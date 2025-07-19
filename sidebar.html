@@ -10,12 +10,16 @@
     <div class="sidebar-header">
       <img id="pageFavicon" src="" alt="favicon" />
       <span id="pageDomain"></span>
-      <button id="darkModeToggle" title="Toggle Dark Mode"><i class="fas fa-moon"></i></button> <button id="closeSidebar" title="Close Sidebar"><i class="fas fa-times"></i></button>
+      <!-- New History Navigation Buttons moved to header -->
+      <button id="historyBackBtn" title="Previous Result" disabled><i class="fas fa-arrow-left"></i></button>
+      <button id="historyForwardBtn" title="Next Result" disabled><i class="fas fa-arrow-right"></i></button>
+      <button id="darkModeToggle" title="Toggle Dark Mode"><i class="fas fa-moon"></i></button>
+      <button id="closeSidebar" title="Close Sidebar"><i class="fas fa-times"></i></button>
     </div>
     <div id="pageTitle" class="page-title"></div>
 
     <div class="tabs">
-      <button class="tab active" data-tab="current">Page Analysis</button>
+      <button class="tab active" data-tab="current">Page Pilot AI</button>
       <button class="tab" data-tab="history">History</button>
     </div>
 

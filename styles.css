@@ -1,192 +1,207 @@
-/* Define CSS Variables for colors */
-:root {
-  /* Light Mode Colors */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f5f5f5;
-  --bg-tertiary: #f9f9f9;
-  --border-color: #ddd;
-  --text-primary: #333;
-  --text-secondary: #666;
-  --text-light: #999;
-  --accent-color: #4f46e5;
-  --accent-hover: #4338ca;
-  --accent-active: #372e9a;
-  --tag-bg: #e0e7ff;
-  --tag-text: #4338ca;
-  --history-item-bg: #f0f0f0;
-  --history-item-border: #e0e0e0;
-  --shadow-color: rgba(0, 0, 0, 0.15);
-  --input-border: #ccc;
-  --accent-color-transparent: rgba(79, 70, 229, 0.2);
-}
-
-/* Dark Mode Colors - Now applied to #sidebar when it has the dark-mode class */
-#sidebar.dark-mode {
-  --bg-primary: #1a1a1a;
-  --bg-secondary: #2c2c2c;
-  --bg-tertiary: #3a3a3a;
-  --border-color: #444;
-  --text-primary: #e0e0e0;
-  --text-secondary: #b0b0b0;
-  --text-light: #888;
-  --accent-color: #6a60ff; /* Slightly lighter for contrast */
-  --accent-hover: #5a50e0;
-  --accent-active: #4a40c0;
-  --tag-bg: #333d6b;
-  --tag-text: #a0b0ff;
-  --history-item-bg: #2a2a2a;
-  --history-item-border: #3a3a3a;
-  --shadow-color: rgba(0, 0, 0, 0.4);
-  --input-border: #555;
-  --accent-color-transparent: rgba(106, 96, 255, 0.3);
-}
-
-body, html {
-  font-family: 'Segoe UI', sans-serif;
+/* General Body and Font Styles */
+body {
+  font-family: 'Inter', sans-serif;
   margin: 0;
   padding: 0;
-  height: 100%;
-  overflow: hidden;
-  /* Removed direct background/color, they are now inherited/set by #sidebar */
+  background-color: #f4f7f6; /* Light background for the sidebar */
+  color: #333; /* Default text color */
+  overflow-x: hidden; /* Prevent horizontal scroll */
 }
 
+/* Sidebar Container */
 #sidebar {
-  font-size: 14px;
-  height: 100%;
+  width: 100%;
+  height: 100vh; /* Full viewport height */
   display: flex;
   flex-direction: column;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  transition: background-color 0.3s ease, color 0.3s ease;
-  overscroll-behavior: contain; /* NEW: Prevent scroll from bubbling to parent */
+  background-color: #ffffff; /* White background for the sidebar */
+  box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease-in-out;
+  border-radius: 8px; /* Rounded corners for the sidebar */
+  overflow: hidden; /* Hide anything outside the sidebar's bounds */
 }
 
+/* Dark Mode Styles */
+#sidebar.dark-mode {
+  background-color: #282c34; /* Darker background */
+  color: #e0e0e0; /* Lighter text color */
+  box-shadow: -4px 0 15px rgba(0, 0, 0, 0.3);
+}
+
+#sidebar.dark-mode .sidebar-header,
+#sidebar.dark-mode .tabs,
+#sidebar.dark-mode .tab,
+#sidebar.dark-mode #inputBox,
+#sidebar.dark-mode #cmdInput,
+#sidebar.dark-mode #responseBox,
+#sidebar.dark-mode .history-item,
+#sidebar.dark-mode .nice-button {
+  background-color: #3a3f4a; /* Darker component backgrounds */
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+#sidebar.dark-mode .tab.active {
+  background-color: #555c66; /* Active tab in dark mode */
+  color: #ffffff;
+}
+
+#sidebar.dark-mode #cmdInput::placeholder {
+  color: #bbb;
+}
+
+#sidebar.dark-mode .copy-button {
+    background-color: #555c66;
+    color: #e0e0e0;
+}
+
+#sidebar.dark-mode .copy-button:hover {
+    background-color: #6a737d;
+}
+
+#sidebar.dark-mode .loading-status-message {
+    color: #bbb;
+}
+
+#sidebar.dark-mode .history-delete {
+    color: #e0e0e0;
+}
+
+/* Dark mode for header navigation buttons */
+#sidebar.dark-mode .sidebar-header button {
+    background-color: #3a3f4a; /* Match header background */
+    color: #e0e0e0;
+}
+
+#sidebar.dark-mode .sidebar-header button:hover:not(:disabled) {
+    background-color: #555c66;
+}
+
+
+/* Header Styles */
 .sidebar-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  padding: 10px 15px;
+  background-color: #f0f3f2;
+  border-bottom: 1px solid #e0e0e0;
   gap: 10px;
-  padding: 10px;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-color);
+  min-height: 50px;
 }
 
 .sidebar-header img {
-  width: 16px;
-  height: 16px;
-  vertical-align: middle;
-  margin-right: 5px;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
 }
 
-.sidebar-header #pageDomain {
+.sidebar-header span {
+  font-size: 0.9em;
+  color: #666;
   flex-grow: 1;
-  font-weight: bold;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: var(--text-secondary);
 }
 
-/* Dark Mode Toggle Button Styling */
-#darkModeToggle {
+.sidebar-header button {
   background: none;
   border: none;
-  font-size: 16px;
-  color: var(--text-secondary);
+  font-size: 1.1em;
   cursor: pointer;
+  color: #666;
   padding: 5px;
-  border-radius: 50%;
-  transition: background-color 0.2s ease, color 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border-radius: 50%; /* Keep circular for header buttons */
+  transition: background-color 0.2s ease;
 }
 
-#darkModeToggle:hover {
-  background-color: var(--border-color);
-  color: var(--text-primary);
+.sidebar-header button:hover {
+  background-color: #e0e0e0;
 }
 
-#closeSidebar {
-  background: none;
-  border: none;
-  font-size: 18px;
-  cursor: pointer;
-  color: var(--text-secondary);
-  padding: 5px;
-  border-radius: 50%;
-  transition: background-color 0.2s ease, color 0.2s ease;
+/* Specific styles for history navigation buttons in header */
+#historyBackBtn, #historyForwardBtn {
+    width: 30px; /* Smaller size */
+    height: 30px; /* Smaller size */
+    font-size: 0.9em; /* Smaller icon */
+    border-radius: 50%; /* Circular */
+    background-color: #e9eceb; /* Slightly different background for distinction */
+    color: #4f46e5; /* Accent color */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-#closeSidebar:hover {
-  background-color: var(--border-color);
-  color: var(--text-primary);
+#historyBackBtn:hover:not(:disabled),
+#historyForwardBtn:hover:not(:disabled) {
+    background-color: #d0d0d0;
 }
 
+#historyBackBtn:disabled,
+#historyForwardBtn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+
+/* Page Title */
 .page-title {
-  font-size: 16px;
+  padding: 10px 15px;
+  font-size: 1em;
   font-weight: bold;
-  padding: 0 10px;
-  margin: 8px 0;
+  color: #444;
+  border-bottom: 1px solid #e0e0e0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: var(--text-primary);
+  background-color: #f8f8f8;
 }
 
+/* Tabs Navigation */
 .tabs {
   display: flex;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid #e0e0e0;
+  background-color: #f0f3f2;
 }
 
 .tab {
   flex: 1;
-  padding: 10px;
+  padding: 12px 0;
   text-align: center;
-  background: var(--bg-secondary);
+  background: none;
   border: none;
-  border-right: 1px solid var(--border-color);
+  border-bottom: 3px solid transparent;
   cursor: pointer;
-  font-size: 0.9em;
-  color: var(--text-secondary);
-  transition: all 0.2s ease;
-}
-
-.tab:last-child {
-  border-right: none;
+  font-size: 0.95em;
+  color: #555;
+  transition: all 0.3s ease;
+  font-weight: 500;
 }
 
 .tab:hover {
-  background-color: var(--border-color);
+  background-color: #e9eceb;
+  color: #333;
 }
 
 .tab.active {
-  background: var(--bg-primary);
-  border-bottom: 2px solid var(--accent-color);
-  color: var(--accent-color);
-  font-weight: bold;
+  border-bottom-color: #4f46e5; /* Tailwind indigo-600 */
+  color: #4f46e5;
+  font-weight: 600;
+  background-color: #ffffff;
 }
 
+/* Tab Content Panels */
 #tabContent {
-  flex: 1;
+  flex-grow: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-}
-
-#currentTab {
-  flex: 1;
-  flex-direction: column;
-  overflow: hidden;
-  padding-bottom: 110px; /* Estimated height of #bottomControls */
+  overflow: hidden; /* Ensure panels don't overflow */
 }
 
 .tab-panel {
   display: none;
-  height: 100%;
-  flex-grow: 1; /* MODIFIED: Ensure tab panel fills space */
-  overflow-y: auto; /* MODIFIED: Enable scrolling for tab content */
-  overscroll-behavior: contain; /* NEW: Prevent scroll from bubbling */
+  flex-grow: 1;
+  padding: 15px;
+  overflow-y: auto; /* Enable scrolling for content within panels */
 }
 
 .tab-panel.active {
@@ -194,86 +209,41 @@ body, html {
   flex-direction: column;
 }
 
+/* Response Box */
 #responseBox {
-    flex: 1;
-    overflow-y: auto;
-    padding: 10px;
-    background-color: var(--bg-tertiary);
-    border-bottom: 1px solid var(--border-color);
-    line-height: 1.5;
-    color: var(--text-primary);
-    position: relative;
-    overscroll-behavior: contain;
-    min-height: calc(100vh - 146px);
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-bottom: 15px; /* Space for controls */
 }
 
-.ai-response-content {
-  padding-bottom: 200px;
-}
-
-/* Styling for the dynamically added copy button */
-.copy-button {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background-color: var(--bg-secondary);
-  color: var(--text-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 5px;
-  padding: 5px 8px;
-  cursor: pointer;
-  font-size: 0.8em;
-  transition: background-color 0.2s ease, color 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.copy-button:hover {
-  background-color: var(--border-color);
-  color: var(--text-primary);
-}
-
-.copy-feedback {
-  position: absolute;
-  top: 10px;
-  right: 50px;
-  background-color: var(--accent-color);
-  color: white;
-  padding: 5px 10px;
-  border-radius: 5px;
-  font-size: 0.8em;
-  white-space: nowrap;
-  opacity: 0;
-  transition: opacity 0.3s ease-in-out;
-  pointer-events: none;
-}
-
-.copy-feedback:not(.hidden) {
-  opacity: 1;
-}
-
-/* AI-generated HTML content styling */
-#output h1, #output h2, #output h3, #output h4, #output h5, #output h6 {
-  margin-top: 1em;
-  margin-bottom: 0.5em;
-  color: var(--text-primary);
+#output {
+  min-height: 100px;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  line-height: 1.6;
+  font-size: 0.95em;
+  color: #333;
+  position: relative; /* For copy button positioning */
 }
 
 #output p {
   margin-bottom: 1em;
-  color: var(--text-primary);
+}
+
+#output h1, #output h2, #output h3, #output h4 {
+  margin-top: 1.5em;
+  margin-bottom: 0.8em;
+  color: #2c3e50; /* Darker heading color */
 }
 
 #output ul, #output ol {
   margin-left: 20px;
   margin-bottom: 1em;
-  color: var(--text-primary);
 }
 
 #output li {
   margin-bottom: 0.5em;
-  color: var(--text-primary);
 }
 
 #output strong {
@@ -285,7 +255,7 @@ body, html {
 }
 
 #output a {
-  color: var(--accent-color);
+  color: #4f46e5;
   text-decoration: none;
 }
 
@@ -293,173 +263,126 @@ body, html {
   text-decoration: underline;
 }
 
-.page-link-header {
+#output img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 10px 0;
+    display: block; /* Ensures image takes its own line */
+}
+
+/* Copy button for output */
+.copy-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: #e0e0e0;
+  border: none;
+  border-radius: 5px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.9em;
+  color: #555;
+  transition: background-color 0.2s ease;
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-  font-size: 0.9em;
-  color: var(--text-secondary);
-}
-
-.page-link-header .header-favicon {
-  width: 16px;
-  height: 16px;
-}
-
-.page-link-header a {
-  color: var(--text-secondary);
-  text-decoration: none;
-}
-
-.page-link-header a:hover {
-  text-decoration: underline;
-}
-
-.tags-container {
-  display: flex;
-  flex-wrap: wrap;
   gap: 5px;
-  margin-bottom: 15px;
 }
 
-.tag-item {
-  background-color: var(--tag-bg);
-  color: var(--tag-text);
-  padding: 5px 10px;
-  border-radius: 15px;
-  font-size: 0.8em;
-  white-space: nowrap;
+.copy-button:hover {
+  background-color: #d0d0d0;
 }
 
-/* Fixed bottom controls */
-#bottomControls {
+.copy-feedback {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  width: calc(100% - 10px);
-  padding: 14px 5px 5px 5px;
-  margin: 10px 5px;
-  border-radius: 15px;
-  background: var(--bg-primary);
-  border: 2px solid var(--border-color);
-  box-sizing: border-box;
-  z-index: 100;
+  top: 10px;
+  right: 60px; /* Adjust based on button width */
+  background-color: #4CAF50; /* Green background */
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 0.8em;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.copy-feedback.hidden {
+  opacity: 0;
+}
+
+/* Loading Message */
+.loading-status-message {
+    text-align: center;
+    padding: 20px;
+    font-size: 1.1em;
+    color: #666;
+}
+
+.loading-status-message .fa-spinner {
+    margin-right: 8px;
+}
+
+
+/* Bottom Controls */
+#bottomControls {
+  padding: 15px;
+  background-color: #ffffff;
+  border-top: 1px solid #e0e0e0;
   display: flex;
   flex-direction: column;
+  gap: 10px;
 }
 
+/* Input Box - Reverted styling for less rounded/pill look */
 #inputBox {
   display: flex;
-  padding: 0 10px 10px 10px;
-  background: none;
-  border-top: none;
-  align-items: center;
+  gap: 10px;
   width: 100%;
-  box-sizing: border-box;
-}
-
-.summarize-and-context-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 10px;
-  width: 100%;
-  box-sizing: border-box;
-  margin-bottom: 10px;
-}
-
-#summarizeBox {
-  padding: 0;
-  background: none;
-  border-bottom: none;
-  flex-grow: 1;
-  margin-right: 10px;
-}
-
-#summarizeBtn {
-  width: 100%;
-  padding: 10px 16px;
-  font-size: 14px;
-  background-color: var(--accent-color);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-#summarizeBtn:hover:not(:disabled) {
-  background-color: var(--accent-hover);
-}
-
-#summarizeBtn:disabled {
-  background-color: var(--text-light);
-  cursor: not-allowed;
-}
-
-.context-toggle {
-  padding: 0;
-  background: none;
-  border-bottom: none;
-  flex-shrink: 0;
-  white-space: nowrap;
-  color: var(--text-primary);
-}
-
-.context-toggle input[type="checkbox"] {
-  margin-right: 8px;
 }
 
 #cmdInput {
-  flex: 1;
-  padding: 8px;
-  border: 1px solid var(--input-border);
-  border-radius: 6px;
-  margin-right: 8px;
-  font-size: 1em;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
+  flex-grow: 1;
+  padding: 10px 15px;
+  border: 1px solid #ccc;
+  border-radius: 4px; /* More subtle rounded corners */
+  font-size: 0.95em;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 #cmdInput:focus {
-  outline: none;
-  border-color: var(--accent-color);
-  box-shadow: 0 0 0 2px var(--accent-color-transparent);
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
 }
 
 #cmdBtn {
-  background: var(--accent-color);
-  border: none;
+  background-color: #4f46e5; /* Tailwind indigo-600 */
   color: white;
-  border-radius: 50%;
-  padding: 10px;
-  width: 40px;
-  height: 40px;
+  border: none;
+  border-radius: 4px; /* Square/subtly rounded button */
+  width: 40px; /* Maintain size */
+  height: 40px; /* Maintain size */
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  position: relative;
-  overflow: hidden;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  font-size: 1.1em;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-#cmdBtn:hover:not(:disabled) {
-  background-color: var(--accent-hover);
+#cmdBtn:hover {
+  background-color: #4338ca; /* Darker indigo */
+  transform: translateY(-1px);
 }
 
 #cmdBtn:disabled {
-  background-color: var(--text-light);
+  background-color: #a0aec0; /* Tailwind gray-400 */
   cursor: not-allowed;
+  box-shadow: none;
 }
 
-#arrowIcon {
-  font-size: 1.2em;
-}
-
+/* Spinner Animation */
 .spinner {
   border: 3px solid rgba(255, 255, 255, 0.3);
   border-top: 3px solid #fff;
@@ -467,99 +390,215 @@ body, html {
   width: 20px;
   height: 20px;
   animation: spin 1s linear infinite;
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+}
+
+.spinner.hidden {
+  display: none;
 }
 
 @keyframes spin {
-  0% { transform: translate(-50%, -50%) rotate(0deg); }
-  100% { transform: translate(-50%, -50%) rotate(360deg); }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .hidden {
   display: none !important;
 }
 
-.loading-status-message {
-  padding: 15px;
-  text-align: center;
-  color: var(--text-secondary);
-  font-style: italic;
-  font-size: 0.95em;
+/* Summarize and Context Row */
+.summarize-and-context-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap; /* Allow wrapping on smaller screens */
+  gap: 10px; /* Space between items */
 }
 
-.loading-status-message .fa-spinner {
-  margin-right: 8px;
+#summarizeBox {
+  flex-grow: 1;
+  min-width: 150px; /* Ensure button has enough space */
 }
 
-/* History Tab Styles */
-#historyTab {
-  background-color: var(--bg-primary);
-  padding: 10px;
-  overflow-y: auto;
-  overscroll-behavior: contain; /* NEW: Prevent scroll from bubbling */
-  flex-grow: 1; /* NEW: Allow history tab to fill space */
+.nice-button {
+  background-color: #28a745; /* Green for summarize */
+  color: white;
+  border: none;
+  border-radius: 20px; /* Pill shape */
+  padding: 10px 15px;
+  cursor: pointer;
+  font-size: 0.9em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
+.nice-button:hover {
+  background-color: #218838;
+  transform: translateY(-1px);
+}
+
+.nice-button:disabled {
+  background-color: #a0aec0;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Context Toggle */
+.context-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.context-toggle input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #4f46e5; /* Highlight color for checkbox */
+  cursor: pointer;
+}
+
+.context-toggle label {
+  font-size: 0.9em;
+  color: #555;
+  cursor: pointer;
+}
+
+/* History Tab */
 #historyList {
   list-style: none;
   padding: 0;
   margin: 0;
+  flex-grow: 1;
   overflow-y: auto;
-  overscroll-behavior: contain; /* NEW: Prevent scroll from bubbling */
-  flex-grow: 1; /* NEW: Allow history list to fill space */
-  max-height: calc(100% - 110px); /* NEW: Match #bottomControls height */
 }
 
 .history-item {
+  background-color: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 12px 15px;
+  margin-bottom: 10px;
   display: flex;
   flex-direction: column;
-  padding: 10px;
-  margin-bottom: 8px;
-  background-color: var(--history-item-bg);
-  border-radius: 8px;
-  border: 1px solid var(--history-item-border);
+  gap: 5px;
   position: relative;
+  cursor: pointer; /* Make the whole item clickable to display content */
+  transition: background-color 0.2s ease;
 }
 
 .history-item:hover {
-  box-shadow: 0 2px 5px var(--shadow-color);
+  background-color: #f0f0f0;
 }
 
 .history-question {
   font-weight: bold;
-  cursor: pointer;
-  color: var(--text-primary);
-  margin-bottom: 5px;
+  color: #333;
+  font-size: 0.95em;
+  padding-right: 30px; /* Space for delete button */
 }
 
-.history-question:hover {
-  color: var(--accent-color);
+.history-response-preview {
+    font-size: 0.85em;
+    color: #666;
+    max-height: 40px; /* Limit preview height */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap; /* Keep preview on one line */
 }
+
 
 .history-time {
-  font-size: 0.8em;
-  color: var(--text-secondary);
-  margin-top: 5px;
+  font-size: 0.75em;
+  color: #888;
 }
 
 .history-delete {
   position: absolute;
-  top: 5px;
-  right: 5px;
+  top: 8px;
+  right: 8px;
   background: none;
   border: none;
-  color: var(--text-light);
+  color: #dc3545; /* Red for delete */
   cursor: pointer;
-  font-size: 0.9em;
+  font-size: 1em;
   padding: 5px;
   border-radius: 50%;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s ease;
 }
 
 .history-delete:hover {
-  background-color: var(--border-color);
-  color: var(--text-primary);
+  background-color: rgba(220, 53, 69, 0.1);
+}
+
+/* Page Link Header (for summarized pages) */
+.page-link-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px dashed #e0e0e0;
+}
+
+.page-link-header .header-favicon {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+}
+
+.page-link-header a {
+    font-size: 0.9em;
+    font-weight: 600;
+    color: #4f46e5;
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.page-link-header a:hover {
+  text-decoration: underline;
+}
+
+/* New Styles for Tags (Pills) */
+.tags-container {
+  margin-bottom: 15px;
+  display: flex; /* Use flexbox for inline display */
+  flex-wrap: wrap; /* Allow tags to wrap to the next line */
+  gap: 8px; /* Space between tags */
+}
+
+.tag-item {
+  background-color: #e0f2f7; /* Light blue background */
+  color: #007bff; /* Blue text */
+  padding: 5px 12px;
+  border-radius: 20px; /* Pill shape */
+  font-size: 0.8em;
+  font-weight: 500;
+  white-space: nowrap; /* Prevent text wrapping inside the pill */
+  border: 1px solid #cce7f0; /* Light border */
+}
+
+/* Dark mode for tags */
+#sidebar.dark-mode .tag-item {
+  background-color: #4a698a; /* Darker blue background */
+  color: #e0f2f7; /* Lighter text */
+  border-color: #6a8bb0;
+}
+
+/* Dot animation for loading message */
+.dot-animation span {
+  opacity: 0;
+  animation: dot-fade 1.5s infinite;
+}
+
+.dot-animation span:nth-child(1) { animation-delay: 0s; }
+.dot-animation span:nth-child(2) { animation-delay: 0.5s; }
+.dot-animation span:nth-child(3) { animation-delay: 1s; }
+
+@keyframes dot-fade {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
 }

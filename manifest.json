@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "AI Sidebar Assistant",
+  "name": "Page Pilot AI",
   "version": "1.0",
   "description": "A sidebar assistant using Perplexity AI.",
   "permissions": [
