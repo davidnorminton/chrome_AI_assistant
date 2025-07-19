@@ -18,7 +18,7 @@ function createAndAppendSidebar() {
       position: fixed;
       top: 0;
       right: 0;
-      width: 350px;
+      width: 450px;
       height: 100%;
       border: none;
       z-index: 99999999999999999999999999999999;
