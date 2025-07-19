@@ -10,52 +10,107 @@
     <div class="sidebar-header">
       <img id="pageFavicon" src="" alt="favicon" />
       <span id="pageDomain"></span>
-      <!-- New History Navigation Buttons moved to header -->
       <button id="historyBackBtn" title="Previous Result" disabled><i class="fas fa-arrow-left"></i></button>
       <button id="historyForwardBtn" title="Next Result" disabled><i class="fas fa-arrow-right"></i></button>
-      <!-- Added class "header-icon-button" to these buttons -->
-      <button id="darkModeToggle" title="Toggle Dark Mode" class="header-icon-button"><i class="fas fa-moon"></i></button>
-      <button id="closeSidebar" title="Close Sidebar" class="header-icon-button"><i class="fas fa-times"></i></button>
+      <!-- History Toggle Button -->
+      <button id="historyToggle" title="History" class="header-icon-button"><i class="fas fa-history"></i></button>
+      <!-- Settings Toggle Button -->
+      <button id="settingsToggle" title="Settings" class="header-icon-button"><i class="fas fa-cog"></i></button>
     </div>
-    <div id="pageTitle" class="page-title"></div>
+    <!-- Removed <div id="pageTitle" class="page-title"></div> -->
 
-    <div class="tabs">
-      <button class="tab active" data-tab="current">Page Pilot AI</button>
-      <button class="tab" data-tab="history">History</button>
-    </div>
+    <!-- Removed the entire tabs div -->
 
     <div id="tabContent">
+      <!-- The main content (formerly currentTab) is now always active -->
       <div id="currentTab" class="tab-panel active">
+        <!-- New Error Message Area -->
+        <div id="errorMessage" class="error-message hidden"></div>
+
         <div id="responseBox">
           <div id="output">Click 'Summarize Page' to analyze the current content.</div>
         </div>
 
         <div id="bottomControls">
-          <div id="inputBox">
-            <input type="text" id="cmdInput" placeholder="Ask anything..." />
-            <button id="cmdBtn">
-              <i id="arrowIcon" class="fas fa-arrow-right"></i>
-              <div id="loaderIcon" class="spinner hidden"></div>
-            </button>
-          </div>
 
-          <div class="summarize-and-context-row">
-              <div id="summarizeBox">
-                <button id="summarizeBtn" class="nice-button"><i class="fas fa-sync-alt"></i> Summarize Page</button>
+          <!-- Main prompt input area - Gemini-like layout -->
+          <div class="main-prompt-area">
+            <textarea id="cmdInput" placeholder="Ask anything about this page..." rows="1"></textarea>
+            <div class="action-buttons-row">
+              <input type="file" id="hiddenFileInput" style="display: none;" accept="image/*, application/pdf, .txt"> <!-- Accept common file types -->
+              <button id="fileUploadBtn" class="icon-button file-upload-button" title="Upload File">
+                <i class="fas fa-plus"></i>
+              </button>
+              <button id="summarizeBtn" class="nice-button"><i class="fas fa-file-alt"></i> Summarize</button>
+              <button id="newChatBtn" class="nice-button clear-chat-button">
+                <i class="fas fa-eraser"></i> 
+                <span>Clear chat</span>
+              </button>
+              <!-- Context Toggle Button -->
+              <button id="toggleContextBtn" class="nice-button context-toggle-button active">
+                <i class="fas fa-globe"></i> 
+                <span>Page Context</span>
+              </button>
+              <div class="end">
+                <button id="cmdBtn" class="icon-button send-button" title="Send">
+                  <i id="arrowIcon" class="fas fa-arrow-up"></i> <!-- Changed to arrow-up for send -->
+                  <div id="loaderIcon" class="spinner hidden"></div>
+                </button>
               </div>
-              <div class="context-toggle">
-                <input type="checkbox" id="includeContext" checked />
-                <label for="includeContext">Ask about this page</label>
-              </div>
+            </div>
           </div>
         </div>
       </div>
+    </div>
 
-      <div id="historyTab" class="tab-panel">
-        <ul id="historyList">
-          </ul>
+    <!-- Settings Overlay Panel -->
+    <div id="settingsOverlay" class="settings-overlay">
+      <div class="settings-header">
+        <h2>Settings</h2>
+        <button id="closeSettings" title="Close Settings" class="header-icon-button"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="settings-content">
+        <h3>Perplexity AI Settings</h3>
+
+        <label for="apiKey">API Key</label>
+        <input type="password" id="apiKey" placeholder="Enter your Perplexity AI key" />
+
+        <label for="modelSelect">Model</label>
+        <select id="modelSelect"></select>
+
+        <button id="saveSettings" class="nice-button">Save Settings</button>
+        <p id="saveMsg" class="save-feedback hidden">Settings saved!</p>
+
+        <hr style="border-color: #eee; margin: 20px 0;"> <!-- Separator -->
+
+        <!-- New Theme Selection -->
+        <div class="theme-selection">
+          <label>Theme</label>
+          <div class="theme-buttons">
+            <button id="lightModeBtn" class="theme-button">Light</button>
+            <button id="darkModeBtn" class="theme-button">Dark</button>
+          </div>
+        </div>
       </div>
     </div>
+
+    <!-- New History Overlay Panel -->
+    <div id="historyOverlay" class="history-overlay">
+      <div class="settings-header"> <!-- Reusing settings-header style for consistency -->
+        <h2>History</h2>
+        <button id="closeHistory" title="Close History" class="header-icon-button"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="history-content"> <!-- New class for history content area -->
+        <div class="history-controls">
+          <input type="text" id="historySearchInput" placeholder="Search history..." />
+          <button id="exportHistoryBtn" class="nice-button"><i class="fas fa-download"></i> Export CSV</button>
+        </div>
+        <ul id="historyList">
+          <!-- History items will be rendered here by JavaScript -->
+        </ul>
+      </div>
+    </div>
+
   </div>
 
   <script src="sidebar.js"></script>

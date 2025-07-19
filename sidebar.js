@@ -12,6 +12,21 @@ let loadingMessageElement = null;
 let queryHistory = []; // Stores all history entries
 let currentHistoryIndex = -1; // Index of the currently displayed item in queryHistory (0 is newest)
 
+// Global variable for file upload
+let selectedFile = null; // Stores the base64 Data URL of the selected file
+
+// Model options for the settings dropdown
+const modelOptions = [
+  'pplx-7b-chat',
+  'pplx-70b-chat',
+  'sonar-deep-research',
+  'sonar-reasoning-pro',
+  'sonar-reasoning',
+  'sonar-pro',
+  'sonar',
+  'r1-1776'
+];
+
 document.addEventListener('DOMContentLoaded', () => {
   console.log("[Sidebar] DOMContentLoaded fired.");
 
@@ -26,28 +41,32 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // --- Dark Mode Initialization ---
-  const darkModeToggle = document.getElementById('darkModeToggle');
+  // --- Dark Mode Initialization (now within settings overlay) ---
   const sidebarElement = document.getElementById('sidebar'); // Target #sidebar for dark mode class
+  const lightModeBtn = document.getElementById('lightModeBtn');
+  const darkModeBtn = document.getElementById('darkModeBtn');
+
+  function applyTheme(isDark) {
+    if (isDark) {
+      sidebarElement.classList.add('dark-mode');
+      lightModeBtn.classList.remove('active');
+      darkModeBtn.classList.add('active');
+    } else {
+      sidebarElement.classList.remove('dark-mode');
+      lightModeBtn.classList.add('active');
+      darkModeBtn.classList.remove('active');
+    }
+    chrome.storage.local.set({ darkMode: isDark });
+  }
 
   // Load dark mode preference
   chrome.storage.local.get('darkMode', (data) => {
-    if (data.darkMode) {
-      sidebarElement.classList.add('dark-mode'); // Apply to #sidebar
-      darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>'; // Sun icon for dark mode
-    } else {
-      sidebarElement.classList.remove('dark-mode'); // Apply to #sidebar
-      darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>'; // Moon icon for light mode
-    }
+    applyTheme(data.darkMode);
   });
 
-  // Toggle dark mode on click
-  darkModeToggle.addEventListener('click', () => {
-    sidebarElement.classList.toggle('dark-mode'); // Toggle on #sidebar
-    const isDarkMode = sidebarElement.classList.contains('dark-mode');
-    chrome.storage.local.set({ darkMode: isDarkMode });
-    darkModeToggle.innerHTML = isDarkMode ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
-  });
+  // Theme button click handlers
+  lightModeBtn.addEventListener('click', () => applyTheme(false));
+  darkModeBtn.addEventListener('click', () => applyTheme(true));
   // --- End Dark Mode Initialization ---
 
   // Favicon error handler
@@ -59,9 +78,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
-  // Listen for messages from content script (PAGE_INFO)
+  // Listen for messages from content script (PAGE_INFO) or background script (RESTRICTED_PAGE_ERROR)
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    // Ensure the message is from the content script (tab context) and is PAGE_INFO
     if (sender.tab && request.type === 'PAGE_INFO') {
       console.log("[Sidebar] Received PAGE_INFO from content script:", request.data);
       const { url, title, domain, favicon } = request.data;
@@ -75,15 +93,34 @@ document.addEventListener('DOMContentLoaded', () => {
         pageFaviconElement.style.display = ''; // Ensure it's visible
       }
       document.getElementById("pageDomain").textContent = domain;
-      document.getElementById("pageTitle").textContent = title;
+      // No pageTitle element anymore
+      
+      // Clear any restricted page error if a valid page info is received
+      hideErrorMessage();
+
+    } else if (request.type === 'RESTRICTED_PAGE_ERROR') {
+      console.warn("[Sidebar] Received RESTRICTED_PAGE_ERROR from background:", request.message);
+      displayError(request.message);
     }
   });
 
-  // Close sidebar button now closes the panel directly
-  document.getElementById("closeSidebar").onclick = () => {
-    console.log("[Sidebar] Close button clicked. Closing side panel.");
-    window.close(); // Closes the side panel
-  };
+  // Helper function to display errors
+  function displayError(message) {
+    const errorMessageElement = document.getElementById("errorMessage");
+    if (errorMessageElement) {
+      errorMessageElement.textContent = message;
+      errorMessageElement.classList.remove("hidden");
+    }
+  }
+
+  // Helper function to hide errors
+  function hideErrorMessage() {
+    const errorMessageElement = document.getElementById("errorMessage");
+    if (errorMessageElement) {
+      errorMessageElement.classList.add("hidden");
+      errorMessageElement.textContent = ""; // Clear content
+    }
+  }
 
   function toggleLoadingState(isLoading, message = '') {
     const cmdBtn = document.getElementById("cmdBtn");
@@ -91,12 +128,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const arrowIcon = document.getElementById("arrowIcon");
     const loaderIcon = document.getElementById("loaderIcon");
     const outputElement = document.getElementById("output");
+    const newChatBtn = document.getElementById("newChatBtn"); // Get new chat button
+    const fileUploadBtn = document.getElementById("fileUploadBtn"); // Get file upload button
+    const toggleContextBtn = document.getElementById("toggleContextBtn"); // Get context toggle button
 
     if (isLoading) {
       cmdBtn.disabled = true;
       summarizeBtn.disabled = true;
+      newChatBtn.disabled = true; // Disable new chat button during loading
+      fileUploadBtn.disabled = true; // Disable file upload button during loading
+      toggleContextBtn.disabled = true; // Disable context toggle button during loading
       arrowIcon.classList.add("hidden");
       loaderIcon.classList.remove("hidden");
+      hideErrorMessage(); // Hide any previous errors when starting a new action
 
       if (!loadingMessageElement) {
         loadingMessageElement = document.createElement("div");
@@ -109,6 +153,9 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       cmdBtn.disabled = false;
       summarizeBtn.disabled = false;
+      newChatBtn.disabled = false; // Re-enable new chat button
+      fileUploadBtn.disabled = false; // Re-enable file upload button
+      toggleContextBtn.disabled = false; // Re-enable context toggle button
       arrowIcon.classList.remove("hidden");
       loaderIcon.classList.add("hidden");
 
@@ -119,30 +166,113 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  const cmdInput = document.getElementById("cmdInput");
+  const newChatBtn = document.getElementById("newChatBtn");
+  const toggleContextBtn = document.getElementById("toggleContextBtn"); // Reference to the new button
+  const fileUploadBtn = document.getElementById("fileUploadBtn");
+  const hiddenFileInput = document.getElementById("hiddenFileInput");
+
+  // Auto-resize textarea
+  cmdInput.addEventListener('input', () => {
+    cmdInput.style.height = 'auto'; // Reset height
+    cmdInput.style.height = cmdInput.scrollHeight + 'px'; // Set to scroll height
+  });
+
+  // Function to update placeholder text based on context button state
+  function updatePlaceholder() {
+    if (toggleContextBtn.classList.contains('active')) {
+      cmdInput.placeholder = "Ask anything about this page...";
+    } else {
+      cmdInput.placeholder = "Ask anything...";
+    }
+  }
+
+  // Initial placeholder set based on initial button state
+  updatePlaceholder();
+
+  // Toggle Context Button Logic
+  toggleContextBtn.addEventListener('click', () => {
+    toggleContextBtn.classList.toggle('active');
+    updatePlaceholder(); // Update placeholder immediately after toggling
+  });
+
+
+  // Clear chat/output logic
+  newChatBtn.addEventListener('click', () => {
+    clearOutputAndInput();
+  });
+
+  function clearOutputAndInput() {
+    document.getElementById("output").innerHTML = "Click 'Summarize Page' to analyze the current content.";
+    cmdInput.value = ''; // Use cmdInput directly
+    cmdInput.style.height = 'auto'; // Reset textarea height
+    hideErrorMessage(); // Clear any error messages
+    toggleLoadingState(false); // Ensure loading state is off
+    selectedFile = null; // Clear any selected file
+    hiddenFileInput.value = ''; // Clear file input element
+    updatePlaceholder(); // Reset placeholder
+    console.log("[Sidebar] Chat cleared. Selected file reset.");
+  }
+
+  // File Upload Logic
+  fileUploadBtn.addEventListener('click', () => {
+    hiddenFileInput.click(); // Trigger the hidden file input click
+  });
+
+  hiddenFileInput.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        selectedFile = e.target.result; // Store the Data URL (base64)
+        console.log(`[Sidebar] File selected: ${file.name} (${file.type}). Data URL length: ${selectedFile.length}. Ready to send.`);
+        // Update placeholder to indicate file is ready
+        cmdInput.placeholder = `File "${file.name}" ready. Add your message...`;
+      };
+      reader.onerror = (e) => {
+        console.error("[Sidebar] Error reading file:", e);
+        displayError("Error reading file. Please try again.");
+        selectedFile = null;
+        updatePlaceholder(); // Reset placeholder if file reading fails
+      };
+      reader.readAsDataURL(file); // Read file as Data URL
+    } else {
+      selectedFile = null;
+      updatePlaceholder(); // Reset placeholder if no file selected
+    }
+  });
+
+
   document.getElementById("cmdBtn").onclick = async () => {
     console.log("[Sidebar] Ask anything button clicked.");
-    const input = document.getElementById("cmdInput").value.trim();
-    if (!input) return;
+    const input = cmdInput.value.trim();
+    
+    if (!input && !selectedFile) {
+        displayError("Please enter a message or select a file to send.");
+        return;
+    }
 
     toggleLoadingState(true, 'Processing your request...');
 
-    const usePageContext = document.getElementById("includeContext").checked;
+    // Determine if page context should be used based on the button's active class
+    const usePageContext = toggleContextBtn.classList.contains('active'); 
     let query = input;
+    let fileToSend = selectedFile; // Use the globally stored selected file
 
     if (usePageContext) {
       toggleLoadingState(true, 'Fetching page content...');
       const pageResponse = await getPageTextFromTab(); // Get the full response object from getPageTextFromTab
 
       if (pageResponse.error === 'restricted_page') {
-        displayInSidebar("Unable to access page content on this type of browser page (e.g., internal browser pages, extension pages, or file system pages).", "None");
+        displayError("Unable to access page content on this type of browser page (e.g., internal browser pages, extension pages, or file system pages).");
         toggleLoadingState(false);
         return;
       } else if (pageResponse.error === 'no_discernible_text') {
-        displayInSidebar("The current page has no discernible text content. Please try on a different page or uncheck 'Ask about this page'.", "None");
+        displayError("The current page has no discernible text content. Please try on a different page or uncheck 'Page Context'.");
         toggleLoadingState(false);
         return;
       } else if (!pageResponse.text) { // General error or empty text
-        displayInSidebar("Could not retrieve page content for context. There might be a general error. Trying without context.", "None");
+        displayError("Could not retrieve page content for context. There might be a general error. Trying without context.");
         // Fallback to sending query without context if text retrieval fails
         query = input;
       } else {
@@ -151,10 +281,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     toggleLoadingState(true, 'Sending to AI...');
-    const response = await sendQueryToAI({ query, action: 'direct_question' });
+    // Pass selectedFile to sendQueryToAI
+    const response = await sendQueryToAI({ query, action: 'direct_question', file: fileToSend });
 
     toggleLoadingState(false);
-    document.getElementById("cmdInput").value = '';
+    cmdInput.value = '';
+    cmdInput.style.height = 'auto'; // Reset textarea height
+    selectedFile = null; // Clear selected file after sending
+    hiddenFileInput.value = ''; // Clear file input element
+    updatePlaceholder(); // Reset placeholder
     displayInSidebar(response.text, response.model);
     saveToHistory(input, response.text, false);
   };
@@ -167,16 +302,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const pageText = pageResponse.text; // Extract text
 
     if (pageResponse.error === 'restricted_page') {
-      displayInSidebar("Unable to access page content on this type of browser page for summarization.", "None");
+      displayError("Unable to access page content on this type of browser page for summarization.");
       toggleLoadingState(false);
       return;
     } else if (pageResponse.error === 'no_discernible_text') {
-      displayInSidebar("The current page has no discernible text content for summarization.", "None");
+      displayError("The current page has no discernible text content for summarization.");
       toggleLoadingState(false);
       return;
     } else if (!pageText) {
       console.error("[Sidebar] No page text obtained for summarization.");
-      displayInSidebar("Unable to access page content for summarization. The page might not have discernible text, or there was a general error.", "None");
+      displayError("Unable to access page content for summarization. The page might not have discernible text, or there was a general error.");
       toggleLoadingState(false);
       return;
     }
@@ -208,6 +343,9 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("  Tags:", tags);
     console.log("  Links:", links); // Log links received
 
+    // Clear any existing error messages when new content is displayed
+    hideErrorMessage();
+
     let headerHtml = '';
     if (url && favicon && pageTitle) {
       headerHtml = `
@@ -233,7 +371,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (Array.isArray(links) && links.length > 0) {
         linksHtml = '<h3>Relevant Links:</h3><ul>';
         links.forEach(link => {
-            linksHtml += `<li><a href="${link.url}" target="_blank" rel="noopener noreferrer">${link.title}</a></li>`;
+            linksHtml += `<li><a href="${link.url}" target="_blank" rel="noopener noreferrer">${link.title}</a>`;
+            // Add description if available
+            if (link.description) {
+                linksHtml += `<p class="relevant-link-description">${link.description}</p>`;
+            }
+            linksHtml += `</li>`;
         });
         linksHtml += '</ul>';
     }
@@ -277,8 +420,10 @@ document.addEventListener('DOMContentLoaded', () => {
         questionElement.title = 'Click to ask this question';
         questionElement.addEventListener('click', (event) => {
           const questionText = event.target.textContent.trim();
-          document.getElementById('cmdInput').value = questionText;
-          document.getElementById('cmdInput').focus(); // Focus the input field
+          cmdInput.value = questionText; // Use cmdInput directly
+          cmdInput.style.height = 'auto'; // Reset height
+          cmdInput.style.height = cmdInput.scrollHeight + 'px'; // Adjust to content
+          cmdInput.focus(); // Focus the input field
         });
       });
 
@@ -292,7 +437,8 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log(`[Sidebar] Tag "${tagName}" clicked.`);
     toggleLoadingState(true, `Finding links for "${tagName}"...`);
 
-    const prompt = `Provide 5 highly relevant and diverse links (URLs with titles) related to '${tagName}'. Format the response as a JSON array of objects, where each object has 'title' and 'url' properties. Example: [{"title": "Example Link 1", "url": "https://example.com/1"}, {"title": "Example Link 2", "url": "https://example.com/2"}]`;
+    // MODIFIED: Request description for links and add a random number for uniqueness
+    const prompt = `Provide 5 highly relevant and unique links (URLs with titles and a brief 1-2 sentence description) related to '${tagName}'. Format the response as a JSON array of objects, where each object has 'title', 'url', and 'description' properties. Ensure the links are diverse and distinct. Random ID: ${Math.random().toString(36).substring(7)}. Example: [{"title": "Example Link 1", "url": "https://example.com/1", "description": "A brief description of this example link."}, {"title": "Example Link 2", "url": "https://example.com/2", "description": "Another brief description."}]`;
 
     const response = await sendQueryToAI({ query: prompt, action: 'get_links' });
     toggleLoadingState(false);
@@ -301,7 +447,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (response && response.links && response.links.length > 0) {
       linksHtml = '<h3>Relevant Links:</h3><ul>';
       response.links.forEach(link => {
-        linksHtml += `<li><a href="${link.url}" target="_blank" rel="noopener noreferrer">${link.title}</a></li>`;
+        linksHtml += `<li><a href="${link.url}" target="_blank" rel="noopener noreferrer">${link.title}</a>`;
+        // Add description if available
+        if (link.description) {
+            linksHtml += `<p class="relevant-link-description">${link.description}</p>`;
+        }
+        linksHtml += `</li>`;
       });
       linksHtml += '</ul>';
       // Display links, keep the tag for context, no main text content for this action
@@ -360,15 +511,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  async function sendQueryToAI({ query, action }) {
+  async function sendQueryToAI({ query, action, file = null }) { // Added file parameter
     console.log("[Sidebar] Sending query to AI for action:", action, " Query snippet:", query.substring(0, 100) + "...");
+    if (file) {
+        console.log("[Sidebar] Including file in query. File data URL length:", file.length);
+    }
+
     const { model, apiKey } = await chrome.storage.local.get(["model", "apiKey"]);
 
     console.log("[Sidebar] Using API Key:", apiKey ? "Set" : "Not Set", "Model:", model);
 
     if (!apiKey) {
       console.error("[Sidebar] API Key not set.");
-      return { text: "Error: Perplexity AI API Key is not set. Please set it in extension options.", model: "None", tags: [], links: [] };
+      displayError("Error: Perplexity AI API Key is not set. Please set it in Settings.");
+      return { text: "Error: Perplexity AI API Key is not set. Please set it in Settings.", model: "None", tags: [], links: [] };
     }
     const endpoint = "https://api.perplexity.ai/chat/completions";
     const headers = {
@@ -376,7 +532,7 @@ document.addEventListener('DOMContentLoaded', () => {
       "Content-Type": "application/json"
     };
 
-    let userMessageContent;
+    let messages = [];
     let systemMessageContent;
 
     if (action === "summarize_page") {
@@ -388,15 +544,15 @@ document.addEventListener('DOMContentLoaded', () => {
       The "tags" value must be an array of 3 to 5 strings, identifying keywords or content categories (e.g., 'News Article', 'Product Page', 'Tutorial').
       Do not include any text outside the JSON object.`;
 
-      userMessageContent = `Generate a concise summary in HTML and relevant tags for this webpage content. Include suggested follow-up questions at the end of the summary.
-
-      Page content to analyze:\n${query}`;
+      messages.push({ role: "system", content: systemMessageContent });
+      messages.push({ role: "user", content: query });
       
     } else if (action === "get_links") {
-        systemMessageContent = `You are an AI assistant that provides lists of relevant links.
-        You must format your entire response as a single JSON array of objects. Each object in the array must have two properties: "title" (string) and "url" (string).
+        systemMessageContent = `You are an AI assistant that provides lists of highly relevant and unique links.
+        You must format your entire response as a single JSON array of objects. Each object in the array must have three properties: "title" (string), "url" (string), and "description" (string, a brief 1-2 sentence summary of the link's content).
         Provide 5 highly relevant and diverse links. Do not include any text or markdown outside the JSON array.`;
-        userMessageContent = query; // The query already contains the instruction for links
+        messages.push({ role: "system", content: systemMessageContent });
+        messages.push({ role: "user", content: query });
     }
     else { // For 'direct_question'
       systemMessageContent = `You are an AI assistant for a web browser sidebar.
@@ -406,15 +562,31 @@ document.addEventListener('DOMContentLoaded', () => {
       Be concise but informative.
       ${query.startsWith('Based on this page:') ? `The user is asking a question related to the following page content: "${query.split('\n\nUser question:')[0].replace('Based on this page:\n', '')}".` : ''}
       `;
-      userMessageContent = query;
+      messages.push({ role: "system", content: systemMessageContent });
+      
+      // Handle multimodal input if a file is present
+      if (file) {
+          // Extract mimeType and data from Data URL
+          const parts = file.split(';');
+          const mimeType = parts[0].split(':')[1];
+          const base64Data = parts[1].split(',')[1];
+
+          messages.push({
+              role: "user",
+              parts: [
+                  { text: query }, // User's text message
+                  { inlineData: { mimeType: mimeType, data: base64Data } } // Inline file data
+              ]
+          });
+          console.log("[Sidebar] Sending multimodal request with text and file.");
+      } else {
+          messages.push({ role: "user", content: query });
+      }
     }
 
     const body = {
       model: model || "sonar-small-online",
-      messages: [
-        { role: "system", content: systemMessageContent },
-        { role: "user", content: userMessageContent }
-      ],
+      messages: messages, // Use the constructed messages array
       temperature: 0.7,
       stream: false // Ensure we get the full response at once
     };
@@ -428,7 +600,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (response.status === 401) {
         console.error("[Sidebar] API Key Unauthorized (401).");
-        return { text: "Error: Perplexity AI API Key Unauthorized (401). Please check your API Key in extension options.", model: "None", tags: [], links: [] };
+        displayError("Error: Perplexity AI API Key Unauthorized (401). Please check your API Key in Settings.");
+        return { text: "Error: Perplexity AI API Key Unauthorized (401). Please check your API Key in Settings.", model: "None", tags: [], links: [] };
       }
 
       const data = await response.json();
@@ -458,6 +631,7 @@ document.addEventListener('DOMContentLoaded', () => {
               };
             } else {
               console.warn("[Sidebar] AI returned unexpected JSON structure for tags. Falling back to plain text with empty tags.");
+              displayError("AI response format unexpected. Displaying raw response. Please try again.");
               return {
                 text: rawContent, // Fallback to raw if JSON structure is wrong
                 model: model || "sonar-small-online",
@@ -467,6 +641,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           } catch (e) {
             console.error("[Sidebar] Failed to parse AI response as JSON for tags (possibly not valid JSON or unexpected format):", e, "Raw content:", rawContent);
+            displayError("AI response format invalid. Displaying raw response. Please try again.");
             // If parsing fails, treat the whole rawContent as the text and no tags
             return {
               text: rawContent,
@@ -487,7 +662,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 const parsedLinks = JSON.parse(cleanContent);
-                if (Array.isArray(parsedLinks) && parsedLinks.every(item => typeof item.title === 'string' && typeof item.url === 'string')) {
+                // Ensure each link has title, url, and description
+                if (Array.isArray(parsedLinks) && parsedLinks.every(item => typeof item.title === 'string' && typeof item.url === 'string' && typeof item.description === 'string')) {
                     return {
                         text: '', // No main text content for this action
                         model: model || "sonar-small-online",
@@ -495,7 +671,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         links: parsedLinks
                     };
                 } else {
-                    console.warn("[Sidebar] AI returned unexpected JSON structure for links. Falling back to plain text.");
+                    console.warn("[Sidebar] AI returned unexpected JSON structure for links (missing title, url, or description). Falling back to plain text.");
+                    displayError("AI response format unexpected for links. Displaying raw response. Please try again.");
                     return {
                         text: rawContent,
                         model: model || "sonar-small-online",
@@ -505,6 +682,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (e) {
                 console.error("[Sidebar] Failed to parse AI response as JSON for links:", e, "Raw content:", rawContent);
+                displayError("AI response format invalid for links. Displaying raw response. Please try again.");
                 return {
                     text: rawContent,
                     model: model || "sonar-small-online",
@@ -524,10 +702,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       } else {
         console.error("[Sidebar] Error from API:", data.detail || data.error || response.statusText);
+        displayError(`Error from Perplexity AI: ${data.detail || data.error || response.statusText}`);
         return { text: `Error from Perplexity AI: ${data.detail || data.error || response.statusText}`, model: "None", tags: [], links: [] };
       }
     } catch (err) {
       console.error("[Sidebar] Network/Fetch error:", err);
+      displayError(`Network Error: Could not connect to Perplexity AI. Please check your internet connection. (${err.message})`);
       return { text: `Network Error: Could not connect to Perplexity AI. Please check your internet connection. (${err.message})`, model: "None", tags: [], links: [] };
     }
   }
@@ -578,11 +758,8 @@ document.addEventListener('DOMContentLoaded', () => {
       currentHistoryIndex = index;
       const entry = queryHistory[currentHistoryIndex];
       displayInSidebar(entry.response, 'Saved', entry.url, entry.favicon, entry.pageTitle, entry.tags || [], entry.links || []);
-      // Switch to the "Page Pilot AI" tab when viewing history
-      const currentTabBtn = document.querySelector('.tab[data-tab="current"]');
-      if (currentTabBtn) {
-        currentTabBtn.click();
-      }
+      // Close history overlay after selecting an item
+      document.getElementById('historyOverlay').classList.remove('active');
       updateHistoryNavigationButtons();
     }
   }
@@ -601,17 +778,17 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  function renderHistoryList(history) {
+  function renderHistoryList(historyToRender) { // Renamed parameter for clarity
     console.log("[Sidebar] Rendering history list.");
     const list = document.getElementById("historyList");
     list.innerHTML = ''; // Clear existing list
 
-    if (history.length === 0) {
+    if (historyToRender.length === 0) {
       list.innerHTML = '<p style="text-align: center; color: #555;">No history yet. Ask a question to see it here!</p>';
       return;
     }
 
-    history.forEach((entry, index) => {
+    historyToRender.forEach((entry, index) => {
       console.log(`DEBUG: renderHistoryList - Processing entry ${index}:`);
       console.log("  Entry Query:", entry.query);
       console.log("  Entry URL:", entry.url);
@@ -629,7 +806,13 @@ document.addEventListener('DOMContentLoaded', () => {
       question.onclick = () => {
         console.log("[Sidebar] History item clicked, displaying saved response.");
         // Call showHistoryEntry to correctly update index and buttons
-        showHistoryEntry(index);
+        // Note: When searching, the index refers to the filtered list,
+        // but showHistoryEntry needs the index from the *original* queryHistory.
+        // For simplicity, we'll re-find the index in the original array.
+        const originalIndex = queryHistory.findIndex(item => item.timestamp === entry.timestamp);
+        if (originalIndex !== -1) {
+            showHistoryEntry(originalIndex);
+        }
       };
 
       const time = document.createElement("div");
@@ -655,22 +838,26 @@ document.addEventListener('DOMContentLoaded', () => {
       del.onclick = (event) => {
         event.stopPropagation(); // Prevent the parent <li> click event
         console.log("[Sidebar] History delete button clicked.");
-        queryHistory.splice(index, 1); // Use global queryHistory
-        chrome.storage.local.set({ queryHistory: queryHistory }, () => {
-          renderHistoryList(queryHistory);
-          // Adjust currentHistoryIndex if the deleted item was before it
-          if (index < currentHistoryIndex) {
-            currentHistoryIndex--;
-          } else if (index === currentHistoryIndex && queryHistory.length > 0) {
-            // If current item deleted, show newest or previous
-            currentHistoryIndex = Math.max(0, currentHistoryIndex - 1);
-            showHistoryEntry(currentHistoryIndex); // Re-display current if it shifted
-          } else if (queryHistory.length === 0) {
-            currentHistoryIndex = -1; // No history left
-            document.getElementById("output").innerHTML = "No history yet. Ask a question to see it here!";
-          }
-          updateHistoryNavigationButtons();
-        });
+        // Find the index in the original array to delete correctly
+        const originalIndex = queryHistory.findIndex(item => item.timestamp === entry.timestamp);
+        if (originalIndex !== -1) {
+            queryHistory.splice(originalIndex, 1); // Use global queryHistory
+            chrome.storage.local.set({ queryHistory: queryHistory }, () => {
+                renderHistoryList(queryHistory); // Re-render all history
+                // Adjust currentHistoryIndex if the deleted item was before it
+                if (originalIndex < currentHistoryIndex) {
+                    currentHistoryIndex--;
+                } else if (originalIndex === currentHistoryIndex && queryHistory.length > 0) {
+                    // If current item deleted, show newest or previous
+                    currentHistoryIndex = Math.max(0, currentHistoryIndex - 1);
+                    showHistoryEntry(currentHistoryIndex); // Re-display current if it shifted
+                } else if (queryHistory.length === 0) {
+                    currentHistoryIndex = -1; // No history left
+                    document.getElementById("output").innerHTML = "No history yet. Ask a question to see it here!";
+                }
+                updateHistoryNavigationButtons();
+            });
+        }
       };
 
       li.appendChild(question);
@@ -682,19 +869,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Initial load of history and button states
-  chrome.storage.local.get(["queryHistory", "activeTab"], data => {
+  chrome.storage.local.get(["queryHistory"], data => { // Removed "activeTab" as tabs are gone
     queryHistory = data.queryHistory || []; // Initialize global queryHistory
     renderHistoryList(queryHistory);
-
-    const tab = data.activeTab || "current";
-    document.querySelectorAll(".tab").forEach(t => {
-      t.classList.remove("active");
-      if (t.dataset.tab === tab) t.classList.add("active");
-    });
-    document.querySelectorAll(".tab-panel").forEach(p => {
-      p.classList.remove("active");
-      if (p.id === tab + "Tab") p.classList.add("active");
-    });
 
     // If there's history, display the newest entry and update buttons
     if (queryHistory.length > 0) {
@@ -706,18 +883,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  document.querySelectorAll(".tab").forEach(tab => {
-    tab.addEventListener("click", () => {
-      console.log("[Sidebar] Tab clicked:", tab.dataset.tab);
-      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+  // Removed tab event listeners as tabs are gone
 
-      tab.classList.add("active");
-      document.getElementById(tab.dataset.tab + "Tab").classList.add("active");
-
-      chrome.storage.local.set({ activeTab: tab.dataset.tab });
-    });
-  });
 
   // Event listeners for new history navigation buttons
   const historyBackBtn = document.getElementById('historyBackBtn');
@@ -743,5 +910,143 @@ document.addEventListener('DOMContentLoaded', () => {
   // This helps ensure the sidebar has the latest page data
   chrome.runtime.sendMessage({ type: "REQUEST_PAGE_INFO_FROM_CONTENT_SCRIPT_VIA_BACKGROUND" })
     .catch(error => console.warn("[Sidebar] Could not request initial PAGE_INFO from background:", error.message));
+
+
+  // --- Settings Overlay Logic ---
+  const settingsToggle = document.getElementById('settingsToggle');
+  const settingsOverlay = document.getElementById('settingsOverlay');
+  const closeSettingsBtn = document.getElementById('closeSettings');
+  const apiKeyInput = document.getElementById('apiKey');
+  const modelSelect = document.getElementById('modelSelect');
+  const saveSettingsBtn = document.getElementById('saveSettings');
+  const saveMsg = document.getElementById('saveMsg');
+
+  // Populate model dropdown
+  modelOptions.forEach(model => {
+    const opt = document.createElement("option");
+    opt.value = model;
+    opt.textContent = model;
+    modelSelect.appendChild(opt);
+  });
+
+  // Load saved settings
+  chrome.storage.local.get(["apiKey", "model"], (data) => {
+    apiKeyInput.value = data.apiKey || "";
+    modelSelect.value = data.model || "sonar-small-online";
+  });
+
+  // Save settings on button click
+  saveSettingsBtn.addEventListener("click", () => {
+    const apiKey = apiKeyInput.value.trim();
+    const model = modelSelect.value;
+
+    if (!apiKey) {
+      saveMsg.textContent = "API key is required!";
+      saveMsg.classList.remove("hidden");
+      saveMsg.style.color = "red";
+      setTimeout(() => saveMsg.classList.add("hidden"), 3000);
+      return;
+    }
+
+    chrome.storage.local.set({ apiKey, model }, () => {
+      saveMsg.textContent = "Settings saved!";
+      saveMsg.classList.remove("hidden");
+      saveMsg.style.color = "green";
+      setTimeout(() => saveMsg.classList.add("hidden"), 2000);
+    });
+  });
+
+  // Open settings overlay
+  if (settingsToggle) {
+    settingsToggle.addEventListener('click', () => {
+      settingsOverlay.classList.add('active'); // 'active' class will control visibility
+      document.getElementById('historyOverlay').classList.remove('active'); // Close history if open
+    });
+  }
+
+  // Close settings overlay
+  if (closeSettingsBtn) {
+    closeSettingsBtn.addEventListener('click', () => {
+      settingsOverlay.classList.remove('active');
+    });
+  }
+  // --- End Settings Overlay Logic ---
+
+  // --- History Overlay Logic ---
+  const historyToggle = document.getElementById('historyToggle');
+  const historyOverlay = document.getElementById('historyOverlay');
+  const closeHistoryBtn = document.getElementById('closeHistory');
+  const historySearchInput = document.getElementById('historySearchInput');
+  const exportHistoryBtn = document.getElementById('exportHistoryBtn');
+
+
+  // Open history overlay
+  if (historyToggle) {
+    historyToggle.addEventListener('click', () => {
+      historyOverlay.classList.add('active'); // 'active' class will control visibility
+      settingsOverlay.classList.remove('active'); // Close settings if open
+      renderHistoryList(queryHistory); // Re-render all history when opening
+      historySearchInput.value = ''; // Clear search input when opening history
+    });
+  }
+
+  // Close history overlay
+  if (closeHistoryBtn) {
+    closeHistoryBtn.addEventListener('click', () => {
+      historyOverlay.classList.remove('active');
+    });
+  }
+
+  // History Search Functionality
+  if (historySearchInput) {
+    historySearchInput.addEventListener('input', (event) => {
+      const searchTerm = event.target.value.toLowerCase();
+      const filtered = queryHistory.filter(entry =>
+        entry.query.toLowerCase().includes(searchTerm) ||
+        entry.response.toLowerCase().includes(searchTerm) ||
+        (entry.pageTitle && entry.pageTitle.toLowerCase().includes(searchTerm)) ||
+        (entry.tags && entry.tags.some(tag => tag.toLowerCase().includes(searchTerm)))
+      );
+      renderHistoryList(filtered);
+    });
+  }
+
+  // Export History to CSV
+  if (exportHistoryBtn) {
+    exportHistoryBtn.addEventListener('click', () => {
+      exportHistoryToCsv(queryHistory);
+    });
+  }
+
+  function exportHistoryToCsv(historyData) {
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "Timestamp,Type,Query/Title,Response,URL,Tags\n"; // CSV Header
+
+    historyData.forEach(entry => {
+      const timestamp = new Date(entry.timestamp).toLocaleString();
+      const type = entry.isSummary ? "Summary" : "Direct Question";
+      // Sanitize CSV fields: wrap in quotes and escape internal quotes
+      const query = `"${entry.query.replace(/"/g, '""')}"`;
+      // Convert HTML response to plain text and sanitize
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = entry.response;
+      const responseText = `"${tempDiv.innerText.replace(/"/g, '""')}"`;
+      const url = `"${(entry.url || '').replace(/"/g, '""')}"`;
+      const tags = `"${(entry.tags || []).join(', ').replace(/"/g, '""')}"`;
+
+      csvContent += `${timestamp},${type},${query},${responseText},${url},${tags}\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "web_pilot_ai_history.csv");
+    document.body.appendChild(link); // Required for Firefox
+    link.click();
+    document.body.removeChild(link); // Clean up
+    console.log("[Sidebar] History exported to CSV.");
+  }
+
+  // --- End History Overlay Logic ---
 
 });

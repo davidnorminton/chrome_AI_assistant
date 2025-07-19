@@ -5,20 +5,37 @@ console.log("[Background] Background script loaded.");
 chrome.action.onClicked.addListener(async (tab) => {
   console.log("[Background] Extension icon clicked for tab:", tab.id);
 
-  // Open the side panel for the current tab
-  await chrome.sidePanel.open({ tabId: tab.id });
-  console.log("[Background] Side panel opened for tab:", tab.id);
-
-  // Send a message to the content script to request page info
-  // This ensures the content script is active and ready to provide data
-  // and the sidebar can immediately display relevant page info.
   try {
+    // Open the side panel for the current tab
+    await chrome.sidePanel.open({ tabId: tab.id });
+    console.log("[Background] Side panel opened for tab:", tab.id);
+
+    // First, ensure content.js is injected into the current tab.
+    // This is crucial for tabs that were open before the extension was installed/updated.
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ['content.js']
+    });
+    console.log("[Background] Ensured content.js is injected into tab:", tab.id);
+
+    // After content.js is ensured to be injected, send a message to request page info.
+    // The content script will then send PAGE_INFO back to the sidebar.
     await chrome.tabs.sendMessage(tab.id, { type: "REQUEST_PAGE_INFO_FROM_CONTENT_SCRIPT" });
-    console.log("[Background] Requested page info from content script.");
+    console.log("[Background] Requested page info from content script for tab:", tab.id);
+
   } catch (error) {
-    console.error("[Background] Error sending REQUEST_PAGE_INFO_FROM_CONTENT_SCRIPT:", error);
-    // If the content script isn't ready, it might be due to a new tab or a restricted page.
-    // The content script will eventually load and send PAGE_INFO automatically.
+    console.error("[Background] Error handling extension click:", error);
+    if (error.message.includes("Cannot access a chrome-internal URL")) {
+      // Handle cases where the user clicks on a restricted page (e.g., chrome://extensions)
+      // We can send a message to the sidebar to display a specific error.
+      // Note: The sidebar itself cannot directly access chrome.tabs.query for this,
+      // so the background script needs to mediate.
+      chrome.runtime.sendMessage({
+        type: "RESTRICTED_PAGE_ERROR",
+        message: "Cannot access content on this type of browser page (e.g., internal browser pages, extension pages, or file system pages).",
+        url: tab.url
+      }).catch(e => console.warn("[Background] Could not send RESTRICTED_PAGE_ERROR to sidebar:", e));
+    }
   }
 });
 
@@ -50,8 +67,22 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // This message is from sidebar.js, asking background to request page info from content.js
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       if (tabs[0]) {
-        chrome.tabs.sendMessage(tabs[0].id, { type: "REQUEST_PAGE_INFO_FROM_CONTENT_SCRIPT" })
-          .catch(error => console.error("[Background] Error forwarding REQUEST_PAGE_INFO_FROM_CONTENT_SCRIPT to content script:", error));
+        // Ensure content.js is injected before requesting info
+        chrome.scripting.executeScript({
+          target: { tabId: tabs[0].id },
+          files: ['content.js']
+        }).then(() => {
+          chrome.tabs.sendMessage(tabs[0].id, { type: "REQUEST_PAGE_INFO_FROM_CONTENT_SCRIPT" })
+            .catch(error => console.error("[Background] Error forwarding REQUEST_PAGE_INFO_FROM_CONTENT_SCRIPT to content script after injection:", error));
+        }).catch(error => {
+          console.error("[Background] Error injecting content.js for REQUEST_PAGE_INFO_FROM_CONTENT_SCRIPT_VIA_BACKGROUND:", error);
+          // If injection fails (e.g., restricted page), send error to sidebar
+          chrome.runtime.sendMessage({
+            type: "RESTRICTED_PAGE_ERROR",
+            message: "Cannot access content on this type of browser page (e.g., internal browser pages, extension pages, or file system pages).",
+            url: tabs[0].url
+          }).catch(e => console.warn("[Background] Could not send RESTRICTED_PAGE_ERROR from background (injection failed):", e));
+        });
       } else {
         console.warn("[Background] No active tab found to request page info.");
       }
@@ -81,7 +112,21 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === 'complete' && tab.active) {
     console.log(`[Background] Tab updated (ID: ${tabId}). Requesting page info.`);
     // Send a message to the content script in the updated tab to get fresh info
-    chrome.tabs.sendMessage(tabId, { type: "REQUEST_PAGE_INFO_FROM_CONTENT_SCRIPT" })
-      .catch(error => console.error(`[Background] Error sending REQUEST_PAGE_INFO_FROM_CONTENT_SCRIPT on tab update for ${tabId}:`, error));
+    // Ensure content.js is injected first, especially for newly loaded tabs or refreshes
+    chrome.scripting.executeScript({
+      target: { tabId: tabId },
+      files: ['content.js']
+    }).then(() => {
+      chrome.tabs.sendMessage(tabId, { type: "REQUEST_PAGE_INFO_FROM_CONTENT_SCRIPT" })
+        .catch(error => console.error(`[Background] Error sending REQUEST_PAGE_INFO_FROM_CONTENT_SCRIPT on tab update for ${tabId}:`, error));
+    }).catch(error => {
+      console.error(`[Background] Error injecting content.js on tab update for ${tabId}:`, error);
+      // If injection fails (e.g., restricted page), send error to sidebar
+      chrome.runtime.sendMessage({
+        type: "RESTRICTED_PAGE_ERROR",
+        message: "Cannot access content on this type of browser page (e.g., internal browser pages, extension pages, or file system pages).",
+        url: tab.url
+      }).catch(e => console.warn("[Background] Could not send RESTRICTED_PAGE_ERROR from background (tab update injection failed):", e));
+    });
   }
 });

@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Page Pilot AI",
+  "name": "Web Pilot AI",
   "version": "1.0",
   "description": "An AI sidebar assistant for web pages.",
   "permissions": [
@@ -33,7 +33,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["icons/*", "options.html"],
+      "resources": ["icons/*"],
       "matches": ["<all_urls>"]
     }
   ],
@@ -42,7 +42,6 @@
     "48": "icon.png",
     "128": "icon.png"
   },
-  "options_page": "options.html",
   "side_panel": {
     "default_path": "sidebar.html"
   }
