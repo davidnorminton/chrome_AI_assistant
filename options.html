@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>AI Sidebar Settings</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      padding: 20px;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+
+    h1 {
+      font-size: 20px;
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      font-size: 14px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 16px;
+      font-size: 14px;
+      background-color: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #4338ca;
+    }
+
+    .saved {
+      margin-top: 10px;
+      color: green;
+    }
+  </style>
+</head>
+<body>
+  <h1>AI Sidebar Settings</h1>
+
+  <label for="apiKey">Perplexity API Key</label>
+  <input type="text" id="apiKey" placeholder="Enter your API key here" />
+
+  <label for="modelSelect">Model</label>
+  <select id="modelSelect">
+    <option value="sonar">sonar</option>
+    <option value="sonar-pro">sonar-pro</option>
+    <option value="sonar-reasoning">sonar-reasoning</option>
+    <option value="r1-1776">r1-1776</option>
+  </select>
+
+  <button id="saveSettings">Save Settings</button>
+  <div id="saveMsg" class="saved" style="display: none;">Settings saved!</div>
+
+  <script src="options.js"></script>
+</body>
+</html>

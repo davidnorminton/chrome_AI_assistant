@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>AI Sidebar</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous">
+</head>
+<body>
+  <div id="sidebar">
+    <div class="sidebar-header">
+      <img id="pageFavicon" src="" alt="favicon" />
+      <span id="pageDomain"></span>
+      <button id="darkModeToggle" title="Toggle Dark Mode"><i class="fas fa-moon"></i></button> <button id="closeSidebar" title="Close Sidebar"><i class="fas fa-times"></i></button>
+    </div>
+    <div id="pageTitle" class="page-title"></div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="current">Page Analysis</button>
+      <button class="tab" data-tab="history">History</button>
+    </div>
+
+    <div id="tabContent">
+      <div id="currentTab" class="tab-panel active">
+        <div id="responseBox">
+          <div id="output">Click 'Summarize Page' to analyze the current content.</div>
+        </div>
+
+        <div id="bottomControls">
+          <div id="inputBox">
+            <input type="text" id="cmdInput" placeholder="Ask anything..." />
+            <button id="cmdBtn">
+              <i id="arrowIcon" class="fas fa-arrow-right"></i>
+              <div id="loaderIcon" class="spinner hidden"></div>
+            </button>
+          </div>
+
+          <div class="summarize-and-context-row">
+              <div id="summarizeBox">
+                <button id="summarizeBtn" class="nice-button"><i class="fas fa-sync-alt"></i> Summarize Page</button>
+              </div>
+              <div class="context-toggle">
+                <input type="checkbox" id="includeContext" checked />
+                <label for="includeContext">Ask about this page</label>
+              </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="historyTab" class="tab-panel">
+        <ul id="historyList">
+          </ul>
+      </div>
+    </div>
+  </div>
+
+  <script src="sidebar.js"></script>
+</body>
+</html>
