@@ -54,78 +54,35 @@ document.addEventListener('DOMContentLoaded', () => {
   const pageFaviconElement = document.getElementById("pageFavicon");
   if (pageFaviconElement) {
     pageFaviconElement.onerror = function() {
-      this.style.display = 'none';
+      this.style.display = 'none'; // Hide if loading fails
       console.warn("[Sidebar] Favicon failed to load. Image will be hidden.");
     };
   }
 
-  window.addEventListener("message", (event) => {
-    if (event.data?.type === "PAGE_META") {
-      const { favicon, domain, title, url } = event.data.data;
-      console.log("DEBUG: PAGE_META received:", { favicon, domain, title, url });
-
+  // Listen for messages from content script (PAGE_INFO)
+  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    // Ensure the message is from the content script (tab context) and is PAGE_INFO
+    if (sender.tab && request.type === 'PAGE_INFO') {
+      console.log("[Sidebar] Received PAGE_INFO from content script:", request.data);
+      const { url, title, domain, favicon } = request.data;
+      
       currentBrowsePageUrl = url;
       currentBrowsePageTitle = title;
       currentBrowsePageFavicon = favicon;
 
       if (pageFaviconElement) {
         pageFaviconElement.src = favicon;
-        pageFaviconElement.style.display = '';
+        pageFaviconElement.style.display = ''; // Ensure it's visible
       }
       document.getElementById("pageDomain").textContent = domain;
       document.getElementById("pageTitle").textContent = title;
     }
   });
 
-  document.getElementById("closeSidebar").onclick = async () => {
-    console.log("[Sidebar] Close button clicked.");
-    try {
-      // Get the active tab
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!tab) {
-        console.error("[Sidebar] No active tab found.");
-        return;
-      }
-
-      // Ping content script to check availability
-      const pingResponse = await new Promise((resolve, reject) => {
-        chrome.tabs.sendMessage(tab.id, { type: "PING_CONTENT_SCRIPT" }, (response) => {
-          if (chrome.runtime.lastError) {
-            reject(chrome.runtime.lastError);
-          } else {
-            resolve(response);
-          }
-        });
-      });
-      console.log("[Sidebar] Ping response:", pingResponse);
-
-      // Send close message
-      chrome.tabs.sendMessage(tab.id, { type: "CLOSE_SIDEBAR_REQUEST" }, (response) => {
-        if (chrome.runtime.lastError) {
-          console.error("[Sidebar] SendMessage failed:", chrome.runtime.lastError.message);
-        } else {
-          console.log("[Sidebar] Close response:", response);
-        }
-      });
-    } catch (error) {
-      console.error("[Sidebar] Content script not responding:", error.message);
-      // Request background script to reinject content.js
-      chrome.runtime.sendMessage({ type: "REINJECT_CONTENT_SCRIPT" });
-      // Retry closing after a delay
-      setTimeout(() => {
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-          if (tabs[0]) {
-            chrome.tabs.sendMessage(tabs[0].id, { type: "CLOSE_SIDEBAR_REQUEST" }, (response) => {
-              if (chrome.runtime.lastError) {
-                console.error("[Sidebar] Retry SendMessage failed:", chrome.runtime.lastError.message);
-              } else {
-                console.log("[Sidebar] Retry Close response:", response);
-              }
-            });
-          }
-        });
-      }, 500);
-    }
+  // Close sidebar button now closes the panel directly
+  document.getElementById("closeSidebar").onclick = () => {
+    console.log("[Sidebar] Close button clicked. Closing side panel.");
+    window.close(); // Closes the side panel
   };
 
   function toggleLoadingState(isLoading, message = '') {
@@ -180,12 +137,17 @@ document.addEventListener('DOMContentLoaded', () => {
         displayInSidebar("Unable to access page content on this type of browser page (e.g., internal browser pages, extension pages, or file system pages).", "None");
         toggleLoadingState(false);
         return;
-      } else if (!pageResponse.text) { // If text is empty for other reasons (e.g., no discernible text or general error)
-        displayInSidebar("Unable to access page content for context. The page might not have discernible text, or there was a general error.", "None");
+      } else if (pageResponse.error === 'no_discernible_text') {
+        displayInSidebar("The current page has no discernible text content. Please try on a different page or uncheck 'Ask about this page'.", "None");
         toggleLoadingState(false);
         return;
+      } else if (!pageResponse.text) { // General error or empty text
+        displayInSidebar("Could not retrieve page content for context. There might be a general error. Trying without context.", "None");
+        // Fallback to sending query without context if text retrieval fails
+        query = input;
+      } else {
+        query = `Based on this page:\n${pageResponse.text}\n\nUser question: ${input}`;
       }
-      query = `Based on this page:\n${pageResponse.text}\n\nUser question: ${input}`;
     }
 
     toggleLoadingState(true, 'Sending to AI...');
@@ -206,6 +168,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (pageResponse.error === 'restricted_page') {
       displayInSidebar("Unable to access page content on this type of browser page for summarization.", "None");
+      toggleLoadingState(false);
+      return;
+    } else if (pageResponse.error === 'no_discernible_text') {
+      displayInSidebar("The current page has no discernible text content for summarization.", "None");
       toggleLoadingState(false);
       return;
     } else if (!pageText) {
@@ -305,19 +271,15 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       // Attach event listeners to suggested questions
-      // Assuming suggested questions are within an <ul><li> structure inside ai-response-content
-      outputElement.querySelectorAll('.ai-response-content ul li').forEach(questionElement => {
-        // Check if the parent is an h3 for "Suggested Follow-up Questions:"
-        let parentHeading = questionElement.closest('ul')?.previousElementSibling;
-        if (parentHeading && parentHeading.tagName === 'H3' && parentHeading.textContent.includes('Suggested Follow-up Questions')) {
-          questionElement.style.cursor = 'pointer'; // Make it visually clickable
-          questionElement.title = 'Click to ask this question';
-          questionElement.addEventListener('click', (event) => {
-            const questionText = event.target.textContent.trim();
-            document.getElementById('cmdInput').value = questionText;
-            document.getElementById('cmdInput').focus(); // Focus the input field
-          });
-        }
+      // Now targeting li elements directly within .suggested-questions-container
+      outputElement.querySelectorAll('.suggested-questions-container li').forEach(questionElement => {
+        questionElement.style.cursor = 'pointer'; // Make it visually clickable
+        questionElement.title = 'Click to ask this question';
+        questionElement.addEventListener('click', (event) => {
+          const questionText = event.target.textContent.trim();
+          document.getElementById('cmdInput').value = questionText;
+          document.getElementById('cmdInput').focus(); // Focus the input field
+        });
       });
 
     } else {
@@ -382,26 +344,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function getPageTextFromTab() {
-    console.log("[Sidebar] Requesting page text from content script via chrome.runtime.sendMessage.");
+    console.log("[Sidebar] Requesting page text from content script via background.");
     try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!tab) {
-        console.error("[Sidebar] No active tab found.");
-        return { text: '', error: 'no_active_tab' };
+      // Send message to background script, which will forward to content script
+      const response = await chrome.runtime.sendMessage({ type: 'REQUEST_PAGE_TEXT_FROM_CONTENT_SCRIPT' });
+      if (chrome.runtime.lastError) {
+        console.error("[Sidebar] Error receiving response from background for page text:", chrome.runtime.lastError.message);
+        return { text: '', error: 'background_messaging_error' };
       }
-      const response = await new Promise((resolve, reject) => {
-        chrome.tabs.sendMessage(tab.id, { type: 'REQUEST_PAGE_TEXT_FROM_IFRAME' }, (response) => {
-          if (chrome.runtime.lastError) {
-            reject(chrome.runtime.lastError);
-          } else {
-            resolve(response || {});
-          }
-        });
-      });
-      console.log("[Sidebar] Received response from content script:", response);
+      console.log("[Sidebar] Received response from background (page text):", response);
       return { text: response.text || '', error: response.error || null };
     } catch (error) {
-      console.error("[Sidebar] Error requesting page text:", error.message);
+      console.error("[Sidebar] Error in getPageTextFromTab:", error.message);
       return { text: '', error: 'messaging_failure', debugInfo: error.message };
     }
   }
@@ -429,8 +383,8 @@ document.addEventListener('DOMContentLoaded', () => {
       systemMessageContent = `You are an AI assistant for a web browser sidebar that specializes in summarizing web page content.
       You must format your entire response as a single JSON object with two keys: "summary" and "tags".
       The "summary" value must be an HTML formatted string (use <p>, <ul>, <li>, <strong>, <em>, etc.).
-      Include relevant image URLs in <img> tags where appropriate. For example: <img src="https://example.com/image.jpg" alt="Description" style="max-width: 100%; height: auto;">.
-      At the end of the summary, under an <h3> heading "Suggested Follow-up Questions:", provide 2-3 concise follow-up questions related to the summary in an unordered list.
+      Include relevant image URLs in <img> tags where appropriate. For example: <img src="https://placehold.co/400x200/cccccc/000000?text=Image+Placeholder" alt="Description" style="max-width: 100%; height: auto;">.
+      At the end of the summary, provide 2-3 concise follow-up questions related to the summary in an unordered list, wrapped in a <div class="suggested-questions-container">. Do NOT include any heading for these questions. Each list item should be a direct question.
       The "tags" value must be an array of 3 to 5 strings, identifying keywords or content categories (e.g., 'News Article', 'Product Page', 'Tutorial').
       Do not include any text outside the JSON object.`;
 
@@ -447,8 +401,8 @@ document.addEventListener('DOMContentLoaded', () => {
     else { // For 'direct_question'
       systemMessageContent = `You are an AI assistant for a web browser sidebar.
       Always format your responses using appropriate HTML tags (e.g., <p>, <h1>, <h2>, <h3>, <ul>, <ol>, <li>, <strong>, <em>, <a> for links).
-      If relevant, embed image URLs using <img> tags (e.g., <img src="https://placehold.co/400x200/cccccc/000000?text=Image+Placeholder" alt="description" style="max-width: 100%; height: auto;">).
-      After your main answer, suggest 2-3 concise follow-up questions in an unordered list (<ul><li>...</li></ul>) under an <h3> heading "Suggested Follow-up Questions:".
+      If relevant, embed image URLs using <img> tags where appropriate. For example: <img src="https://placehold.co/400x200/cccccc/000000?text=Image+Placeholder" alt="Description" style="max-width: 100%; height: auto;">.
+      After your main answer, suggest 2-3 concise follow-up questions in an unordered list (<ul><li>...</li></ul>), wrapped in a <div class="suggested-questions-container">. Do NOT include any heading for these questions. Each list item should be a direct question.
       Be concise but informative.
       ${query.startsWith('Based on this page:') ? `The user is asking a question related to the following page content: "${query.split('\n\nUser question:')[0].replace('Based on this page:\n', '')}".` : ''}
       `;
@@ -784,4 +738,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  // Explicitly request page info when the sidebar loads
+  // This helps ensure the sidebar has the latest page data
+  chrome.runtime.sendMessage({ type: "REQUEST_PAGE_INFO_FROM_CONTENT_SCRIPT_VIA_BACKGROUND" })
+    .catch(error => console.warn("[Sidebar] Could not request initial PAGE_INFO from background:", error.message));
+
 });

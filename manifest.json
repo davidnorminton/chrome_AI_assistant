@@ -2,12 +2,13 @@
   "manifest_version": 3,
   "name": "Page Pilot AI",
   "version": "1.0",
-  "description": "A sidebar assistant using Perplexity AI.",
+  "description": "An AI sidebar assistant for web pages.",
   "permissions": [
     "activeTab",
     "scripting",
     "storage",
-    "tabs"
+    "tabs",
+    "sidePanel"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -17,7 +18,8 @@
       "16": "icon.png",
       "48": "icon.png",
       "128": "icon.png"
-    }
+    },
+    "default_title": "Open Page Pilot AI"
   },
   "background": {
     "service_worker": "background.js"
@@ -31,7 +33,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["sidebar.html", "sidebar.css", "icons/*", "options.html"],
+      "resources": ["icons/*", "options.html"],
       "matches": ["<all_urls>"]
     }
   ],
@@ -40,5 +42,8 @@
     "48": "icon.png",
     "128": "icon.png"
   },
-  "options_page": "options.html"
+  "options_page": "options.html",
+  "side_panel": {
+    "default_path": "sidebar.html"
+  }
 }

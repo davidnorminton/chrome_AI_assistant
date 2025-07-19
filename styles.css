@@ -23,27 +23,43 @@ body {
 
 /* Dark Mode Styles */
 #sidebar.dark-mode {
-  background-color: #282c34; /* Darker background */
-  color: #e0e0e0; /* Lighter text color */
-  box-shadow: -4px 0 15px rgba(0, 0, 0, 0.3);
+  background-color: #282c34;
+  color: #e0e0e0;
+  box-shadow: -4px 0 15px rgba(0, 0, 0, 0.5); /* Slightly stronger shadow for dark mode */
 }
 
 #sidebar.dark-mode .sidebar-header,
 #sidebar.dark-mode .tabs,
-#sidebar.dark-mode .tab,
+#sidebar.dark-mode #bottomControls { /* Added #bottomControls */
+  background-color: #3a3f4a;
+  border-color: #4a4f58; /* Darker border */
+}
+
+#sidebar.dark-mode .tab {
+  background-color: #3a3f4a; /* Ensure tab background is consistent */
+  color: #e0e0e0;
+  border-color: #4a4f58; /* Consistent border */
+}
+
+#sidebar.dark-mode .tab:hover {
+  background-color: #4a4f58; /* Darker hover for tabs */
+  color: #ffffff;
+}
+
+#sidebar.dark-mode .tab.active {
+  background-color: #282c34; /* Active tab darker than other components */
+  border-bottom-color: #8e82f7; /* Lighter accent color */
+  color: #8e82f7; /* Lighter accent color */
+}
+
 #sidebar.dark-mode #inputBox,
 #sidebar.dark-mode #cmdInput,
 #sidebar.dark-mode #responseBox,
 #sidebar.dark-mode .history-item,
 #sidebar.dark-mode .nice-button {
-  background-color: #3a3f4a; /* Darker component backgrounds */
-  border-color: #555;
+  background-color: #3a3f4a;
+  border-color: #4a4f58; /* Consistent border */
   color: #e0e0e0;
-}
-
-#sidebar.dark-mode .tab.active {
-  background-color: #555c66; /* Active tab in dark mode */
-  color: #ffffff;
 }
 
 #sidebar.dark-mode #cmdInput::placeholder {
@@ -64,17 +80,11 @@ body {
 }
 
 #sidebar.dark-mode .history-delete {
-    color: #e0e0e0;
+    color: #e0e0e0; /* Keep white for visibility */
+    background-color: rgba(220, 53, 69, 0.2); /* Subtle red background */
 }
-
-/* Dark mode for header navigation buttons */
-#sidebar.dark-mode .sidebar-header button {
-    background-color: #3a3f4a; /* Match header background */
-    color: #e0e0e0;
-}
-
-#sidebar.dark-mode .sidebar-header button:hover:not(:disabled) {
-    background-color: #555c66;
+#sidebar.dark-mode .history-delete:hover {
+    background-color: rgba(220, 53, 69, 0.4);
 }
 
 
@@ -104,19 +114,34 @@ body {
   text-overflow: ellipsis;
 }
 
+/* General button reset for header buttons */
 .sidebar-header button {
-  background: none;
-  border: none;
-  font-size: 1.1em;
-  cursor: pointer;
-  color: #666;
-  padding: 5px;
-  border-radius: 50%; /* Keep circular for header buttons */
-  transition: background-color 0.2s ease;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
 }
 
-.sidebar-header button:hover {
-  background-color: #e0e0e0;
+/* Specific styles for general icon buttons in header (Dark Mode Toggle, Close Button) */
+.header-icon-button {
+  background: none; /* No background by default */
+  border: none;
+  font-size: 1.1em; /* Icon size */
+  color: #666; /* Icon color */
+  padding: 5px;
+  border-radius: 50%; /* Circular */
+}
+
+.header-icon-button:hover {
+  background-color: #e0e0e0; /* Hover effect */
+}
+
+/* Dark mode for general icon buttons in header */
+#sidebar.dark-mode .header-icon-button {
+    color: #e0e0e0; /* Lighter icon color */
+    background: none; /* Still no background by default */
+}
+
+#sidebar.dark-mode .header-icon-button:hover {
+    background-color: #555c66; /* Darker hover for icon buttons */
 }
 
 /* Specific styles for history navigation buttons in header */
@@ -140,6 +165,19 @@ body {
     opacity: 0.4;
     cursor: not-allowed;
     box-shadow: none;
+}
+
+/* Dark mode for history navigation buttons */
+#sidebar.dark-mode #historyBackBtn,
+#sidebar.dark-mode #historyForwardBtn {
+    background-color: #4a4f58; /* Darker background for history buttons */
+    color: #8e82f7; /* Lighter accent color */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+#sidebar.dark-mode #historyBackBtn:hover:not(:disabled),
+#sidebar.dark-mode #historyForwardBtn:hover:not(:disabled) {
+    background-color: #555c66;
 }
 
 
@@ -377,7 +415,7 @@ body {
 }
 
 #cmdBtn:disabled {
-  background-color: #a0aec0; /* Tailwind gray-400 */
+  background-color: #a0aec0;
   cursor: not-allowed;
   box-shadow: none;
 }

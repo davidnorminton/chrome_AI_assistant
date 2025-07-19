@@ -2,62 +2,86 @@
 
 console.log("[Background] Background script loaded.");
 
-chrome.action.onClicked.addListener((tab) => {
+chrome.action.onClicked.addListener(async (tab) => {
   console.log("[Background] Extension icon clicked for tab:", tab.id);
-  // Check if content.js is already injected and the sidebar is open
-  chrome.scripting.executeScript({
-    target: { tabId: tab.id },
-    function: checkIfSidebarExistsAndIsOpen
-  }).then((results) => {
-    const sidebarExistsAndIsOpen = results && results[0] && results[0].result;
-    console.log("[Background] Sidebar exists and is open:", sidebarExistsAndIsOpen);
-    if (sidebarExistsAndIsOpen) {
-      // If sidebar is already open, send message to content script to close it
-      chrome.tabs.sendMessage(tab.id, { type: "TOGGLE_SIDEBAR" });
-      console.log("[Background] Sent TOGGLE_SIDEBAR message (to close).");
-    } else {
-      // If sidebar is not open, inject content.js and then send message to open it
-      chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        files: ['content.js']
-      }).then(() => {
-        console.log("[Background] Injected content.js successfully.");
-        // After content.js is injected, send the message to toggle the sidebar
-        chrome.tabs.sendMessage(tab.id, { type: "TOGGLE_SIDEBAR" });
-        console.log("[Background] Sent TOGGLE_SIDEBAR message (to open).");
-      }).catch(err => console.error("[Background] Error injecting content script:", err));
-    }
-  }).catch(err => console.error("[Background] Error checking sidebar state:", err));
+
+  // Open the side panel for the current tab
+  await chrome.sidePanel.open({ tabId: tab.id });
+  console.log("[Background] Side panel opened for tab:", tab.id);
+
+  // Send a message to the content script to request page info
+  // This ensures the content script is active and ready to provide data
+  // and the sidebar can immediately display relevant page info.
+  try {
+    await chrome.tabs.sendMessage(tab.id, { type: "REQUEST_PAGE_INFO_FROM_CONTENT_SCRIPT" });
+    console.log("[Background] Requested page info from content script.");
+  } catch (error) {
+    console.error("[Background] Error sending REQUEST_PAGE_INFO_FROM_CONTENT_SCRIPT:", error);
+    // If the content script isn't ready, it might be due to a new tab or a restricted page.
+    // The content script will eventually load and send PAGE_INFO automatically.
+  }
 });
 
-// Handle messages from sidebar to reinject content script
+// Listener for messages from sidebar.js (via chrome.runtime.sendMessage)
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  console.log("[Background] Message received:", request);
-  if (request.type === 'REINJECT_CONTENT_SCRIPT') {
+  console.log("[Background] Message received from sidebar:", request.type);
+
+  if (request.type === 'REQUEST_PAGE_TEXT_FROM_CONTENT_SCRIPT') {
+    // Forward the request to the active tab's content script
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       if (tabs[0]) {
-        chrome.scripting.executeScript({
-          target: { tabId: tabs[0].id },
-          files: ['content.js']
-        }).then(() => {
-          console.log("[Background] Re-injected content.js");
-          sendResponse({ success: true });
-        }).catch(err => {
-          console.error("[Background] Error re-injecting content.js:", err);
-          sendResponse({ success: false, error: err.message });
+        chrome.tabs.sendMessage(tabs[0].id, { type: "GET_PAGE_TEXT" }, (response) => {
+          if (chrome.runtime.lastError) {
+            console.error("[Background] Error forwarding GET_PAGE_TEXT to content script:", chrome.runtime.lastError.message);
+            sendResponse({ text: '', error: 'content_script_error' });
+          } else {
+            sendResponse(response); // Send content script's response back to sidebar
+          }
         });
       } else {
-        console.error("[Background] No active tab found for reinjection.");
-        sendResponse({ success: false, error: "No active tab" });
+        console.warn("[Background] No active tab found to get page text.");
+        sendResponse({ text: '', error: 'no_active_tab' });
       }
     });
     return true; // Keep the message channel open for async response
   }
-  return true;
+
+  if (request.type === 'REQUEST_PAGE_INFO_FROM_CONTENT_SCRIPT_VIA_BACKGROUND') {
+    // This message is from sidebar.js, asking background to request page info from content.js
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]) {
+        chrome.tabs.sendMessage(tabs[0].id, { type: "REQUEST_PAGE_INFO_FROM_CONTENT_SCRIPT" })
+          .catch(error => console.error("[Background] Error forwarding REQUEST_PAGE_INFO_FROM_CONTENT_SCRIPT to content script:", error));
+      } else {
+        console.warn("[Background] No active tab found to request page info.");
+      }
+    });
+    // No direct response needed for this request, content script will send PAGE_INFO directly to sidebar
+    return false;
+  }
+
+  // Handle PAGE_INFO_FROM_CONTENT_SCRIPT messages (for debugging or complex routing)
+  if (request.type === 'PAGE_INFO_FROM_CONTENT_SCRIPT') {
+    console.log("[Background] Received PAGE_INFO_FROM_CONTENT_SCRIPT:", request.data);
+  }
+
+  return false; // For other messages, no async response
 });
 
-// This function will be executed in the context of the content script
-function checkIfSidebarExistsAndIsOpen() {
-  const sidebarIframe = document.getElementById('ai-sidebar-iframe');
-  return sidebarIframe && sidebarIframe.style.transform === 'translateX(0px)';
-}
+// Set the side panel to be available on all hosts
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.sidePanel.setOptions({
+    path: 'sidebar.html',
+    enabled: true
+  });
+});
+
+// Optional: Listen for tab updates to ensure side panel context is fresh
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status === 'complete' && tab.active) {
+    console.log(`[Background] Tab updated (ID: ${tabId}). Requesting page info.`);
+    // Send a message to the content script in the updated tab to get fresh info
+    chrome.tabs.sendMessage(tabId, { type: "REQUEST_PAGE_INFO_FROM_CONTENT_SCRIPT" })
+      .catch(error => console.error(`[Background] Error sending REQUEST_PAGE_INFO_FROM_CONTENT_SCRIPT on tab update for ${tabId}:`, error));
+  }
+});
