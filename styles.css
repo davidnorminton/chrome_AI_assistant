@@ -481,6 +481,24 @@ body {
   border-radius: 5px;
 }
 
+#toggleContextBtn.active:hover::before {
+  content: "General Question";
+  position: absolute;
+  bottom: 30px;
+  background: black;
+  width: 125px;
+  padding: 5px;
+  right: -50px;
+  border-radius: 5px;
+}
+
+.context-toggle-button.active {
+  background: #28a745;
+  color: white;
+  border-radius: 25px;
+  padding: 5px;
+}
+
 #newChatBtn:hover::before {
   content: "Clear content";
   position: absolute;

@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Web Pilot AI",
+  "name": "Webpilot AI",
   "version": "1.0",
   "description": "An AI sidebar assistant for web pages.",
   "permissions": [
@@ -19,7 +19,7 @@
       "48": "icon.png",
       "128": "icon.png"
     },
-    "default_title": "Open Page Pilot AI"
+    "default_title": "webpilot AI"
   },
   "background": {
     "service_worker": "background.js"

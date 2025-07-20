@@ -10,7 +10,7 @@ let loadingMessageElement = null;
 
 // Global variables for history management
 let queryHistory = []; // Stores all history entries
-let currentHistoryIndex = -1; // Index of the currently displayed item in queryHistory (0 is newest)
+let currentHistoryIndex = -1; // Indfex of the currently displayed item in queryHistory (0 is newest)
 
 // Global variable for file upload
 let selectedFile = null; // Stores the base64 Data URL of the selected file
@@ -624,7 +624,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (typeof parsedContent.summary === 'string' && Array.isArray(parsedContent.tags)) {
               return {
                 text: parsedContent.summary,
-                model: model || "sonar-small-online",
+                model: model || "sonar",
                 tags: parsedContent.tags,
                 links: []
               };
@@ -633,7 +633,7 @@ document.addEventListener('DOMContentLoaded', () => {
               displayError("AI response format unexpected. Displaying raw response. Please try again.");
               return {
                 text: rawContent, // Fallback to raw if JSON structure is wrong
-                model: model || "sonar-small-online",
+                model: model || "sonar",
                 tags: [],
                 links: []
               };
@@ -644,7 +644,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // If parsing fails, treat the whole rawContent as the text and no tags
             return {
               text: rawContent,
-              model: model || "sonar-small-online",
+              model: model || "sonar",
               tags: [],
               links: []
             };
@@ -665,7 +665,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (Array.isArray(parsedLinks) && parsedLinks.every(item => typeof item.title === 'string' && typeof item.url === 'string' && typeof item.description === 'string')) {
                     return {
                         text: '', // No main text content for this action
-                        model: model || "sonar-small-online",
+                        model: model || "sonar",
                         tags: [],
                         links: parsedLinks
                     };
@@ -674,7 +674,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     displayError("AI response format unexpected for links. Displaying raw response. Please try again.");
                     return {
                         text: rawContent,
-                        model: model || "sonar-small-online",
+                        model: model || "sonar",
                         tags: [],
                         links: []
                     };
@@ -684,7 +684,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 displayError("AI response format invalid for links. Displaying raw response. Please try again.");
                 return {
                     text: rawContent,
-                    model: model || "sonar-small-online",
+                    model: model || "sonar",
                     tags: [],
                     links: []
                 };
@@ -694,7 +694,7 @@ document.addEventListener('DOMContentLoaded', () => {
           // For direct questions, the response is expected to be direct HTML
           return {
             text: rawContent,
-            model: model || "sonar-small-online",
+            model: model || "sonar",
             tags: [],
             links: []
           };

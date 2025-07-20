@@ -4,6 +4,7 @@ const saveBtn = document.getElementById("save");
 const statusEl = document.getElementById("status");
 const historyList = document.getElementById("queryHistory");
 
+// Perplexity models that work in the sidebar context
 const modelOptions = [
   // 'pplx-7b-chat',
   // 'pplx-70b-chat',
