@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Function to update placeholder text based on context button state
   function updatePlaceholder() {
     if (toggleContextBtn.classList.contains('active')) {
-      cmdInput.placeholder = "Ask Orla anything about this page...";
+      cmdInput.placeholder = "Ask Orla about this page...";
     } else {
       cmdInput.placeholder = "Ask Orla anything...";
     }
@@ -242,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   document.getElementById("cmdBtn").onclick = async () => {
-    console.log("[Sidebar] Ask Orla anything button clicked.");
+    console.log("[Sidebar] Ask Orla button clicked.");
     const input = cmdInput.value.trim();
     
     if (!input && !selectedFile) {
