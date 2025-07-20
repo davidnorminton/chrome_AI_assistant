@@ -99,7 +99,6 @@ document.addEventListener('DOMContentLoaded', () => {
       hideErrorMessage();
 
     } else if (request.type === 'RESTRICTED_PAGE_ERROR') {
-      console.warn("[Sidebar] Received RESTRICTED_PAGE_ERROR from background:", request.message);
       displayError(request.message);
     }
   });
@@ -438,7 +437,7 @@ document.addEventListener('DOMContentLoaded', () => {
     toggleLoadingState(true, `Finding links for "${tagName}"...`);
 
     // MODIFIED: Request description for links and add a random number for uniqueness
-    const prompt = `Provide 5 highly relevant and unique links (URLs with titles and a brief 1-2 sentence description) related to '${tagName}'. Format the response as a JSON array of objects, where each object has 'title', 'url', and 'description' properties. Ensure the links are diverse and distinct. Random ID: ${Math.random().toString(36).substring(7)}. Example: [{"title": "Example Link 1", "url": "https://example.com/1", "description": "A brief description of this example link."}, {"title": "Example Link 2", "url": "https://example.com/2", "description": "Another brief description."}]`;
+    const prompt = `Provide 10 highly relevant and unique links (URLs with titles and a brief 1-2 sentence description) related to '${tagName}'. Format the response as a JSON array of objects, where each object has 'title', 'url', and 'description' properties. Ensure the links are diverse and distinct. Random ID: ${Math.random().toString(36).substring(7)}. Example: [{"title": "Example Link 1", "url": "https://example.com/1", "description": "A brief description of this example link."}, {"title": "Example Link 2", "url": "https://example.com/2", "description": "Another brief description."}]`;
 
     const response = await sendQueryToAI({ query: prompt, action: 'get_links' });
     toggleLoadingState(false);

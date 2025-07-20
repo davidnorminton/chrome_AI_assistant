@@ -5,14 +5,13 @@ const statusEl = document.getElementById("status");
 const historyList = document.getElementById("queryHistory");
 
 const modelOptions = [
-  'pplx-7b-chat',
-  'pplx-70b-chat',
-  'sonar-deep-research',
-  'sonar-reasoning-pro',
-  'sonar-reasoning',
+  // 'pplx-7b-chat',
+  // 'pplx-70b-chat',
+  // 'sonar-deep-research',
+  // 'sonar-reasoning-pro',
+  // 'sonar-reasoning',
   'sonar-pro',
   'sonar',
-  'r1-1776'
 ];
 
 function populateModels() {
