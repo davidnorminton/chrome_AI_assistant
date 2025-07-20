@@ -262,6 +262,30 @@ body {
     display: block; /* Ensures image takes its own line */
 }
 
+.orla {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  align-items: center;
+}
+
+.orla h1 {
+  font-size: 6em !important;
+  letter-spacing: 12px;
+  font-family: system-ui;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.orla p {
+  font-size: 1.1em;
+  margin-top: 0;
+  padding-top: 0;
+  position: relative;
+  bottom: 38px;
+}
+
 /* Page Link Header (for summarized pages) */
 .page-link-header {
     display: flex;
@@ -611,6 +635,7 @@ body {
   box-sizing: border-box;
   display: block;
   cursor: text;
+  margin-bottom: 15px;
 }
 
 .main-prompt-area:focus-within {

@@ -7,14 +7,6 @@
 </head>
 <body>
   <div id="sidebar">
-    <div class="sidebar-header">
-      <img id="pageFavicon" src="" alt="favicon" />
-      <span id="pageDomain"></span>
-    </div>
-    <!-- Removed <div id="pageTitle" class="page-title"></div> -->
-
-    <!-- Removed the entire tabs div -->
-
     <div id="tabContent">
       <!-- The main content (formerly currentTab) is now always active -->
       <div id="currentTab" class="tab-panel active">
@@ -22,12 +14,16 @@
         <div id="errorMessage" class="error-message hidden"></div>
 
         <div id="responseBox">
-          <div id="output">Click 'Summarize Page' to analyze the current content.</div>
+          <div id="output">
+            <div class="intro orla">
+              <h1>ORLA</h1>
+              <p>Your persoal A.I. browser assistant</p>
+              <img src="orla.png" width="250" height="250" />
+            </div>
+          </div>
         </div>
 
         <div id="bottomControls">
-
-          <!-- Main prompt input area - Gemini-like layout -->
           <div class="main-prompt-area">
             <textarea id="cmdInput" placeholder="Ask anything about this page..." rows="1"></textarea>
             <div class="action-buttons-row">

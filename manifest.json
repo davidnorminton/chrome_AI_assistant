@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Webpilot AI",
+  "name": "Orla",
   "version": "1.0",
-  "description": "An AI sidebar assistant for web pages.",
+  "description": "Orla is an AI sidebar assistant for web pages.",
   "permissions": [
     "activeTab",
     "scripting",

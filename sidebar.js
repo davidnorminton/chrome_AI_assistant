@@ -17,14 +17,8 @@ let selectedFile = null; // Stores the base64 Data URL of the selected file
 
 // Model options for the settings dropdown
 const modelOptions = [
-  'pplx-7b-chat',
-  'pplx-70b-chat',
-  'sonar-deep-research',
-  'sonar-reasoning-pro',
-  'sonar-reasoning',
   'sonar-pro',
   'sonar',
-  'r1-1776'
 ];
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -180,9 +174,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Function to update placeholder text based on context button state
   function updatePlaceholder() {
     if (toggleContextBtn.classList.contains('active')) {
-      cmdInput.placeholder = "Ask anything about this page...";
+      cmdInput.placeholder = "Ask Orla anything about this page...";
     } else {
-      cmdInput.placeholder = "Ask anything...";
+      cmdInput.placeholder = "Ask Orla anything...";
     }
   }
 
@@ -202,7 +196,12 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function clearOutputAndInput() {
-    document.getElementById("output").innerHTML = "Click 'Summarize Page' to analyze the current content.";
+ document.getElementById("output").innerHTML = 
+    '<div class="intro orla">' +
+      '<h1>ORLA</h1>' +
+      '<p>Your personal A.I. browser assistant</p>' +
+      '<img src="orla.png" width="250" height="250" />' +
+    '</div>';
     cmdInput.value = ''; // Use cmdInput directly
     cmdInput.style.height = 'auto'; // Reset textarea height
     hideErrorMessage(); // Clear any error messages
@@ -243,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   document.getElementById("cmdBtn").onclick = async () => {
-    console.log("[Sidebar] Ask anything button clicked.");
+    console.log("[Sidebar] Ask Orla anything button clicked.");
     const input = cmdInput.value.trim();
     
     if (!input && !selectedFile) {
@@ -404,7 +403,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Now targeting li elements directly within .suggested-questions-container
       outputElement.querySelectorAll('.suggested-questions-container li').forEach(questionElement => {
         questionElement.style.cursor = 'pointer'; // Make it visually clickable
-        questionElement.title = 'Click to ask this question';
+        questionElement.title = 'Click to ask Orla this question';
         questionElement.addEventListener('click', (event) => {
           const questionText = event.target.textContent.trim();
           cmdInput.value = questionText; // Use cmdInput directly
