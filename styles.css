@@ -357,11 +357,7 @@ body {
 
 /* Action Buttons Row (Summarize, New Chat, Page Context) */
 .action-buttons-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 5px;
+  display: inline-flex;
 }
 
 .action-buttons-row .nice-button {
@@ -384,6 +380,7 @@ body {
   padding-left: 15px;
   padding-right: 15px;
   position: relative;
+  margin-left: 15px;
 }
 #summarizeBtn:hover {
   background-color: #304fc0;
@@ -460,6 +457,11 @@ body {
   position: relative;
 }
 
+.end {
+  position: absolute;
+  right: 20px;
+}
+
 #toggleContextBtn:hover::before {
   content: "Use Page Content";
   position: absolute;
@@ -482,11 +484,19 @@ body {
   border-radius: 5px;
 }
 
+.context-toggle-button {
+  margin-left: 15px;
+}
+
 .context-toggle-button.active {
   background: #28a745;
   color: white;
   border-radius: 25px;
-  padding: 5px;
+  padding: 5px 8px;
+}
+
+.context-toggle-button.active:hover {
+  padding: 5px 8px;
 }
 
 #newChatBtn:hover::before {
