@@ -7,6 +7,12 @@ body {
   color: #333; /* Default text color */
   overflow-x: hidden; /* Prevent horizontal scroll */
   font-size: 15px; /* Base font size increased */
+  padding-right: 42px; /* prevent content from going under right menu */
+  box-sizing: border-box;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 *:hover {
@@ -137,20 +143,11 @@ body {
     width: 32px; /* Slightly larger */
     height: 32px; /* Slightly larger */
     font-size: 1em; /* Slightly larger icon */
-    border-radius: 50%; /* Circular */
-    background-color: #e9eceb; /* Slightly different background for distinction */
-    color: #4f46e5; /* Accent color */
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-#historyBackBtn:hover:not(:disabled),
-#historyForwardBtn:hover:not(:disabled) {
-    background-color: #d0d0d0;
 }
 
 #historyBackBtn:disabled,
 #historyForwardBtn:disabled {
-    opacity: 0.4;
+    opacity: 0.9;
     cursor: not-allowed;
     box-shadow: none;
 }
@@ -162,12 +159,6 @@ body {
     color: #8e82f7; /* Lighter accent color */
     box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
-
-#sidebar.dark-mode #historyBackBtn:hover:not(:disabled),
-#sidebar.dark-mode #historyForwardBtn:hover:not(:disabled) {
-    background-color: #555c66;
-}
-
 
 /* Removed .page-title styles */
 /* Removed .tabs and .tab styles */
@@ -354,7 +345,6 @@ body {
     margin-right: 8px;
 }
 
-
 /* Bottom Controls */
 #bottomControls {
   padding: 15px 5px;
@@ -362,7 +352,7 @@ body {
   position: fixed;
   bottom: 0;
   left: 0;
-  min-width: calc(100% - 10px);
+  min-width: calc(100% - 42px);
 }
 
 /* Action Buttons Row (Summarize, New Chat, Page Context) */
@@ -502,12 +492,99 @@ body {
 #newChatBtn:hover::before {
   content: "Clear content";
   position: absolute;
-  bottom: 30px;
+  top: 0px;
   background: black;
-  width: 90px;
+  width: 117px;
   padding: 5px;
-  right: -35px;
+  right: 38px;
   border-radius: 5px;
+  color: white;
+  font-size: 0.8em;
+}
+
+#copyToggle {
+  position: relative;
+}
+
+#copyToggle:hover::before {
+  content: "Copy to clipboard";
+  position: absolute;
+  top: 0px;
+  background: black;
+  width: 117px;
+  padding: 5px;
+  right: 38px;
+  border-radius: 5px;
+  color: white;
+  font-size: 0.8em;  
+}
+
+#settingsToggle {
+  position: relative;
+}
+
+#settingsToggle:hover::before {
+  content: "Settings";
+  position: absolute;
+  top: 0px;
+  background: black;
+  width: 117px;
+  padding: 5px;
+  right: 38px;
+  border-radius: 5px;
+  color: white;
+  font-size: 0.8em; 
+}
+
+#historyToggle {
+  position: relative;
+}
+
+#historyForwardBtn {
+  position: relative;
+}
+
+#historyForwardBtn:hover::before {
+  content: "Forward";
+  position: absolute;
+  top: 0px;
+  background: black;
+  width: 117px;
+  padding: 5px;
+  right: 38px;
+  border-radius: 5px;
+  color: white;
+  font-size: 0.8em; 
+}
+
+#historyBackBtn {
+  position: relative;
+}
+
+#historyBackBtn:hover::before {
+  content: "Back";
+  position: absolute;
+  top: 0px;
+  background: black;
+  width: 117px;
+  padding: 5px;
+  right: 38px;
+  border-radius: 5px;
+  color: white;
+  font-size: 0.8em; 
+}
+
+#historyToggle:hover::before {
+  content: "History";
+  position: absolute;
+  top: 0px;
+  background: black;
+  width: 117px;
+  padding: 5px;
+  right: 38px;
+  border-radius: 5px;
+  color: white;
+  font-size: 0.8em; 
 }
 
 #cmdInput {
@@ -1145,4 +1222,30 @@ body {
 
 #sidebar.dark-mode #exportHistoryBtn:hover {
   background-color: #5a7a9a;
+}
+
+#rightMenu {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 40px;
+  height: 100%;
+  background-color: #5046e55e;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 10px;
+  z-index: 999;
+}
+
+#rightMenu button {
+  background: none;
+  border: none;
+  margin: 10px 0;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+#rightMenu button:hover {
+  color: #007BFF;
 }

@@ -387,20 +387,8 @@ document.addEventListener('DOMContentLoaded', () => {
         ${headerHtml}
         ${tagsHtml}
         <div class="ai-response-content">${text}</div>
-        ${linksHtml} <!-- Add links section -->
-        <button class="copy-button" title="Copy to clipboard"><i class="fas fa-copy"></i></button>
-        <span class="copy-feedback hidden">Copied!</span>
-      `;
+        ${linksHtml} <!-- Add links section -->`;
 
-      // Attach event listener to the new copy button
-      const copyButton = outputElement.querySelector('.copy-button');
-      const copyFeedback = outputElement.querySelector('.copy-feedback');
-      if (copyButton && copyFeedback) {
-        copyButton.addEventListener('click', () => {
-          const textToCopy = outputElement.querySelector('.ai-response-content').innerText; // Use innerText to get plain text
-          copyToClipboard(textToCopy, copyFeedback);
-        });
-      }
 
       // Attach event listeners to clickable tags
       outputElement.querySelectorAll('.tag-item').forEach(tagElement => {
@@ -1048,4 +1036,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- End History Overlay Logic ---
 
+
+  // Copy to clipboard from right menu
+  const copyToggle = document.getElementById('copyToggle');
+  if (copyToggle) {
+    copyToggle.addEventListener('click', () => {
+      const responseEl = document.getElementById('output');
+      if (responseEl) {
+        const textToCopy = responseEl.innerText;
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          const feedback = document.createElement('span');
+          feedback.className = 'copy-feedback';
+          feedback.textContent = 'Copied!';
+          document.getElementById('rightMenu').appendChild(feedback);
+          feedback.style.opacity = '1';
+          setTimeout(() => { feedback.style.opacity = '0'; feedback.remove(); }, 1500);
+        }).catch(err => console.error('Copy failed:', err));
+      }
+    });
+  }
 });
