@@ -1,0 +1,189 @@
+/* Bottom Controls */
+#bottomControls {
+  margin: 15px;
+  display: block;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  min-width: calc(100% - 73px);
+}
+
+/* Action Buttons Row */
+.action-buttons-row {
+  display: inline-flex;
+}
+
+.action-buttons-row .nice-button {
+  text-align: left;
+  padding: 5px;
+  font-size: 1em;
+  border: 0;
+}
+
+.action-buttons-row .context-toggle {
+  flex-shrink: 0;
+  min-width: fit-content;
+  font-size: 0.9em;
+}
+
+/* Summarize Button */
+#summarizeBtn {
+  border: 0;
+  background: transparent;
+  padding-left: 15px;
+  padding-right: 15px;
+  position: relative;
+  margin-left: 15px;
+  color: #e0e0e0;
+  border-radius: 8px;
+}
+
+#summarizeBtn:hover {
+  background-color: #4a9eff;
+  color: white;
+  border-radius: 8px;
+}
+
+/* Clear Chat Button */
+.clear-chat-button {
+  background-color: transparent;
+  border: 0;
+}
+
+.clear-chat-button:hover {
+  background-color: #304fc0;
+  color: white;
+  cursor: pointer;
+}
+
+/* Context Toggle */
+.context-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.context-toggle input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #4f46e5;
+  cursor: pointer;
+}
+
+.context-toggle label {
+  font-size: 0.95em;
+  color: #555;
+  cursor: pointer;
+}
+
+/* Main Prompt Area */
+.main-prompt-area {
+  /* display: flex; */
+  /* flex-direction: column; */
+  /* gap: 10px; */
+  /* padding: 15px; */
+  /* border-radius: 8px; */
+  /* margin: 10px; */
+}
+
+#newChatBtn > span, #toggleContextBtn > span {
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+#newChatBtn {
+  background: none;
+  border: none;
+}
+
+#toggleContextBtn {
+  /* background: none; */
+  /* border: none; */
+}
+
+.end {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+/* Context Toggle Button */
+.context-toggle-button {
+  background-color: #4a9eff;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  font-size: 16px;
+  color: #ffffff;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+}
+
+.context-toggle-button:hover {
+  background-color: #66b3ff;
+  color: #ffffff;
+}
+
+.context-toggle-button.active {
+  background-color: #28a745;
+  color: #ffffff;
+}
+
+.context-toggle-button.active:hover {
+  background-color: #34c759;
+  color: #ffffff;
+}
+
+#toggleContextBtn span {
+  margin-left: 8px;
+  font-size: 14px;
+}
+
+/* Clear Content Button */
+.clear-content-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: #aaaaaa;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  font-size: 16px;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.clear-content-button:hover {
+  background-color: #555555;
+  color: #ffffff;
+}
+
+/* Loading animation for submit button */
+.send-button.loading {
+  background-color: #4a9eff;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.nice-button.loading {
+  animation: pulse 1.5s ease-in-out infinite;
+} 

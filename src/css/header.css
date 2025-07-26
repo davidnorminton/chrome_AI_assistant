@@ -1,0 +1,136 @@
+/* Header Styles */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  border-bottom: 1px solid #e0e0e0;
+  gap: 10px;
+  min-height: 50px;
+}
+
+.sidebar-header img {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+.sidebar-header span {
+  font-size: 0.95em;
+  color: #666;
+  flex-grow: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* General button reset for header buttons */
+.sidebar-header button {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+/* Specific styles for general icon buttons in header */
+.header-icon-button {
+  background: none;
+  border: none;
+  font-size: 1.2em;
+  color: #666;
+  padding: 5px;
+  border-radius: 50%;
+}
+
+.header-icon-button:hover {
+  background-color: #555555;
+  color: #ffffff;
+}
+
+/* History navigation buttons */
+#historyBackBtn, #historyForwardBtn {
+  width: 32px;
+  height: 32px;
+  font-size: 1em;
+}
+
+#historyBackBtn:disabled,
+#historyForwardBtn:disabled {
+  opacity: 0.9;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Page Link Header */
+.page-link-header {
+  display: flex;
+  align-items: center;
+  padding: 5px;
+  margin-bottom: 15px;
+  background-color: #4a4a4a;
+  border-radius: 8px;
+  border: 1px solid #555555;
+}
+
+.page-link-header .header-favicon {
+  width: 32px;
+  height: 32px;
+  margin-right: 5px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.page-link-header a {
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 18px;
+  font-weight: bold;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-grow: 1;
+}
+
+.page-link-header a:hover {
+  color: #4a9eff;
+  text-decoration: underline;
+}
+
+/* Copy Button */
+.copy-button {
+  background: none;
+  border: none;
+  color: #aaaaaa;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  font-size: 16px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.copy-button:hover {
+  background-color: #555555;
+  color: #ffffff;
+  transform: scale(1.1);
+}
+
+.copy-feedback {
+  position: absolute;
+  top: -30px;
+  right: 0;
+  background-color: #28a745;
+  color: #ffffff;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.copy-feedback.hidden {
+  opacity: 0;
+} 

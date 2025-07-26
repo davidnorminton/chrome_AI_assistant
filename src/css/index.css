@@ -1,0 +1,7 @@
+/* Import all modular CSS files */
+@import './base.css';
+@import './header.css';
+@import './menu.css';
+@import './prompt.css';
+@import './history.css';
+@import './content.css'; 

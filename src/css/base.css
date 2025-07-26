@@ -1,0 +1,157 @@
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+/* General Body and Font Styles */
+body {
+  font-family: 'Roboto', sans-serif;
+  margin: 0;
+  padding: 0;
+  color: #e0e0e0;
+  overflow-x: hidden;
+  font-size: 15px;
+  padding-right: 42px;
+  box-sizing: border-box;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Sidebar Container */
+#sidebar {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease-in-out;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Tab Content Panels */
+#tabContent {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tab-panel {
+  display: block;
+  padding: 15px;
+  overflow-y: auto;
+  height: 100%;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+/* Error Message */
+.error-message {
+  background-color: #ff6b6b;
+  color: #ffffff;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 10px 0;
+  font-size: 14px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+}
+
+/* Response Box */
+#responseBox {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 15px;
+}
+
+#output {
+  line-height: 1.6;
+  color: #e0e0e0;
+}
+
+#output p {
+  margin-bottom: 12px;
+}
+
+#output ul, #output ol {
+  margin-bottom: 12px;
+  padding-left: 20px;
+}
+
+#output li {
+  margin-bottom: 6px;
+}
+
+#output h1, #output h2, #output h3, #output h4 {
+  color: #ffffff;
+  margin-top: 20px;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+#output strong {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+#output em {
+  font-style: italic;
+  color: #cccccc;
+}
+
+#output a {
+  color: #4a9eff;
+  text-decoration: none;
+}
+
+#output a:hover {
+  text-decoration: underline;
+}
+
+#output img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 10px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Orla Intro */
+.orla {
+  text-align: center;
+  padding: 20px;
+  color: #e0e0e0;
+}
+
+.orla h1 {
+  color: #4a9eff;
+  margin-bottom: 10px;
+  font-size: 24px;
+}
+
+.orla p {
+  color: #cccccc;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* Loading Status Message */
+.loading-status-message {
+  text-align: center;
+  color: #4a9eff;
+  font-size: 16px;
+  margin: 20px 0;
+}
+
+.loading-status-message .fa-spinner {
+  margin-right: 8px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+} 

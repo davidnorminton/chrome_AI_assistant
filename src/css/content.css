@@ -1,0 +1,174 @@
+/* Tags styling */
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #4a4a4a;
+  border-radius: 8px;
+  border: 1px solid #555555;
+}
+
+.tag-item {
+  background-color: #4a9eff;
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.tag-item:hover {
+  background-color: #66b3ff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(74, 158, 255, 0.3);
+}
+
+/* Suggested questions styling */
+.suggested-questions-container {
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #4a4a4a;
+  border-radius: 8px;
+  border: 1px solid #555555;
+}
+
+.suggested-questions-container h3 {
+  color: #ffffff;
+  font-size: 16px;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.suggested-questions-container ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.suggested-questions-container li {
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  background-color: #555555;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #e0e0e0;
+  font-size: 14px;
+}
+
+.suggested-questions-container li:last-child {
+  margin-bottom: 0;
+}
+
+.suggested-questions-container li:hover {
+  background-color: #4a9eff;
+  color: #ffffff;
+  transform: translateX(2px);
+}
+
+/* Link List */
+.link-list a {
+  color: #4a9eff;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.link-list a:hover {
+  color: #66b3ff;
+  text-decoration: underline;
+}
+
+.link-list p {
+  margin: 8px 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #cccccc;
+}
+
+/* Relevant Link Description */
+.relevant-link-description {
+  background-color: #4a4a4a;
+  border: 1px solid #555555;
+  border-radius: 8px;
+  padding: 15px;
+  margin: 10px 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #e0e0e0;
+}
+
+/* Modern Summary Content Styling */
+.summary-content {
+  font-size: 16px;
+  line-height: 1.7;
+  letter-spacing: 0.3px;
+  color: #e0e0e0;
+}
+
+.summary-content p {
+  margin-bottom: 16px;
+  font-size: 16px;
+  line-height: 1.7;
+  color: #e0e0e0;
+}
+
+.summary-content strong {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.summary-content h1,
+.summary-content h2,
+.summary-content h3,
+.summary-content h4,
+.summary-content h5,
+.summary-content h6 {
+  color: #ffffff;
+  margin-top: 24px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.summary-content h1 { font-size: 24px; }
+.summary-content h2 { font-size: 20px; }
+.summary-content h3 { font-size: 18px; }
+.summary-content h4 { font-size: 16px; }
+.summary-content h5 { font-size: 14px; }
+.summary-content h6 { font-size: 13px; }
+
+.summary-content ul,
+.summary-content ol {
+  margin-bottom: 16px;
+  padding-left: 24px;
+}
+
+.summary-content li {
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+
+.summary-content a {
+  color: #4a9eff;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.summary-content a:hover {
+  color: #66b3ff;
+  text-decoration: underline;
+}
+
+/* Content header styling */
+.content-header p {
+  font-size: 17px !important;
+  line-height: 24px !important;
+} 
