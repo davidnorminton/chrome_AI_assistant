@@ -183,4 +183,23 @@ html body #rightMenu button,
   background-color: #ff4444 !important;
   border-color: #ff6666 !important;
   color: #ffffff !important;
+}
+
+/* Settings Button Container - Below clear button */
+.settings-button-container {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.settings-button {
+  background-color: #4a4a4a !important;
+  border: 1px solid #666666 !important;
+}
+
+.settings-button:hover {
+  background-color: #555555 !important;
+  border-color: #777777 !important;
+  color: #4a9eff !important;
 } 

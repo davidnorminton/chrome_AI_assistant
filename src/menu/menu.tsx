@@ -244,9 +244,6 @@ export default function Menu() {
             <Link to="/" id="homeToggle" className="menu-item">
                 <i className="fas fa-comments"></i>
             </Link>
-            <Link to="/settings" id="settingsToggle" className="menu-item">
-                <i className="fas fa-cog"></i>
-            </Link>
             <button id="historyBackBtn" title="Previous Result" className="menu-item" onClick={nav?.goBack} disabled={!nav?.canGoBack}>
                 <i className="fas fa-arrow-left"></i>
             </button>
@@ -304,6 +301,13 @@ export default function Menu() {
                 >
                     <i className="fas fa-trash-alt"></i>
                 </button>
+            </div>
+            
+            {/* Settings Button - Below clear button */}
+            <div className="settings-button-container">
+                <Link to="/settings" id="settingsToggle" className="menu-item settings-button">
+                    <i className="fas fa-cog"></i>
+                </Link>
             </div>
         </nav>
     </div>
