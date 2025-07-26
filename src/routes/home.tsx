@@ -37,6 +37,7 @@ export default function Home() {
   });
   const [savedPageInfo, setSavedPageInfo] = useState<{ title: string; url: string; favicon: string } | null>(null);
   const [usePageContext, setUsePageContext] = useState(true);
+  const [screenshotData, setScreenshotData] = useState<string | null>(null);
   const lastProcessedIndexRef = useRef<number | null>(null);
 
   // Simple logic: show welcome only when there's no content
@@ -61,7 +62,6 @@ export default function Home() {
   useEffect(() => {
     console.log('=== ACTIONS OBJECT CHANGED ===');
     console.log('actions object:', actions);
-    console.log('actions.setClearContent:', actions?.setClearContent);
   }, [actions]);
 
   // Restore from history when clicked or when nav changes
@@ -281,19 +281,26 @@ export default function Home() {
     setLinks([]);
     setSearchQuery(""); // Clear search query
     setOutputHtml(""); // Hide welcome when starting operations
+    
+    // Use screenshot data if available, otherwise use fileData
+    const imageData = screenshotData || fileData;
+    
     try {
       const info = await getPageInfoFromTab();
       setPageInfo(info);
 
       let finalQuery = query;
-      if (_useContext) {
+      if (_useContext && !imageData) {
         finalQuery = `Based on this page:\n${info.text}\n\nUser question: ${query}`;
+      } else if (imageData) {
+        // For screenshots, don't use page context, just send the image with the question
+        finalQuery = query;
       }
 
       const res: AIResponse = await sendQueryToAI({
         query: finalQuery,
         action: "direct_question",
-        file: fileData,
+        file: imageData,
       });
 
       setOutputHtml(res.text);
@@ -318,6 +325,9 @@ export default function Home() {
           favicon: info.favicon || "",
         },
       });
+      
+      // Clear screenshot data after successful send
+      setScreenshotData(null);
     } catch (e: any) {
       setOutputHtml(`<p class="error">${e.message}</p>`);
       setTags([]);
@@ -358,6 +368,263 @@ export default function Home() {
       setLoading(false);
     }
   };
+
+  // Send news query function
+  const sendNewsQuery = useCallback((query: string) => {
+    console.log('=== SEND NEWS QUERY CALLED ===');
+    console.log('Query:', query);
+    
+    // Check if this is a location form
+    if (query.startsWith('LOCATION_FORM:')) {
+      const parts = query.split(':');
+      const option = parts[1];
+      const formHTML = parts.slice(2).join(':');
+      
+      // Show the location form
+      setOutputHtml(formHTML);
+      setTags([]);
+      setSuggested([]);
+      setLinks([]);
+      setSearchQuery("");
+      setLoading(false);
+      
+      // Add event listeners after a short delay to ensure DOM is ready
+      setTimeout(() => {
+        addLocationFormListeners(option);
+      }, 100);
+      
+      return;
+    }
+    
+    // Check if this is a loading message with query
+    if (query.startsWith('LOADING:')) {
+      const parts = query.split(':');
+      const loadingMessage = parts[1];
+      const actualQuery = parts.slice(2).join(':');
+      
+      // Show the loading message
+      setOutputHtml(`<p class="loading-status-message centered-message">${loadingMessage}</p>`);
+      setTags([]);
+      setSuggested([]);
+      setLinks([]);
+      setSearchQuery("");
+      setLoading(true);
+      
+      // Send the actual query to AI
+      setTimeout(() => {
+        handleSend(actualQuery, null, false);
+      }, 100);
+      
+      return;
+    }
+    
+    // Regular query (for world news)
+    setOutputHtml(`<p class="loading-status-message centered-message">Getting latest news...</p>`);
+    setTags([]);
+    setSuggested([]);
+    setLinks([]);
+    setSearchQuery("");
+    setLoading(true);
+    
+    // Send the query to AI
+    handleSend(query, null, false);
+  }, []);
+
+  // Add event listeners for location form
+  const addLocationFormListeners = (option: string) => {
+    // Handle saved location buttons
+    const locationButtons = document.querySelectorAll('.location-btn[data-city]');
+    locationButtons.forEach(button => {
+      button.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        const city = target.getAttribute('data-city');
+        const country = target.getAttribute('data-country');
+        
+        if (city && country) {
+          // Save location and build query
+          saveLocation(city, country);
+          buildAndSendQuery(option, city, country);
+        }
+      });
+    });
+    
+    // Handle use current location button
+    const useCurrentBtn = document.getElementById('useCurrentLocation');
+    if (useCurrentBtn) {
+      useCurrentBtn.addEventListener('click', async () => {
+        try {
+          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 10000,
+              maximumAge: 60000
+            });
+          });
+          
+          const { latitude, longitude } = position.coords;
+          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10`);
+          const data = await response.json();
+          const addressParts = data.display_name.split(', ');
+          const city = addressParts[0];
+          const country = addressParts[addressParts.length - 1];
+          
+          saveLocation(city, country);
+          buildAndSendQuery(option, city, country);
+        } catch (error) {
+          console.log('Could not get current location');
+        }
+      });
+    }
+    
+    // Handle submit button
+    const submitBtn = document.getElementById('submitLocation');
+    if (submitBtn) {
+      submitBtn.addEventListener('click', () => {
+        const cityInput = document.getElementById('cityInput') as HTMLInputElement;
+        const countryInput = document.getElementById('countryInput') as HTMLInputElement;
+        
+        const city = cityInput?.value?.trim();
+        const country = countryInput?.value?.trim();
+        
+        if (city && country) {
+          saveLocation(city, country);
+          buildAndSendQuery(option, city, country);
+        } else {
+          alert('Please enter both city and country');
+        }
+      });
+    }
+  };
+
+  // Helper functions for location management
+  const saveLocation = (city: string, country: string) => {
+    const savedLocations = JSON.parse(localStorage.getItem('savedLocations') || '[]');
+    const newLocation = { city, country, timestamp: Date.now() };
+    
+    // Check if location already exists
+    const exists = savedLocations.find((loc: any) => 
+      loc.city.toLowerCase() === city.toLowerCase() && 
+      loc.country.toLowerCase() === country.toLowerCase()
+    );
+    
+    if (!exists) {
+      savedLocations.push(newLocation);
+      // Keep only last 10 locations
+      if (savedLocations.length > 10) {
+        savedLocations.shift();
+      }
+      localStorage.setItem('savedLocations', JSON.stringify(savedLocations));
+    }
+  };
+
+  const buildAndSendQuery = (option: string, location: string, country: string) => {
+    let query = '';
+    let loadingMessage = '';
+    
+    // Build query based on option and location
+    switch (option) {
+      case 'local':
+        if (location && country) {
+          query = `Get the latest local news for ${location}, ${country} and surrounding areas within 100 miles. Include breaking news, community events, and local developments.`;
+          loadingMessage = `Getting local news for ${location}, ${country}...`;
+        } else if (location) {
+          query = `Get the latest local news for ${location} and surrounding areas within 100 miles. Include breaking news, community events, and local developments.`;
+          loadingMessage = `Getting local news for ${location}...`;
+        } else {
+          query = `Get the latest local news for my current area and surrounding regions within 100 miles. Include breaking news, community events, and local developments.`;
+          loadingMessage = 'Getting local news for your area...';
+        }
+        break;
+      case 'national':
+        if (country) {
+          query = `Get the latest national news from ${country}. Include top headlines, major political developments, economic news, and significant national events.`;
+          loadingMessage = `Getting national news from ${country}...`;
+        } else {
+          query = `Get the latest national news from across the country. Include top headlines, major political developments, economic news, and significant national events.`;
+          loadingMessage = 'Getting national news...';
+        }
+        break;
+      case 'world':
+        query = `Get the latest world news and top international headlines. Include major global events, international politics, economic developments, and significant world news.`;
+        loadingMessage = 'Getting world news...';
+        break;
+      case 'events':
+        if (location && country) {
+          query = `Get upcoming events, concerts, festivals, and activities happening in ${location}, ${country} and within 100 miles. Include dates, venues, and event details.`;
+          loadingMessage = `Getting events near ${location}, ${country}...`;
+        } else if (location) {
+          query = `Get upcoming events, concerts, festivals, and activities happening in ${location} and within 100 miles. Include dates, venues, and event details.`;
+          loadingMessage = `Getting events near ${location}...`;
+        } else {
+          query = `Get upcoming events, concerts, festivals, and activities happening in my area within 100 miles. Include dates, venues, and event details.`;
+          loadingMessage = 'Getting events in your area...';
+        }
+        break;
+      case 'weather':
+        if (location && country) {
+          query = `Get the current weather forecast for ${location}, ${country}. Include current conditions, temperature, humidity, wind speed, and a 5-day forecast. Also provide weather alerts if any.`;
+          loadingMessage = `Getting weather for ${location}, ${country}...`;
+        } else if (location) {
+          query = `Get the current weather forecast for ${location}. Include current conditions, temperature, humidity, wind speed, and a 5-day forecast. Also provide weather alerts if any.`;
+          loadingMessage = `Getting weather for ${location}...`;
+        } else {
+          query = `Get the current weather forecast for my current location. Include current conditions, temperature, humidity, wind speed, and a 5-day forecast. Also provide weather alerts if any.`;
+          loadingMessage = 'Getting weather for your location...';
+        }
+        break;
+    }
+    
+    // Send the query to AI
+    if (query) {
+      console.log('Sending query:', query);
+      setOutputHtml(`<p class="loading-status-message centered-message">${loadingMessage}</p>`);
+      setTags([]);
+      setSuggested([]);
+      setLinks([]);
+      setSearchQuery("");
+      setLoading(true);
+      handleSend(query, null, false);
+    }
+  };
+
+  // Handle screenshot capture
+  const handleScreenshotCapture = (imageData: string) => {
+    setScreenshotData(imageData);
+    setOutputHtml(`
+      <div class="screenshot-preview">
+        <h3><i class="fas fa-camera"></i> Screenshot Captured</h3>
+        <p>You can now ask questions about this image. Type your question in the prompt below and click send.</p>
+        <img src="${imageData}" alt="Screenshot" style="max-width: 100%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
+      </div>
+    `);
+    setTags([]);
+    setSuggested([]);
+    setLinks([]);
+  };
+
+  // Clear all content
+  const handleClearContent = () => {
+    setOutputHtml("");
+    setTags([]);
+    setSuggested([]);
+    setLinks([]);
+    setScreenshotData(null);
+    setSearchQuery("");
+    setSavedPageInfo(null);
+  };
+
+  // Set the context functions
+  useEffect(() => {
+    console.log('=== SETTING CONTEXT FUNCTIONS ===');
+    console.log('actions available:', !!actions);
+    if (actions?.setSendNewsQuery) {
+      console.log('Setting sendNewsQuery function in context');
+      actions.setSendNewsQuery(sendNewsQuery);
+      console.log('Context function set successfully');
+    } else {
+      console.log('actions or setSendNewsQuery not available');
+    }
+  }, [actions, sendNewsQuery]);
 
   // Helper to determine if we should show the page header
   function shouldShowPageHeader() {
@@ -423,6 +690,15 @@ export default function Home() {
               </div>
             ) : outputHtml ? (
               <div key="content-container">
+                <div className="content-header">
+                  <button 
+                    className="clear-content-button"
+                    onClick={handleClearContent}
+                    title="Clear content"
+                  >
+                    <i className="fas fa-times"></i>
+                  </button>
+                </div>
                 <div dangerouslySetInnerHTML={{ __html: outputHtml }} />
                 {tags.length > 0 && (
                   <div className="tags-container">
@@ -469,6 +745,7 @@ export default function Home() {
           loading={loading}
           useContext={usePageContext}
           setUseContext={setUsePageContext}
+          onScreenshotCapture={handleScreenshotCapture}
         />
       </div>
     </div>

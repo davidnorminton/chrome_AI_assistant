@@ -1,13 +1,233 @@
 import { Link } from 'react-router';
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { HistoryNavigationContext, AppActionsContext } from '../App';
 
 export default function Menu() {
     const nav = useContext(HistoryNavigationContext);
     const actions = useContext(AppActionsContext);
+    const [showNewsDropdown, setShowNewsDropdown] = useState(false);
     
     console.log('Menu actions:', actions);
     console.log('Menu nav:', nav);
+    
+    const handleWeatherRequest = () => {
+        // Weather always needs location, show location form
+        showLocationForm('weather');
+    };
+    
+    const handleNewsOption = async (option: string) => {
+        setShowNewsDropdown(false);
+        
+        // World news doesn't need location, go directly to query
+        if (option === 'world') {
+            const query = `Get the latest world news and top international headlines. Include major global events, international politics, economic developments, and significant world news.`;
+            console.log('Sending world news query:', query);
+            if (actions?.sendNewsQuery) {
+                actions.sendNewsQuery(query);
+            }
+            return;
+        }
+        
+        // Weather and other options need location
+        if (option === 'weather') {
+            showLocationForm('weather');
+            return;
+        }
+        
+        // Get user's location or show location selection form
+        let location = '';
+        let country = '';
+        let query = '';
+        
+        try {
+            // Try to get browser location first
+            const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 60000
+                });
+            });
+            
+            const { latitude, longitude } = position.coords;
+            
+            // Reverse geocode to get city and country name
+            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10`);
+            const data = await response.json();
+            const addressParts = data.display_name.split(', ');
+            location = addressParts[0]; // Get city name
+            country = addressParts[addressParts.length - 1]; // Get country name
+            
+            console.log('Detected location:', location, 'Country:', country);
+            
+            // Save this location for future use
+            saveLocation(location, country);
+            
+        } catch (error) {
+            console.log('Could not get location automatically, will show location form');
+            // Show location selection form instead of popup
+            showLocationForm(option);
+            return; // Exit early, will handle query after location is selected
+        }
+        
+        // Build and send query
+        buildAndSendQuery(option, location, country);
+    };
+    
+    const saveLocation = (city: string, country: string) => {
+        const savedLocations = JSON.parse(localStorage.getItem('savedLocations') || '[]');
+        const newLocation = { city, country, timestamp: Date.now() };
+        
+        // Check if location already exists
+        const exists = savedLocations.find((loc: any) => 
+            loc.city.toLowerCase() === city.toLowerCase() && 
+            loc.country.toLowerCase() === country.toLowerCase()
+        );
+        
+        if (!exists) {
+            savedLocations.push(newLocation);
+            // Keep only last 10 locations
+            if (savedLocations.length > 10) {
+                savedLocations.shift();
+            }
+            localStorage.setItem('savedLocations', JSON.stringify(savedLocations));
+        }
+    };
+    
+    const showLocationForm = (option: string) => {
+        const savedLocations = JSON.parse(localStorage.getItem('savedLocations') || '[]');
+        
+        // Get the appropriate title based on option
+        let title = '';
+        switch (option) {
+            case 'local':
+                title = 'Local News';
+                break;
+            case 'national':
+                title = 'National News';
+                break;
+            case 'events':
+                title = 'Events';
+                break;
+            case 'weather':
+                title = 'Weather';
+                break;
+            default:
+                title = 'News';
+        }
+        
+        // Create location selection form HTML
+        const formHTML = `
+            <div class="location-selection-form">
+                <h3>Select Location for ${title}</h3>
+                
+                ${savedLocations.length > 0 ? `
+                    <div class="saved-locations">
+                        <h4>Recently Used Locations</h4>
+                        <div class="location-buttons">
+                            ${savedLocations.map((loc: any) => `
+                                <button class="location-btn" data-city="${loc.city}" data-country="${loc.country}">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    ${loc.city}, ${loc.country}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+                
+                <div class="new-location-form">
+                    <h4>Enter New Location</h4>
+                    <div class="form-row">
+                        <input type="text" id="cityInput" placeholder="City/Town name" class="location-input">
+                        <input type="text" id="countryInput" placeholder="Country" class="location-input">
+                    </div>
+                    <div class="form-actions">
+                        <button id="useCurrentLocation" class="location-btn">
+                            <i class="fas fa-crosshairs"></i>
+                            Use Current Location
+                        </button>
+                        <button id="submitLocation" class="location-btn primary">
+                            <i class="fas fa-check"></i>
+                            Continue
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Send this form to the content area
+        if (actions?.sendNewsQuery) {
+            // We'll use a special format to show the form
+            actions.sendNewsQuery(`LOCATION_FORM:${option}:${formHTML}`);
+        }
+    };
+    
+    const buildAndSendQuery = (option: string, location: string, country: string) => {
+        let query = '';
+        let loadingMessage = '';
+        
+        // Build query based on option and location
+        switch (option) {
+            case 'local':
+                if (location && country) {
+                    query = `Get the latest local news for ${location}, ${country} and surrounding areas within 100 miles. Include breaking news, community events, and local developments.`;
+                    loadingMessage = `Getting local news for ${location}, ${country}...`;
+                } else if (location) {
+                    query = `Get the latest local news for ${location} and surrounding areas within 100 miles. Include breaking news, community events, and local developments.`;
+                    loadingMessage = `Getting local news for ${location}...`;
+                } else {
+                    query = `Get the latest local news for my current area and surrounding regions within 100 miles. Include breaking news, community events, and local developments.`;
+                    loadingMessage = 'Getting local news for your area...';
+                }
+                break;
+            case 'national':
+                if (country) {
+                    query = `Get the latest national news from ${country}. Include top headlines, major political developments, economic news, and significant national events.`;
+                    loadingMessage = `Getting national news from ${country}...`;
+                } else {
+                    query = `Get the latest national news from across the country. Include top headlines, major political developments, economic news, and significant national events.`;
+                    loadingMessage = 'Getting national news...';
+                }
+                break;
+            case 'world':
+                query = `Get the latest world news and top international headlines. Include major global events, international politics, economic developments, and significant world news.`;
+                loadingMessage = 'Getting world news...';
+                break;
+            case 'events':
+                if (location && country) {
+                    query = `Get upcoming events, concerts, festivals, and activities happening in ${location}, ${country} and within 100 miles. Include dates, venues, and event details.`;
+                    loadingMessage = `Getting events near ${location}, ${country}...`;
+                } else if (location) {
+                    query = `Get upcoming events, concerts, festivals, and activities happening in ${location} and within 100 miles. Include dates, venues, and event details.`;
+                    loadingMessage = `Getting events near ${location}...`;
+                } else {
+                    query = `Get upcoming events, concerts, festivals, and activities happening in my area within 100 miles. Include dates, venues, and event details.`;
+                    loadingMessage = 'Getting events in your area...';
+                }
+                break;
+            case 'weather':
+                if (location && country) {
+                    query = `Get the current weather forecast for ${location}, ${country}. Include current conditions, temperature, humidity, wind speed, and a 5-day forecast. Also provide weather alerts if any.`;
+                    loadingMessage = `Getting weather for ${location}, ${country}...`;
+                } else if (location) {
+                    query = `Get the current weather forecast for ${location}. Include current conditions, temperature, humidity, wind speed, and a 5-day forecast. Also provide weather alerts if any.`;
+                    loadingMessage = `Getting weather for ${location}...`;
+                } else {
+                    query = `Get the current weather forecast for my current location. Include current conditions, temperature, humidity, wind speed, and a 5-day forecast. Also provide weather alerts if any.`;
+                    loadingMessage = 'Getting weather for your location...';
+                }
+                break;
+        }
+        
+        // Send the query to AI
+        if (query) {
+            console.log('Sending query:', query);
+            if (actions?.sendNewsQuery) {
+                // Send the loading message along with the query
+                actions.sendNewsQuery(`LOADING:${loadingMessage}:${query}`);
+            }
+        }
+    };
     
     return (
     <div id="rightMenu">
@@ -27,6 +247,43 @@ export default function Menu() {
             <Link to="/history" id="historyToggle" className="menu-item">
                 <i className="fas fa-history"></i>
             </Link>
+            
+            {/* News/Events Button */}
+            <div className="news-dropdown-container">
+                <button 
+                    id="newsBtn" 
+                    className="menu-item news-button" 
+                    onClick={() => setShowNewsDropdown(!showNewsDropdown)}
+                    title="News & Events"
+                >
+                    <i className="fas fa-newspaper"></i>
+                </button>
+                
+                {showNewsDropdown && (
+                    <div className="news-dropdown">
+                        <button onClick={() => handleNewsOption('local')}>
+                            <i className="fas fa-map-marker-alt"></i>
+                            Local News
+                        </button>
+                        <button onClick={() => handleNewsOption('national')}>
+                            <i className="fas fa-flag"></i>
+                            National News
+                        </button>
+                        <button onClick={() => handleNewsOption('world')}>
+                            <i className="fas fa-globe"></i>
+                            World News
+                        </button>
+                        <button onClick={() => handleNewsOption('events')}>
+                            <i className="fas fa-calendar-alt"></i>
+                            Events
+                        </button>
+                        <button onClick={() => handleNewsOption('weather')}>
+                            <i className="fas fa-cloud-sun"></i>
+                            Weather
+                        </button>
+                    </div>
+                )}
+            </div>
         </nav>
     </div>
     )

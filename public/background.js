@@ -107,6 +107,87 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
 
+  // 4) Handle screenshot capture requests from content script
+  if (request.action === "captureScreenshot") {
+    console.log("[Background] Screenshot capture requested");
+    
+    // Store the sendResponse function to use later
+    let responseSent = false;
+    const sendResponseSafe = (response) => {
+      if (!responseSent) {
+        responseSent = true;
+        sendResponse(response);
+      }
+    };
+    
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const tab = tabs[0];
+      if (!tab?.id) {
+        console.error("[Background] No active tab found");
+        sendResponseSafe({ error: "no_active_tab" });
+        return;
+      }
+
+      console.log("[Background] Capturing screenshot for tab:", tab.id, "URL:", tab.url);
+      
+      // Check if the tab URL allows screenshots
+      if (tab.url && /^(chrome|edge|about|view-source|file|data|blob):/.test(tab.url)) {
+        console.error("[Background] Screenshot not allowed for URL:", tab.url);
+        sendResponseSafe({ error: "screenshot_not_allowed_for_url" });
+        return;
+      }
+
+      // Check if tab is ready for screenshot
+      if (tab.status !== 'complete') {
+        console.error("[Background] Tab not ready for screenshot, status:", tab.status);
+        sendResponseSafe({ error: "tab_not_ready" });
+        return;
+      }
+
+      console.log("[Background] Attempting screenshot capture...");
+      
+      // Try to capture the screenshot using the current window
+      try {
+        // Use null for the tabId to capture the current window
+        chrome.tabs.captureVisibleTab(null, { format: 'png' }, (dataUrl) => {
+          console.log("[Background] captureVisibleTab callback executed");
+          
+          if (chrome.runtime.lastError) {
+            const error = chrome.runtime.lastError;
+            console.error("[Background] Screenshot capture failed:", error);
+            console.error("[Background] Error message:", error.message);
+            
+            // Try alternative approach if the first one fails
+            console.log("[Background] Trying alternative capture method...");
+            chrome.tabs.captureVisibleTab(tab.windowId, { format: 'png' }, (dataUrl2) => {
+              if (chrome.runtime.lastError) {
+                console.error("[Background] Alternative capture also failed:", chrome.runtime.lastError);
+                sendResponseSafe({ error: "screenshot_capture_failed" });
+              } else if (!dataUrl2) {
+                console.error("[Background] No dataUrl from alternative capture");
+                sendResponseSafe({ error: "no_screenshot_data" });
+              } else {
+                console.log("[Background] Alternative capture successful, length:", dataUrl2.length);
+                sendResponseSafe({ imageData: dataUrl2 });
+              }
+            });
+          } else if (!dataUrl) {
+            console.error("[Background] No dataUrl received from captureVisibleTab");
+            sendResponseSafe({ error: "no_screenshot_data" });
+          } else {
+            console.log("[Background] Screenshot captured successfully, length:", dataUrl.length);
+            sendResponseSafe({ imageData: dataUrl });
+          }
+        });
+      } catch (error) {
+        console.error("[Background] Exception during screenshot capture:", error);
+        sendResponseSafe({ error: error.message || "screenshot_capture_exception" });
+      }
+    });
+
+    return true; // Keep the message channel open
+  }
+
   return false;
 });
 

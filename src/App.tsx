@@ -17,7 +17,8 @@ export interface HistoryNavContextType {
 }
 
 export interface AppActionsContextType {
-  // Removed clearContent functionality
+  sendNewsQuery: ((query: string) => void) | null;
+  setSendNewsQuery: (fn: (query: string) => void) => void;
 }
 
 export const HistoryNavigationContext = createContext<HistoryNavContextType | undefined>(undefined);
@@ -27,6 +28,14 @@ export default function App() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0); // Always start at 0, never null
   const [initialized, setInitialized] = useState<boolean>(false); // Track if app has been initialized
+  const [sendNewsQuery, setSendNewsQuery] = useState<((query: string) => void) | null>(null);
+
+  // Debug when setSendNewsQuery is called
+  const setSendNewsQueryWithDebug = useCallback((fn: (query: string) => void) => {
+    console.log('=== SET SEND NEWS QUERY CALLED ===');
+    console.log('Setting sendNewsQuery function:', fn);
+    setSendNewsQuery(() => fn);
+  }, []);
 
   useEffect(() => {
     getHistory().then((historyItems) => {
@@ -103,7 +112,8 @@ export default function App() {
       initialized
     }}>
       <AppActionsContext.Provider value={{
-        // Removed clearContent functionality
+        sendNewsQuery,
+        setSendNewsQuery: setSendNewsQueryWithDebug
       }}>
         <Outlet />
         <Menu />

@@ -2,9 +2,9 @@
 import { useState, useRef, useEffect } from "react";
 
 interface PromptProps {
-  /** Called for the “Send” button */
+  /** Called for the "Send" button */
   onSend: (query: string, fileData: string | null, usePageContext: boolean) => void;
-  /** Called for the “Summarize” button */
+  /** Called for the "Summarize" button */
   onSummarize: () => void;
   /** Whether any request is in flight */
   loading: boolean;
@@ -12,13 +12,39 @@ interface PromptProps {
   useContext: boolean;
   /** Setter for context toggle */
   setUseContext: (val: boolean) => void;
+  /** Called when a screenshot is captured */
+  onScreenshotCapture?: (imageData: string) => void;
 }
 
-export default function Prompt({ onSend, onSummarize, loading, useContext, setUseContext }: PromptProps) {
+export default function Prompt({ onSend, onSummarize, loading, useContext, setUseContext, onScreenshotCapture }: PromptProps) {
   const [text, setText] = useState("");
   const [fileData, setFileData] = useState<string | null>(null);
+  const [isScreenshotMode, setIsScreenshotMode] = useState(false);
+  const [canTakeScreenshot, setCanTakeScreenshot] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Check if screenshot is allowed on current page
+  useEffect(() => {
+    const checkScreenshotAvailability = async () => {
+      try {
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+        const currentTab = tabs[0];
+        
+        if (currentTab?.url) {
+          const url = currentTab.url;
+          // Disable screenshot on restricted pages
+          const isRestricted = /^(chrome|edge|about|view-source|file|data|blob):/.test(url);
+          setCanTakeScreenshot(!isRestricted);
+        }
+      } catch (error) {
+        console.error('Error checking screenshot availability:', error);
+        setCanTakeScreenshot(false);
+      }
+    };
+
+    checkScreenshotAvailability();
+  }, []);
 
   // Auto-resize the textarea
   useEffect(() => {
@@ -42,6 +68,32 @@ export default function Prompt({ onSend, onSummarize, loading, useContext, setUs
     onSend(text.trim(), fileData, useContext);
     setText("");
     setFileData(null);
+  };
+
+  const handleScreenshotClick = () => {
+    setIsScreenshotMode(true);
+    
+    // Send message to content script to start screenshot mode
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]?.id) {
+        chrome.tabs.sendMessage(tabs[0].id, { action: "startScreenshot" });
+      }
+    });
+
+    // Listen for screenshot data from content script
+    const handleScreenshotMessage = (message: any, sender: any) => {
+      if (message.action === "screenshotCaptured" && message.imageData) {
+        setIsScreenshotMode(false);
+        setFileData(message.imageData);
+        if (onScreenshotCapture) {
+          onScreenshotCapture(message.imageData);
+        }
+        // Remove the listener
+        chrome.runtime.onMessage.removeListener(handleScreenshotMessage);
+      }
+    };
+
+    chrome.runtime.onMessage.addListener(handleScreenshotMessage);
   };
 
   return (
@@ -77,6 +129,17 @@ export default function Prompt({ onSend, onSummarize, loading, useContext, setUs
             disabled={loading}
           >
             <i className="fas fa-plus" />
+          </button>
+
+          {/* Screenshot button */}
+          <button
+            id="screenshotBtn"
+            className={`icon-button screenshot-button ${isScreenshotMode ? 'active' : ''}`}
+            title="Take Screenshot"
+            onClick={handleScreenshotClick}
+            disabled={loading || !canTakeScreenshot}
+          >
+            <i className="fas fa-camera" />
           </button>
 
           {/* Toggle context */}

@@ -64,24 +64,30 @@ Return only the HTML.
   }
 
   // Assemble request body
-  const messages = [
-    { role: 'system', content: systemPrompt },
-    { role: 'user', content: query }
+  const messages: any[] = [
+    { role: 'system', content: systemPrompt }
   ];
+  
+  // Handle image analysis
+  if (file) {
+    // For image analysis, use the correct Perplexity format
+    messages.push({
+      role: 'user',
+      content: [
+        { type: 'text', text: query },
+        { type: 'image_url', image_url: { url: file } }
+      ]
+    });
+  } else {
+    messages.push({ role: 'user', content: query });
+  }
+  
   const body: any = {
     model,
     messages,
     temperature: 0.7,
     stream: false
   };
-  if (file) {
-    const [meta, data] = file.split(',');
-    const mimeType = meta.split(':')[1].split(';')[0];
-    body.parts = [
-      { text: query },
-      { inlineData: { mimeType, data } }
-    ];
-  }
 
   // Call API
   const resp = await fetch('https://api.perplexity.ai/chat/completions', {
