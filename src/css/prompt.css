@@ -219,4 +219,37 @@
 
 .nice-button.loading {
   animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Image Search Button */
+.image-search-button {
+  background-color: #6c757d; /* Gray */
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  font-size: 16px;
+  color: #ffffff;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+}
+
+.image-search-button:hover {
+  background-color: #5a6268; /* Darker gray */
+  color: #ffffff;
+}
+
+.image-search-button.active {
+  background-color: #28a745; /* Green */
+  color: #ffffff;
+}
+
+.image-search-button.active:hover {
+  background-color: #34ce57; /* Lighter green */
+  color: #ffffff;
 } 

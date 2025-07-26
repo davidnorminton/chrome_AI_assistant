@@ -277,26 +277,9 @@ export default function History() {
                     console.log('History click: item.id', item.id, 'index', index);
                     if (index >= 0) {
                       nav.setIndex(index);
+                      navigate("/");
                     }
                   }
-                  console.log('History click: navigating with state', {
-                    response: item.response,
-                    tags: item.tags,
-                    suggestedQuestions: item.suggestedQuestions,
-                    links: item.links,
-                    title: item.title,
-                    pageInfo: item.pageInfo,
-                  });
-                  navigate("/", {
-                    state: {
-                      response: item.response,
-                      tags: item.tags,
-                      suggestedQuestions: item.suggestedQuestions,
-                      links: item.links,
-                      title: item.title,
-                      pageInfo: item.pageInfo,
-                    }
-                  });
                 }}
               >
                 <div className="history-item-header">

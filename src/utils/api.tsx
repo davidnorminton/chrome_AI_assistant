@@ -6,9 +6,10 @@ export interface AIResponse {
   tags: string[];
   suggestedQuestions?: string[];
   links?: { title: string; url: string; description: string }[];
+  images?: { title: string; url: string; description: string; imageUrl: string }[];
 }
 
-export type AIAction = 'direct_question' | 'summarize_page' | 'get_links';
+export type AIAction = 'direct_question' | 'summarize_page' | 'get_links' | 'get_images';
 
 export async function sendQueryToAI({
   query,
@@ -58,6 +59,27 @@ Example format:
     "title": "Example Title",
     "url": "https://example.com",
     "description": "Brief description of the content"
+  }
+]
+
+Return only the JSON array, no other text.
+`.trim();
+  } else if (action === 'get_images') {
+    systemPrompt = `
+You are an AI assistant that searches for and returns high-quality images related to the user's query.
+Return exactly a JSON array of 10 images. Each object must have:
+  - "title": string (clear, descriptive title)
+  - "url": string (valid URL starting with http:// or https://)
+  - "description": string (brief description of the image)
+  - "imageUrl": string (direct URL to the image file, starting with http:// or https://)
+
+Example format:
+[
+  {
+    "title": "Example Image Title",
+    "url": "https://example.com/image-page",
+    "description": "Brief description of the image content",
+    "imageUrl": "https://example.com/image.jpg"
   }
 ]
 
@@ -149,6 +171,34 @@ Return only the HTML.
         tags: [],
         suggestedQuestions: [],
         links: []
+      };
+    }
+  } else if (action === 'get_images') {
+    try {
+      const parsedImages = JSON.parse(raw);
+      const limited = Array.isArray(parsedImages) ? parsedImages.slice(0, 10) : []; // Limit to 10 images
+      return {
+        text: '',
+        model,
+        tags: [],
+        suggestedQuestions: [],
+        links: [],
+        images: limited.map((img: any) => ({
+          title: img.title || 'Untitled',
+          url: img.url || '#',
+          description: img.description || 'No description available',
+          imageUrl: img.imageUrl || '#'
+        }))
+      };
+    } catch (parseError) {
+      console.error('Failed to parse images JSON:', raw, parseError);
+      return {
+        text: 'Failed to parse image search results',
+        model,
+        tags: [],
+        suggestedQuestions: [],
+        links: [],
+        images: []
       };
     }
   } else {
