@@ -6,6 +6,9 @@ import { createContext, useState, useEffect, useCallback } from 'react';
 import { getHistory } from './utils/storage';
 import type { HistoryItem } from './types';
 
+// Import STORAGE_KEY from storage utility
+const STORAGE_KEY = "extensionHistory";
+
 export interface HistoryNavContextType {
   history: HistoryItem[];
   currentIndex: number;
@@ -43,6 +46,23 @@ export default function App() {
       setHistory(historyItems);
       setInitialized(true); // Mark as initialized after loading history
     });
+  }, []);
+
+  // Listen for storage changes to keep history in sync
+  useEffect(() => {
+    const handleStorageChange = (changes: { [key: string]: chrome.storage.StorageChange }) => {
+      if (changes[STORAGE_KEY]) {
+        console.log('Storage changed, refreshing history');
+        getHistory().then((historyItems) => {
+          setHistory(historyItems);
+        });
+      }
+    };
+
+    chrome.storage.onChanged.addListener(handleStorageChange);
+    return () => {
+      chrome.storage.onChanged.removeListener(handleStorageChange);
+    };
   }, []);
 
   // Update history if it changes in storage (optional: add a listener for more reactivity)

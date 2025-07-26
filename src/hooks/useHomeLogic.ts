@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { getPageInfoFromTab, type PageInfo } from "../utils/tabs";
 import { sendQueryToAI, type AIResponse } from "../utils/api";
 import { addHistory } from "../utils/storage";
+import { processImagesWithBase64 } from "../utils/imageUtils";
 import { HistoryNavigationContext, AppActionsContext } from "../App";
 
 interface LinkItem {
@@ -20,7 +21,7 @@ export function useHomeLogic() {
   const [tags, setTags] = useState<string[]>([]);
   const [suggested, setSuggested] = useState<string[]>([]);
   const [links, setLinks] = useState<LinkItem[]>([]);
-  const [images, setImages] = useState<{ title: string; url: string; description: string; imageUrl: string }[]>([]);
+
   const [loading, setLoading] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [pageInfo, setPageInfo] = useState<PageInfo>({
@@ -32,12 +33,18 @@ export function useHomeLogic() {
   const [savedPageInfo, setSavedPageInfo] = useState<{ title: string; url: string; favicon: string } | null>(null);
   const [usePageContext, setUsePageContext] = useState(true);
   const [useWebSearch, setUseWebSearch] = useState(false);
-  const [useImageSearch, setUseImageSearch] = useState(false);
+
   const [screenshotData, setScreenshotData] = useState<string | null>(null);
+  const [restoredScreenshotData, setRestoredScreenshotData] = useState<string | null>(null);
   const lastProcessedIndexRef = useRef<number | null>(null);
 
   // Simple logic: show welcome only when there's no content
   const showWelcome = !outputHtml && tags.length === 0 && suggested.length === 0 && links.length === 0;
+
+  // Debug restoredScreenshotData changes
+  useEffect(() => {
+    console.log('restoredScreenshotData changed to:', restoredScreenshotData ? 'has data' : 'null/undefined');
+  }, [restoredScreenshotData]);
 
   // Fetch page metadata on mount
   useEffect(() => {
@@ -67,20 +74,18 @@ export function useHomeLogic() {
       console.log('=== HISTORY RESTORATION ===');
       console.log('Item type:', item.type);
       console.log('Item title:', item.title);
-      console.log('Item images:', item.images);
       console.log('Item links:', item.links);
+      console.log('Item screenshotData:', item.screenshotData ? 'present' : 'not present');
+      console.log('Setting restoredScreenshotData to:', item.screenshotData ? 'screenshot data' : 'null');
       
       setTags(item.tags ?? []);
       setSuggested(item.suggestedQuestions ?? []);
       setLinks(item.links ?? []);
-      setImages(item.images ?? []);
+      setRestoredScreenshotData(item.screenshotData || null);
       
       // Set search query for search results
-      if ((item.type === 'search' || item.type === 'image_search') && item.title.startsWith("Search results for")) {
+      if (item.type === 'search' && item.title.startsWith("Search results for")) {
         const match = item.title.match(/Search results for "([^"]+)"/);
-        setSearchQuery(match ? match[1] : "");
-      } else if (item.type === 'image_search' && item.title.startsWith("Image search results for")) {
-        const match = item.title.match(/Image search results for "([^"]+)"/);
         setSearchQuery(match ? match[1] : "");
       } else {
         setSearchQuery("");
@@ -88,14 +93,10 @@ export function useHomeLogic() {
       
       setSavedPageInfo(item.pageInfo ?? null);
       console.log('Display logic - item.links:', item.links?.length);
-      console.log('Display logic - item.images:', item.images?.length);
       console.log('Display logic - item.type:', item.type);
       
       if (item.links && item.links.length > 0 && item.type === 'search') {
         console.log('Setting output HTML to empty for search results');
-        setOutputHtml("");
-      } else if (item.images && item.images.length > 0 && item.type === 'image_search') {
-        console.log('Setting output HTML to empty for image search results');
         setOutputHtml("");
       } else {
         console.log('Setting output HTML to response:', item.response);
@@ -121,7 +122,7 @@ export function useHomeLogic() {
       setTags(state.tags ?? []);
       setSuggested(state.suggestedQuestions ?? []);
       setLinks(state.links ?? []);
-      setImages([]); // No images in state for now
+      setRestoredScreenshotData(null); // No screenshot data in location state
       
       // Set search query for search results
       if (state.title?.startsWith("Search results for")) {
@@ -146,7 +147,8 @@ export function useHomeLogic() {
       setTags([]);
       setSuggested([]);
       setLinks([]);
-      setImages([]);
+      setRestoredScreenshotData(null);
+
       setSearchQuery("");
       setSavedPageInfo(null);
       lastProcessedIndexRef.current = null;
@@ -156,14 +158,11 @@ export function useHomeLogic() {
       setTags(item.tags ?? []);
       setSuggested(item.suggestedQuestions ?? []);
       setLinks(item.links ?? []);
-      setImages(item.images ?? []);
+      setRestoredScreenshotData(item.screenshotData || null);
       
       // Set search query for search results
-      if ((item.type === 'search' || item.type === 'image_search') && item.title.startsWith("Search results for")) {
+      if (item.type === 'search' && item.title.startsWith("Search results for")) {
         const match = item.title.match(/Search results for "([^"]+)"/);
-        setSearchQuery(match ? match[1] : "");
-      } else if (item.type === 'image_search' && item.title.startsWith("Image search results for")) {
-        const match = item.title.match(/Image search results for "([^"]+)"/);
         setSearchQuery(match ? match[1] : "");
       } else {
         setSearchQuery("");
@@ -171,8 +170,6 @@ export function useHomeLogic() {
       
       setSavedPageInfo(item.pageInfo ?? null);
       if (item.links && item.links.length > 0 && item.type === 'search') {
-        setOutputHtml("");
-      } else if (item.images && item.images.length > 0 && item.type === 'image_search') {
         setOutputHtml("");
       } else {
         setTimeout(() => {
@@ -190,6 +187,7 @@ export function useHomeLogic() {
     setTags([]);
     setSuggested([]);
     setLinks([]);
+    setRestoredScreenshotData(null); // Clear screenshot data when summarizing
     setSearchQuery("");
     setLoading(true);
     
@@ -249,12 +247,11 @@ export function useHomeLogic() {
     query: string,
     fileData: string | null,
     _useContext: boolean,
-    _useWebSearch: boolean,
-    _useImageSearch: boolean
+    _useWebSearch: boolean
   ) => {
     setLoading(true);
     setLinks([]);
-    setImages([]);
+    setRestoredScreenshotData(null); // Clear restored screenshot data for new queries
     setSearchQuery("");
     setOutputHtml("");
     
@@ -311,47 +308,6 @@ export function useHomeLogic() {
         setScreenshotData(null);
         setLoading(false);
         return; // Exit early since we handled the web search separately
-      } else if (_useImageSearch) {
-        // Disable page context and web search when image search is active
-        setUsePageContext(false);
-        setUseWebSearch(false);
-        
-        console.log('=== IMAGE SEARCH REQUEST ===');
-        console.log('Query:', query);
-        
-        const res: AIResponse = await sendQueryToAI({
-          query: query,
-          action: "get_images",
-        });
-        
-        console.log('=== IMAGE SEARCH RESPONSE ===');
-        console.log('Complete AI Response:', res);
-        console.log('Response text:', res.text);
-        console.log('Response images:', res.images);
-        
-        const imagesArr = res.images?.slice(0, 15) ?? [];
-        console.log('Processed images array:', imagesArr);
-        
-        setImages(imagesArr);
-        
-        if (imagesArr.length === 0) {
-          setOutputHtml(`<p>No image search results found for "${query}".</p>`);
-        } else {
-          setOutputHtml(''); // Clear output HTML since we'll handle display separately
-        }
-
-        await addHistory({
-          title: `Image search results for "${query}"`,
-          type: 'image_search',
-          response: imagesArr.length > 0 ? `Found ${imagesArr.length} image search results for "${query}":` : `No image search results found for "${query}".`,
-          tags: [],
-          suggestedQuestions: [],
-          images: imagesArr,
-        });
-        
-        setScreenshotData(null);
-        setLoading(false);
-        return; // Exit early since we handled the image search separately
       } else if (imageData) {
         finalQuery = query;
       }
@@ -387,6 +343,7 @@ export function useHomeLogic() {
         response: res.text,
         tags: res.tags ?? [],
         suggestedQuestions: res.suggestedQuestions ?? [],
+        screenshotData: imageData || undefined,
         pageInfo: {
           title: info.title || "",
           url: info.url || "",
@@ -509,11 +466,7 @@ export function useHomeLogic() {
     return links.length > 0;
   }, [links.length]);
 
-  // Helper to determine if we should show image list
-  const shouldShowImageList = useCallback(() => {
-    // Show image list whenever we have images (for image search results)
-    return images.length > 0;
-  }, [images.length]);
+
 
   // Send news query function
   const sendNewsQuery = useCallback((query: string) => {
@@ -531,6 +484,7 @@ export function useHomeLogic() {
       setTags([]);
       setSuggested([]);
       setLinks([]);
+      setRestoredScreenshotData(null); // Clear screenshot data
       setSearchQuery("");
       setLoading(false);
       
@@ -553,12 +507,13 @@ export function useHomeLogic() {
       setTags([]);
       setSuggested([]);
       setLinks([]);
+      setRestoredScreenshotData(null); // Clear screenshot data
       setSearchQuery("");
       setLoading(true);
       
       // Send the actual query to AI
       setTimeout(() => {
-        handleSend(actualQuery, null, false, false, false);
+        handleSend(actualQuery, null, false, false);
       }, 100);
       
       return;
@@ -569,11 +524,12 @@ export function useHomeLogic() {
     setTags([]);
     setSuggested([]);
     setLinks([]);
+    setRestoredScreenshotData(null); // Clear screenshot data
     setSearchQuery("");
     setLoading(true);
     
     // Send the query to AI
-            handleSend(query, null, false, false, false);
+            handleSend(query, null, false, false);
   }, [handleSend]);
 
   // Add event listeners for location form
@@ -729,7 +685,7 @@ export function useHomeLogic() {
       setLinks([]);
       setSearchQuery("");
       setLoading(true);
-      handleSend(query, null, false, false, false);
+      handleSend(query, null, false, false);
     }
   };
 
@@ -739,7 +695,6 @@ export function useHomeLogic() {
     tags,
     suggested,
     links,
-    images,
     loading,
     searchQuery,
     pageInfo,
@@ -748,9 +703,9 @@ export function useHomeLogic() {
     setUsePageContext,
     useWebSearch,
     setUseWebSearch,
-    useImageSearch,
-    setUseImageSearch,
+
     screenshotData,
+    restoredScreenshotData,
     showWelcome,
     
     // Handlers
@@ -764,7 +719,7 @@ export function useHomeLogic() {
     // Helpers
     shouldShowPageHeader,
     shouldShowLinkList,
-    shouldShowImageList,
+
     sendNewsQuery,
   };
 } 

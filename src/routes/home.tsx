@@ -5,7 +5,7 @@ import Prompt from "../prompt/prompt";
 import ContentDisplay from "../components/ContentDisplay";
 import PageHeader from "../components/PageHeader";
 import LinkList from "../components/LinkList";
-import ImageList from "../components/ImageList";
+
 import { useHomeLogic } from "../hooks/useHomeLogic";
 import { AppActionsContext } from "../App";
 
@@ -25,10 +25,9 @@ export default function Home() {
     setUsePageContext,
     useWebSearch,
     setUseWebSearch,
-    useImageSearch,
-    setUseImageSearch,
-    images,
+
     screenshotData,
+    restoredScreenshotData,
     showWelcome,
     
     // Handlers
@@ -42,7 +41,7 @@ export default function Home() {
     // Helpers
     shouldShowPageHeader,
     shouldShowLinkList,
-    shouldShowImageList,
+
     sendNewsQuery,
   } = useHomeLogic();
 
@@ -56,7 +55,7 @@ export default function Home() {
   // Calculate display states
   const showPageHeader = Boolean(outputHtml) && shouldShowPageHeader();
   const showLinkList = shouldShowLinkList();
-  const showImageList = shouldShowImageList();
+
 
   return (
     <div id="tabContent">
@@ -75,12 +74,7 @@ export default function Home() {
           shouldShow={showLinkList}
         />
 
-        {/* Image List */}
-        <ImageList
-          images={images}
-          searchQuery={searchQuery}
-          shouldShow={showImageList}
-        />
+
 
         {/* Content Display */}
         <ContentDisplay
@@ -91,6 +85,7 @@ export default function Home() {
           onSuggestedClick={handleSuggestedClick}
           onClearContent={handleClearContent}
           showWelcome={showWelcome}
+          screenshotData={restoredScreenshotData || undefined}
         >
           <Welcome onSummarize={() => handleSummarize()} />
         </ContentDisplay>
@@ -104,8 +99,7 @@ export default function Home() {
           setUseContext={setUsePageContext}
           useWebSearch={useWebSearch}
           setUseWebSearch={setUseWebSearch}
-          useImageSearch={useImageSearch}
-          setUseImageSearch={setUseImageSearch}
+
           onScreenshotCapture={handleScreenshotCapture}
         />
       </div>

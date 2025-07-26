@@ -7,11 +7,9 @@ import { useContext } from "react";
 import { HistoryNavigationContext } from "../App";
 
 export default function History() {
-  const [items, setItems] = useState<HistoryItem[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedFilter, setSelectedFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("newest");
-  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [displayedItems, setDisplayedItems] = useState<HistoryItem[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
@@ -21,34 +19,9 @@ export default function History() {
 
   const ITEMS_PER_PAGE = 15;
 
-  useEffect(() => {
-    loadHistory();
-  }, []);
-
-  const loadHistory = async () => {
-    setIsLoading(true);
-    try {
-      const historyItems = await getHistory();
-      // Validate and clean up history items to ensure they have required fields
-      const validatedItems = historyItems.map(item => ({
-        id: item.id || crypto.randomUUID(),
-        timestamp: item.timestamp || new Date().toISOString(),
-        title: item.title || "Untitled",
-        type: item.type || 'question', // Default to question for backward compatibility
-        response: item.response || "",
-        tags: Array.isArray(item.tags) ? item.tags : [],
-        suggestedQuestions: Array.isArray(item.suggestedQuestions) ? item.suggestedQuestions : [],
-        links: Array.isArray(item.links) ? item.links : [],
-        pageInfo: item.pageInfo || undefined
-      }));
-      setItems(validatedItems);
-    } catch (error) {
-      console.error("Failed to load history:", error);
-      setItems([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Use navigation context history instead of loading separately
+  const items = nav?.history || [];
+  const isLoading = !nav?.initialized;
 
   // Filter and sort items
   const filteredAndSortedItems = useMemo(() => {
@@ -126,7 +99,7 @@ export default function History() {
     e.stopPropagation();
     try {
       await removeHistory(id);
-      setItems(prev => prev.filter(item => item.id !== id));
+      // The navigation context will automatically update when storage changes
     } catch (error) {
       console.error("Failed to delete history item:", error);
     }

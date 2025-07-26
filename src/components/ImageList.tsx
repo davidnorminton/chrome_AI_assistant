@@ -5,6 +5,7 @@ interface ImageItem {
   url: string;
   description: string;
   imageUrl: string;
+  base64Data?: string;
 }
 
 interface ImageListProps {
@@ -32,7 +33,7 @@ export default function ImageList({ images, searchQuery, shouldShow }: ImageList
           <div key={index} className="image-item" onClick={() => handleImageClick(image.url)}>
             <div className="image-thumbnail">
               <img 
-                src={image.imageUrl} 
+                src={image.base64Data || image.imageUrl} 
                 alt={image.title}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;

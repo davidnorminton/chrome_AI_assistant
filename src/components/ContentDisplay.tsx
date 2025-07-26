@@ -8,6 +8,7 @@ interface ContentDisplayProps {
   onSuggestedClick: (question: string) => void;
   onClearContent: () => void;
   showWelcome: boolean;
+  screenshotData?: string; // Screenshot data to display
   children?: React.ReactNode; // For Welcome component
 }
 
@@ -19,8 +20,11 @@ export default function ContentDisplay({
   onSuggestedClick,
   onClearContent,
   showWelcome,
+  screenshotData,
   children
 }: ContentDisplayProps) {
+  // Debug screenshot data
+  console.log('ContentDisplay - screenshotData:', screenshotData ? 'present' : 'not present');
   return (
     <div id="responseBox">
       <div id="output">
@@ -39,6 +43,15 @@ export default function ContentDisplay({
                 <i className="fas fa-times"></i>
               </button>
             </div>
+            {screenshotData && (
+              <div className="screenshot-display">
+                <img 
+                  src={screenshotData} 
+                  alt="Screenshot" 
+                  className="screenshot-image"
+                />
+              </div>
+            )}
             <div dangerouslySetInnerHTML={{ __html: outputHtml }} />
             {tags.length > 0 && (
               <div className="tags-container">

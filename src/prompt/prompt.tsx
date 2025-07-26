@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from "react";
 
 interface PromptProps {
   /** Called for the "Send" button */
-  onSend: (query: string, fileData: string | null, usePageContext: boolean, useWebSearch: boolean, useImageSearch: boolean) => void;
+  onSend: (query: string, fileData: string | null, usePageContext: boolean, useWebSearch: boolean) => void;
   /** Called for the "Summarize" button */
   onSummarize: () => void;
   /** Whether any request is in flight */
@@ -16,15 +16,11 @@ interface PromptProps {
   useWebSearch: boolean;
   /** Setter for web search toggle */
   setUseWebSearch: (val: boolean) => void;
-  /** Whether to use image search */
-  useImageSearch: boolean;
-  /** Setter for image search toggle */
-  setUseImageSearch: (val: boolean) => void;
   /** Called when a screenshot is captured */
   onScreenshotCapture?: (imageData: string) => void;
 }
 
-export default function Prompt({ onSend, onSummarize, loading, useContext, setUseContext, useWebSearch, setUseWebSearch, useImageSearch, setUseImageSearch, onScreenshotCapture }: PromptProps) {
+export default function Prompt({ onSend, onSummarize, loading, useContext, setUseContext, useWebSearch, setUseWebSearch, onScreenshotCapture }: PromptProps) {
   const [text, setText] = useState("");
   const [fileData, setFileData] = useState<string | null>(null);
   const [isScreenshotMode, setIsScreenshotMode] = useState(false);
@@ -73,7 +69,7 @@ export default function Prompt({ onSend, onSummarize, loading, useContext, setUs
 
   const handleSendClick = () => {
     if (!text.trim() && !fileData) return;
-    onSend(text.trim(), fileData, useContext, useWebSearch, useImageSearch);
+    onSend(text.trim(), fileData, useContext, useWebSearch);
     setText("");
     setFileData(null);
   };
@@ -171,7 +167,6 @@ export default function Prompt({ onSend, onSummarize, loading, useContext, setUs
               // Disable page context when web search is enabled
               if (newWebSearchState) {
                 setUseContext(false);
-                setUseImageSearch(false);
               }
             }}
             disabled={loading}
@@ -180,24 +175,7 @@ export default function Prompt({ onSend, onSummarize, loading, useContext, setUs
             <i className="fas fa-globe" />
           </button>
 
-          {/* Toggle image search */}
-          <button
-            id="toggleImageSearchBtn"
-            className={`nice-button image-search-button ${useImageSearch ? "active" : ""}`}
-            onClick={() => {
-              const newImageSearchState = !useImageSearch;
-              setUseImageSearch(newImageSearchState);
-              // Disable page context and web search when image search is enabled
-              if (newImageSearchState) {
-                setUseContext(false);
-                setUseWebSearch(false);
-              }
-            }}
-            disabled={loading}
-            title="Image Search"
-          >
-            <i className="fas fa-image" />
-          </button>
+          
 
           {/* Summarize */}
           <button
