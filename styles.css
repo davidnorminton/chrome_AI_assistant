@@ -1,0 +1,1298 @@
+/* General Body and Font Styles */
+body {
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f4f7f6; /* Light background for the sidebar */
+  color: #333; /* Default text color */
+  overflow-x: hidden; /* Prevent horizontal scroll */
+  font-size: 15px; /* Base font size increased */
+  padding-right: 42px; /* prevent content from going under right menu */
+  box-sizing: border-box;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+*:hover {
+  cursor: pointer;
+}
+/* Sidebar Container */
+#sidebar {
+  width: 100%;
+  height: 100vh; /* Full viewport height */
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff; /* White background for the sidebar */
+  box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease-in-out;
+  border-radius: 8px; /* Rounded corners for the sidebar */
+  overflow: hidden; /* Hide anything outside the sidebar's bounds */
+}
+
+/* Dark Mode Styles */
+#sidebar.dark-mode {
+  background-color: #282c34;
+  color: #e0e0e0;
+  box-shadow: -4px 0 15px rgba(0, 0, 0, 0.5); /* Slightly stronger shadow for dark mode */
+}
+
+#sidebar.dark-mode .sidebar-header,
+#sidebar.dark-mode #bottomControls { /* Removed .tabs */
+  background-color: #3a3f4a;
+  border-color: #4a4f58; /* Darker border */
+}
+
+/* Removed .tab specific dark mode styles */
+
+#sidebar.dark-mode #inputBox, /* This is now the main-prompt-area */
+#sidebar.dark-mode #cmdInput,
+#sidebar.dark-mode #responseBox,
+#sidebar.dark-mode .history-item,
+#sidebar.dark-mode .nice-button {
+  background-color: #3a3f4a;
+  border-color: #4a4f58; /* Consistent border */
+  color: #e0e0e0;
+}
+
+#sidebar.dark-mode #cmdInput::placeholder {
+  color: #bbb;
+}
+
+#sidebar.dark-mode .copy-button {
+    background-color: #555c66;
+    color: #e0e0e0;
+}
+
+#sidebar.dark-mode .copy-button:hover {
+    background-color: #6a737d;
+}
+
+#sidebar.dark-mode .loading-status-message {
+    color: #bbb;
+}
+
+#sidebar.dark-mode .history-delete {
+    color: #e0e0e0; /* Keep white for visibility */
+    background-color: rgba(220, 53, 69, 0.2); /* Subtle red background */
+}
+#sidebar.dark-mode .history-delete:hover {
+    background-color: rgba(220, 53, 69, 0.4);
+}
+
+
+/* Header Styles */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  background-color: #f0f3f2;
+  border-bottom: 1px solid #e0e0e0;
+  gap: 10px;
+  min-height: 50px;
+}
+
+.sidebar-header img {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+.sidebar-header span {
+  font-size: 0.95em; /* Slightly larger */
+  color: #666;
+  flex-grow: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* General button reset for header buttons */
+.sidebar-header button {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+/* Specific styles for general icon buttons in header (Settings Toggle, History Toggle) */
+.header-icon-button {
+  background: none; /* No background by default */
+  border: none;
+  font-size: 1.2em; /* Icon size increased */
+  color: #666; /* Icon color */
+  padding: 5px;
+  border-radius: 50%; /* Circular */
+}
+
+.header-icon-button:hover {
+  background-color: #e0e0e0; /* Hover effect */
+}
+
+/* Dark mode for general icon buttons in header */
+#sidebar.dark-mode .header-icon-button {
+    color: #e0e0e0; /* Lighter icon color */
+    background: none; /* Still no background by default */
+}
+
+#sidebar.dark-mode .header-icon-button:hover {
+    background-color: #555c66; /* Darker hover for icon buttons */
+}
+
+/* Specific styles for history navigation buttons in header */
+#historyBackBtn, #historyForwardBtn {
+    width: 32px; /* Slightly larger */
+    height: 32px; /* Slightly larger */
+    font-size: 1em; /* Slightly larger icon */
+}
+
+#historyBackBtn:disabled,
+#historyForwardBtn:disabled {
+    opacity: 0.9;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* Dark mode for history navigation buttons */
+#sidebar.dark-mode #historyBackBtn,
+#sidebar.dark-mode #historyForwardBtn {
+    background-color: #4a4f58; /* Darker background for history buttons */
+    color: #8e82f7; /* Lighter accent color */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* Removed .page-title styles */
+/* Removed .tabs and .tab styles */
+
+
+/* Tab Content Panels (now just the main content area) */
+#tabContent {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Ensure panels don't overflow */
+}
+
+.tab-panel { /* This now applies to the main content area */
+  display: block; /* Always display */
+  padding: 15px;
+  overflow-y: auto; /* Enable scrolling for content within panels */
+  min-height: calc(100% - 63px);
+}
+
+/* New Error Message Styles */
+.error-message {
+  background-color: #ffe0e0; /* Light red background */
+  color: #d32f2f; /* Dark red text */
+  border: 1px solid #d32f2f;
+  border-radius: 6px;
+  padding: 10px 15px;
+  margin-bottom: 15px; /* Space below the message */
+  font-size: 0.95em;
+  font-weight: 500;
+  text-align: center;
+}
+
+#sidebar.dark-mode .error-message {
+  background-color: #5a2c2c; /* Darker red for dark mode */
+  color: #ffbaba; /* Lighter red text */
+  border-color: #ffbaba;
+}
+
+
+/* Response Box */
+#responseBox {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-bottom: 15px; /* Space for controls */
+}
+
+#output {
+  min-height: 100px;
+  border-radius: 8px;
+  line-height: 1.6;
+  font-size: 1.1em; /* Increased font size */
+  color: #333;
+  position: relative; /* For copy button positioning */
+  padding-bottom: 150px;
+}
+
+#output p {
+  margin-bottom: 0.8em; /* Reduced margin */
+}
+
+#output ul, #output ol {
+  margin-bottom: 0.8em; /* Reduced margin */
+  padding-left: 30px;
+}
+
+#output li {
+    margin-bottom: 8px;
+}
+
+
+#output h1, #output h2, #output h3, #output h4 {
+  margin-top: 1.4em; /* Adjusted margin */
+  margin-bottom: 0.7em; /* Adjusted margin */
+  color: #2c3e50; /* Darker heading color */
+  font-size: 1.1em; /* Increased heading font size */
+}
+
+#output strong {
+  font-weight: bold;
+}
+
+#output em {
+  font-style: italic;
+}
+
+#output a {
+  color: #4f46e5;
+  text-decoration: none;
+}
+
+#output a:hover {
+  text-decoration: underline;
+}
+
+#output img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 10px 0;
+    display: block; /* Ensures image takes its own line */
+}
+
+.orla {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  align-items: center;
+}
+
+.orla h1 {
+  font-size: 6em !important;
+  letter-spacing: 12px;
+  font-family: system-ui;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.orla p {
+  font-size: 1.1em;
+  margin-top: 0;
+  padding-top: 0;
+  position: relative;
+  bottom: 38px;
+}
+
+/* Page Link Header (for summarized pages) */
+.page-link-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    margin-right: 30px;
+    border-bottom: 1px dashed #e0e0e0;
+}
+
+.page-link-header .header-favicon {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+}
+
+.page-link-header a {
+    font-size: 1.05em; /* Increased font size */
+    font-weight: 600;
+    color: #494853 !important;
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.page-link-header a:hover {
+  text-decoration: underline;
+}
+
+/* Copy button for output */
+.copy-button {
+  position: fixed;
+  top: 75px;
+  right: 5px;
+  background-color: #e0e0e0;
+  border: none;
+  border-radius: 5px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.95em; /* Increased font size */
+  color: #555;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.copy-button:hover {
+  background-color: #d0d0d0;
+}
+
+.copy-feedback {
+  position: absolute;
+  top: 12px; /* Adjusted position */
+  right: 65px; /* Adjusted based on button width */
+  background-color: #4CAF50; /* Green background */
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 0.9em; /* Increased font size */
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.copy-feedback.hidden {
+  opacity: 0;
+}
+
+/* Loading Message */
+.loading-status-message {
+    text-align: center;
+    padding: 20px;
+    font-size: 1.15em; /* Increased font size */
+    color: #666;
+}
+
+.loading-status-message .fa-spinner {
+    margin-right: 8px;
+}
+
+/* Bottom Controls */
+#bottomControls {
+  padding: 15px 5px;
+  display: block;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  min-width: calc(100% - 42px);
+}
+
+/* Action Buttons Row (Summarize, New Chat, Page Context) */
+.action-buttons-row {
+  display: inline-flex;
+}
+
+.action-buttons-row .nice-button {
+  text-align: left;
+  padding: 5px;
+  font-size: 1em;
+  border: 0;
+}
+
+.action-buttons-row .context-toggle {
+    flex-shrink: 0; /* Prevent context toggle from shrinking too much */
+    min-width: fit-content; /* Ensure it takes only needed width */
+    font-size: 0.9em; /* Match button font size */
+}
+
+/* Summarize Button Specifics */
+#summarizeBtn {
+  border: 0;
+  background: #f9f9f9;
+  padding-left: 15px;
+  padding-right: 15px;
+  position: relative;
+  margin-left: 15px;
+}
+#summarizeBtn:hover {
+  background-color: #5046e5;
+  color: white;
+}
+
+
+/* New Chat Button Specific Style */
+.clear-chat-button {
+    background-color: transparent;
+    border: 0;
+}
+
+.clear-chat-button:hover {
+  background-color: #304fc0;
+  color: white;
+  cursor: pointer;
+}
+
+#sidebar.dark-mode .clear-chat-button {
+    background-color: #4a4f58;
+    color: #e0e0e0;
+}
+
+#sidebar.dark-mode .clear-chat-button:hover {
+  background-color: #304fc0;
+  color: white;
+  cursor: pointer;
+}
+
+
+/* Context Toggle */
+.context-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.context-toggle input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #4f46e5; /* Highlight color for checkbox */
+  cursor: pointer;
+}
+
+.context-toggle label {
+  font-size: 0.95em; /* Increased font size */
+  color: #555;
+  cursor: pointer;
+}
+
+
+/* Main Prompt Area (Gemini-like) */
+.main-prompt-area {
+  align-items: flex-end; /* Align items to the bottom (textarea can grow) */
+  gap: 8px; /* Space between elements */
+  border: 4px solid #000;;
+  border-radius: 24px; /* Pill shape for the entire input area */
+  padding: 8px 15px; /* Padding inside the pill */
+  background-color: #f9f9f9;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+
+#newChatBtn > span, #toggleContextBtn > span {
+  display: none;
+}
+
+
+
+#newChatBtn {
+  position: relative;
+}
+
+#toggleContextBtn {
+  position: relative;
+}
+
+.end {
+  position: absolute;
+  right: 20px;
+}
+
+.context-toggle-button {
+  border-radius: 25px;
+  padding: 5px 8px !important;
+  color: white;
+  background: red;
+}
+
+.context-toggle-button.active {
+  background: green;
+}
+
+.context-toggle-button:hover::before {
+  content: "Ask a question about this page";
+  position: absolute;
+  bottom: 35px;
+  background: black;
+  color: white;
+  width: 220px;
+  left: -60px;
+  border-radius: 5px;
+  text-align: center;
+  padding: 5px; 
+}
+
+.context-toggle-button.active:hover::before {
+  content: "Ask a General Question";
+  width: 180px;
+  left: -61px;
+}
+
+.context-toggle-button {
+  margin-left: 15px;
+}
+
+.context-toggle-button.active {
+  background: #28a745;
+  color: white;
+  border-radius: 25px;
+  padding: 5px 8px;
+}
+
+.context-toggle-button.active:hover {
+  padding: 5px 8px;
+}
+
+#newChatBtn:hover::before {
+  content: "Clear content";
+  position: absolute;
+  top: 0px;
+  background: black;
+  width: 117px;
+  padding: 5px;
+  right: 38px;
+  border-radius: 5px;
+  color: white;
+  font-size: 0.8em;
+}
+
+#copyToggle {
+  position: relative;
+}
+
+#copyToggle:hover::before {
+  content: "Copy to clipboard";
+  position: absolute;
+  top: 0px;
+  background: black;
+  width: 117px;
+  padding: 5px;
+  right: 38px;
+  border-radius: 5px;
+  color: white;
+  font-size: 0.8em;  
+}
+
+#settingsToggle {
+  position: relative;
+}
+
+#settingsToggle:hover::before {
+  content: "Settings";
+  position: absolute;
+  top: 0px;
+  background: black;
+  width: 117px;
+  padding: 5px;
+  right: 38px;
+  border-radius: 5px;
+  color: white;
+  font-size: 0.8em; 
+}
+
+#historyToggle {
+  position: relative;
+}
+
+#historyForwardBtn {
+  position: relative;
+}
+
+#historyForwardBtn:hover::before {
+  content: "Forward";
+  position: absolute;
+  top: 0px;
+  background: black;
+  width: 117px;
+  padding: 5px;
+  right: 38px;
+  border-radius: 5px;
+  color: white;
+  font-size: 0.8em; 
+}
+
+#historyBackBtn {
+  position: relative;
+}
+
+#historyBackBtn:hover::before {
+  content: "Back";
+  position: absolute;
+  top: 0px;
+  background: black;
+  width: 117px;
+  padding: 5px;
+  right: 38px;
+  border-radius: 5px;
+  color: white;
+  font-size: 0.8em; 
+}
+
+#historyToggle:hover::before {
+  content: "History";
+  position: absolute;
+  top: 0px;
+  background: black;
+  width: 117px;
+  padding: 5px;
+  right: 38px;
+  border-radius: 5px;
+  color: white;
+  font-size: 0.8em; 
+}
+
+#cmdInput {
+  width: 100%;
+  box-sizing: border-box;
+  display: block;
+  cursor: text;
+  margin-bottom: 15px;
+}
+
+.main-prompt-area:focus-within {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+}
+
+#sidebar.dark-mode .main-prompt-area {
+  background-color: #3a3f4a;
+  border-color: #4a4f58;
+}
+
+#sidebar.dark-mode .main-prompt-area:focus-within {
+  border-color: #8e82f7;
+  box-shadow: 0 0 0 3px rgba(142, 130, 247, 0.3);
+}
+
+
+/* Textarea within main prompt area */
+#cmdInput {
+  flex-grow: 1;
+  border: none; /* Remove individual border */
+  outline: none; /* Remove outline on focus */
+  padding: 5px 10px; /* Remove padding, handled by parent */
+  background-color: transparent; /* Transparent background */
+  color: #333;
+  font-size: 1em; /* Inherit or set specific size */
+  min-height: 24px; /* Base height for one line of text */
+  max-height: 120px; /* Max height before scrollbar appears */
+  resize: none; /* Disable manual resize */
+  overflow-y: auto; /* Enable scrollbar when content exceeds max-height */
+  line-height: 1.5;
+}
+
+#sidebar.dark-mode #cmdInput {
+  color: #e0e0e0;
+}
+
+#sidebar.dark-mode #cmdInput::placeholder {
+  color: #bbb;
+}
+
+
+/* Icon Buttons (for + and Send) */
+.icon-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px; /* Padding around the icon */
+  border-radius: 50%; /* Circular shape */
+  font-size: 1.1em; /* Icon size */
+  color: #666;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0; /* Prevent shrinking */
+  width: 32px; /* Fixed width */
+  height: 32px; /* Fixed height */
+}
+
+.icon-button:hover {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+#sidebar.dark-mode .icon-button {
+  color: #bbb;
+}
+
+#sidebar.dark-mode .icon-button:hover {
+  background-color: #555c66;
+  color: #e0e0e0;
+}
+
+/* Specific styles for File Upload Button */
+.file-upload-button {
+  color: #4f46e5; /* Accent color for plus */
+}
+.file-upload-button:hover {
+  background-color: #e6e4ff; /* Lighter accent hover */
+}
+#sidebar.dark-mode .file-upload-button {
+  color: #8e82f7;
+}
+#sidebar.dark-mode .file-upload-button:hover {
+  background-color: #4a4f58;
+}
+
+
+/* Specific styles for Send Button */
+.send-button {
+  background-color: #b8b6f0; /* Primary accent color */
+  color: #000;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.send-button:hover {
+  background-color: #4f46e5;
+  color: white;
+}
+
+.send-button:disabled {
+  background-color: #a0aec0;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+#sidebar.dark-mode .send-button {
+  background-color: #8e82f7;
+  color: #282c34;
+}
+
+#sidebar.dark-mode .send-button:hover {
+  background-color: #7a6ee0;
+}
+
+#sidebar.dark-mode .send-button:disabled {
+  background-color: #555c66;
+  color: #999;
+}
+
+
+/* Spinner Animation */
+.spinner {
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid #fff;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+}
+
+.spinner.hidden {
+  display: none;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.hidden {
+  display: none !important;
+}
+
+
+/* History List (now within an overlay) */
+#historyList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.history-item {
+  background-color: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 12px 15px;
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  position: relative;
+  cursor: pointer; /* Make the whole item clickable to display content */
+  transition: background-color 0.2s ease;
+}
+
+.history-item:hover {
+  background-color: #f0f0f0;
+}
+
+.history-question {
+  font-weight: bold;
+  color: #333;
+  font-size: 1em; /* Increased font size */
+  padding-right: 30px; /* Space for delete button */
+}
+
+.history-response-preview {
+    font-size: 0.9em; /* Increased font size */
+    color: #666;
+    max-height: 40px; /* Limit preview height */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap; /* Keep preview on one line */
+}
+
+
+.history-time {
+  font-size: 0.8em; /* Increased font size */
+  color: #888;
+}
+
+.history-delete {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  color: #dc3545; /* Red for delete */
+  cursor: pointer;
+  font-size: 1.1em; /* Increased font size */
+  padding: 5px;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+}
+
+.history-delete:hover {
+  background-color: rgba(220, 53, 69, 0.1);
+}
+
+
+/* New Styles for Tags (Pills) */
+.tags-container {
+  margin-bottom: 15px;
+  display: flex; /* Use flexbox for inline display */
+  flex-wrap: wrap; /* Allow tags to wrap to the next line */
+  gap: 8px; /* Space between tags */
+}
+
+.tag-item {
+  background-color: #e0f2f7; /* Light blue background */
+  color: #007bff; /* Blue text */
+  padding: 5px 12px;
+  border-radius: 20px; /* Pill shape */
+  font-size: 0.85em; /* Increased font size */
+  font-weight: 500;
+  white-space: nowrap; /* Prevent text wrapping inside the pill */
+  border: 1px solid #cce7f0; /* Light border */
+  cursor: pointer; /* Added cursor pointer */
+  transition: background-color 0.2s ease, border-color 0.2s ease; /* Added transition */
+}
+
+.tag-item:hover {
+  background-color: #cce7f0; /* Lighter blue on hover */
+  border-color: #007bff; /* Darker blue border on hover */
+}
+
+/* Dark mode for tags */
+#sidebar.dark-mode .tag-item {
+  background-color: #4a698a; /* Darker blue background */
+  color: #e0f2f7; /* Lighter text */
+  border-color: #6a8bb0;
+}
+
+#sidebar.dark-mode .tag-item:hover {
+  background-color: #5a7a9a; /* Darker hover in dark mode */
+  border-color: #e0f2f7;
+}
+
+/* Dot animation for loading message */
+.dot-animation span {
+  opacity: 0;
+  animation: dot-fade 1.5s infinite;
+}
+
+.dot-animation span:nth-child(1) { animation-delay: 0s; }
+.dot-animation span:nth-child(2) { animation-delay: 0.5s; }
+.dot-animation span:nth-child(3) { animation-delay: 1s; }
+
+@keyframes dot-fade {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
+/* Settings Overlay Styles */
+.settings-overlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 100%; /* Take full width of the sidebar */
+  height: 100%;
+  background-color: #ffffff; /* White background for the overlay */
+  transform: translateX(100%); /* Start off-screen to the right */
+  transition: transform 0.3s ease-in-out;
+  z-index: 1000; /* Ensure it's above other sidebar content */
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px; /* Match sidebar's border-radius */
+  overflow: hidden; /* Hide overflow during transition */
+}
+
+.settings-overlay.active {
+  transform: translateX(0); /* Slide in */
+}
+
+#sidebar.dark-mode .settings-overlay {
+  background-color: #282c34; /* Dark mode background for overlay */
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  background-color: #f0f3f2;
+  border-bottom: 1px solid #e0e0e0;
+  gap: 10px;
+  min-height: 50px;
+}
+
+#sidebar.dark-mode .settings-header {
+  background-color: #3a3f4a;
+  border-color: #4a4f58;
+}
+
+.settings-header h2 {
+  font-size: 1.15em; /* Increased font size */
+  font-weight: bold;
+  color: #444;
+  flex-grow: 1;
+  margin: 0; /* Reset margin */
+}
+
+#sidebar.dark-mode .settings-header h2 {
+  color: #e0e0e0;
+}
+
+/* Reusing header-icon-button for close and dark mode toggle within settings */
+.settings-header .header-icon-button {
+  font-size: 1.2em; /* Increased font size */
+  color: #666;
+  background: none;
+  border: none;
+  padding: 5px;
+  border-radius: 50%;
+}
+
+.settings-header .header-icon-button:hover {
+  background-color: #e0e0e0;
+}
+
+#sidebar.dark-mode .settings-header .header-icon-button {
+  color: #e0e0e0;
+}
+
+#sidebar.dark-mode .settings-header .header-icon-button:hover {
+  background-color: #555c66;
+}
+
+
+.settings-content {
+  flex-grow: 1; /* Allow content to fill remaining space */
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  overflow-y: auto; /* Enable scrolling for settings content */
+}
+
+.settings-content h3 { /* Changed from h2 to h3 for consistency with sidebar.html */
+  font-size: 1.1em; /* Increased font size */
+  color: #2c3e50;
+  margin-bottom: 5px; /* Reduced margin */
+}
+
+#sidebar.dark-mode .settings-content h3 {
+  color: #e0e0e0;
+}
+
+.settings-content label {
+  font-size: 0.95em; /* Increased font size */
+  font-weight: bold;
+  color: #555;
+}
+
+#sidebar.dark-mode .settings-content label {
+  color: #bbb;
+}
+
+.settings-content input[type="password"],
+.settings-content select {
+  width: calc(100% - 20px); /* Adjust for padding */
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.95em; /* Increased font size */
+  background-color: #fff;
+  color: #333;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#sidebar.dark-mode .settings-content input[type="password"],
+#sidebar.dark-mode .settings-content select {
+  background-color: #282c34;
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+.settings-content input[type="password"]:focus,
+.settings-content select:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+  outline: none;
+}
+
+.settings-content .nice-button { /* Reusing nice-button style for save */
+  align-self: flex-start; /* Align to the left */
+  margin-top: 10px;
+  background-color: #4f46e5; /* Use primary accent color for settings save */
+  text-align: left;
+  padding: 5px;
+  font-size: 1em;
+  border: 0;
+  border-radius: 15px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.nice-button:hover {
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 15px;
+  color: white;
+}
+
+.save-feedback {
+  font-size: 0.9em; /* Increased font size */
+  font-weight: bold;
+  margin-top: -5px; /* Pull it closer to the button */
+  text-align: left;
+}
+
+/* Styles for suggested questions */
+.suggested-questions-container {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px dashed #e0e0e0;
+}
+
+#sidebar.dark-mode .suggested-questions-container {
+    border-top-color: #555;
+}
+
+.suggested-questions-container ul {
+  list-style: none; /* Remove default bullet points */
+  padding: 0;
+  margin: 0;
+  padding-left: 30px;
+  padding-right: 30px !important; 
+}
+
+.suggested-questions-container li {
+    padding: 8px 12px;
+    border: 1px solid #4f46e5; /* Purple border */
+    color: #4f46e5; /* Purple text */
+    background-color: #f0f0ff; /* Very light purple background */
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+    font-size: 0.95em; /* Increased font size */
+    display: block; /* Use flex to center text if needed */
+    align-items: center;
+    justify-content: flex-start; /* Align text to start */
+    margin-bottom: 10px;
+}
+
+#sidebar.dark-mode .suggested-questions-container li {
+    border-color: #8e82f7; /* Lighter purple border in dark mode */
+    color: #8e82f7; /* Lighter purple text in dark mode */
+    background-color: #353a47; /* Darker background for dark mode pills */
+}
+
+.suggested-questions-container li:hover {
+    background-color: #e6e6ff; /* Slightly darker on hover */
+    border-color: #3b30bd; /* Darker purple border on hover */
+    transform: translateY(-1px);
+}
+
+#sidebar.dark-mode .suggested-questions-container li:hover {
+    background-color: #4a4f58; /* Darker hover in dark mode */
+    border-color: #7a6ee0;
+}
+
+/* New styles for Theme selection buttons */
+.theme-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.theme-selection .theme-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.theme-selection .theme-button {
+  flex: 1;
+  padding: 10px 15px;
+  border: 1px solid #ccc;
+  border-radius: 20px; /* Pill shape */
+  background-color: #f0f0f0;
+  color: #555;
+  cursor: pointer;
+  font-size: 0.95em; /* Increased font size */
+  transition: all 0.2s ease;
+}
+
+.theme-selection .theme-button:hover {
+  background-color: #e0e0e0;
+  border-color: #a0a0a0;
+}
+
+.theme-selection .theme-button.active {
+  background-color: #4f46e5; /* Active color */
+  color: white;
+  border-color: #4f46e5;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+#sidebar.dark-mode .theme-selection .theme-button {
+  background-color: #3a3f4a;
+  color: #e0e0e0;
+  border-color: #4a4f58;
+}
+
+#sidebar.dark-mode .theme-selection .theme-button:hover {
+  background-color: #4a4f58;
+  border-color: #6a737d;
+}
+
+#sidebar.dark-mode .theme-selection .theme-button.active {
+  background-color: #8e82f7; /* Dark mode active color */
+  color: #282c34; /* Dark text on light button */
+  border-color: #8e82f7;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+}
+
+/* Styles for relevant links description */
+.relevant-link-description {
+    font-size: 0.85em; /* Increased font size */
+    color: #777;
+    margin-top: 2px;
+    margin-left: 5px; /* Indent slightly */
+}
+
+#sidebar.dark-mode .relevant-link-description {
+    color: #aaa;
+}
+
+/* New History Overlay Styles */
+.history-overlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 100%; /* Take full width of the sidebar */
+  height: 100%;
+  background-color: #ffffff; /* White background for the overlay */
+  transform: translateX(100%); /* Start off-screen to the right */
+  transition: transform 0.3s ease-in-out;
+  z-index: 1000; /* Ensure it's above other sidebar content */
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px; /* Match sidebar's border-radius */
+  overflow: hidden; /* Hide overflow during transition */
+}
+
+.history-overlay.active {
+  transform: translateX(0); /* Slide in */
+}
+
+#sidebar.dark-mode .history-overlay {
+  background-color: #282c34; /* Dark mode background for overlay */
+}
+
+.history-content {
+  flex-grow: 1; /* Allow content to fill remaining space */
+  padding: 15px; /* Padding inside the history overlay */
+  overflow-y: auto; /* Enable scrolling for history content */
+  display: flex; /* Use flexbox for layout */
+  flex-direction: column;
+  gap: 15px; /* Space between controls and list */
+}
+
+/* Styles for History Controls (Search & Export) */
+.history-controls {
+  display: flex;
+  flex-wrap: wrap; /* Allow wrapping on smaller screens */
+  gap: 10px; /* Space between elements */
+  align-items: center;
+  padding-bottom: 10px; /* Space below controls */
+  border-bottom: 1px solid #e0e0e0; /* Separator */
+}
+
+#historySearchInput {
+  flex-grow: 1; /* Take up available space */
+  padding: 10px 15px;
+  border: 1px solid #ccc;
+  border-radius: 20px; /* Pill shape for search input */
+  font-size: 0.95em;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  min-width: 150px; /* Ensure it doesn't get too small */
+  cursor: text;
+}
+
+#historySearchInput:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+}
+
+#sidebar.dark-mode #historySearchInput {
+  background-color: #3a3f4a;
+  border-color: #4a4f58;
+  color: #e0e0e0;
+}
+
+#sidebar.dark-mode #historySearchInput::placeholder {
+  color: #bbb;
+}
+
+#exportHistoryBtn {
+  /* Reusing .nice-button styles, but can override if needed */
+  background-color: #007bff; /* Blue for export */
+  color: white;
+  border-radius: 20px; /* Match search input pill shape */
+  padding: 8px 15px;
+  font-size: 0.9em;
+  white-space: nowrap; /* Prevent text wrapping */
+}
+
+#exportHistoryBtn:hover {
+  background-color: #0056b3;
+}
+
+#sidebar.dark-mode #exportHistoryBtn {
+  background-color: #6a8bb0; /* Darker blue for dark mode */
+}
+
+#sidebar.dark-mode #exportHistoryBtn:hover {
+  background-color: #5a7a9a;
+}
+
+#rightMenu {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 40px;
+  height: 100%;
+  background-color: #5046e55e;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 10px;
+  z-index: 999;
+}
+
+#rightMenu button {
+  background: none;
+  border: none;
+  margin: 10px 0;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+#rightMenu button:hover {
+  color: #007BFF;
+}

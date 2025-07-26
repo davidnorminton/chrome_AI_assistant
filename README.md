@@ -1,69 +1,55 @@
-# React + TypeScript + Vite
+# ORLA - Chrome AI Assistant
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern Chrome extension that adds an AI assistant to any webpage. Built with React, TypeScript, and Vite.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **AI-powered assistance** - Ask questions about any webpage
+- **Page summarization** - Get quick summaries of web content
+- **Context-aware responses** - AI understands the current page content
+- **History management** - Save and revisit previous conversations
+- **Modern UI** - Clean, responsive interface with dark/light themes
+- **File upload support** - Upload images and documents for analysis
 
-## Expanding the ESLint configuration
+## Technology Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **React 18** - Modern UI framework
+- **TypeScript** - Type-safe development
+- **Vite** - Fast build tooling
+- **Chrome Extension APIs** - Browser integration
+- **Perplexity AI** - Advanced AI capabilities
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Development
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+This project uses a modern development setup with:
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) for Fast Refresh
+- TypeScript ESLint configuration for type-aware linting
+- Chrome Extension Manifest V3
+
+## Building
+
+```bash
+npm install
+npm run build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The built extension will be in the `dist/` directory, ready to load into Chrome.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Installation
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+1. Clone this repository
+2. Run `npm install && npm run build`
+3. Open Chrome and go to `chrome://extensions/`
+4. Enable "Developer mode"
+5. Click "Load unpacked" and select the `dist/` folder
+6. The extension will appear in your browser toolbar
+
+## Usage
+
+- Click the extension icon to open the AI assistant
+- Ask questions about the current webpage
+- Use the "Summarize" button for quick page summaries
+- Toggle "Page Context" to include/exclude page content in your questions
+- Upload files for AI analysis
+- View your conversation history in the history tab
