@@ -1,4 +1,5 @@
 import './App.css'
+import '../styles.css'
 import Menu from './menu/menu'
 import { Outlet } from 'react-router-dom';
 import { createContext, useState, useEffect, useCallback } from 'react';

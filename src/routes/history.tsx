@@ -34,9 +34,12 @@ export default function History() {
         id: item.id || crypto.randomUUID(),
         timestamp: item.timestamp || new Date().toISOString(),
         title: item.title || "Untitled",
+        type: item.type || 'question', // Default to question for backward compatibility
         response: item.response || "",
         tags: Array.isArray(item.tags) ? item.tags : [],
-        suggestedQuestions: Array.isArray(item.suggestedQuestions) ? item.suggestedQuestions : []
+        suggestedQuestions: Array.isArray(item.suggestedQuestions) ? item.suggestedQuestions : [],
+        links: Array.isArray(item.links) ? item.links : [],
+        pageInfo: item.pageInfo || undefined
       }));
       setItems(validatedItems);
     } catch (error) {
@@ -66,11 +69,11 @@ export default function History() {
     if (selectedFilter !== "all") {
       filtered = filtered.filter(item => {
         if (selectedFilter === "summaries") {
-          return !item.title.includes("Search links for") && !item.title.includes("?");
+          return item.type === 'summary';
         } else if (selectedFilter === "searches") {
-          return item.title.includes("Search links for");
+          return item.type === 'search';
         } else if (selectedFilter === "questions") {
-          return item.title.includes("?") || (item.suggestedQuestions && item.suggestedQuestions.length > 0);
+          return item.type === 'question';
         }
         return true;
       });
@@ -148,16 +151,14 @@ export default function History() {
   };
 
   const getItemType = (item: HistoryItem): string => {
-    if (item.title.includes("Search links for")) return "search";
-    if (item.title.includes("?")) return "question";
-    return "summary";
+    return item.type;
   };
 
   const getItemIcon = (item: HistoryItem): string => {
-    const type = getItemType(item);
-    switch (type) {
+    switch (item.type) {
       case "search": return "fas fa-search";
       case "question": return "fas fa-question-circle";
+      case "summary": return "fas fa-file-alt";
       default: return "fas fa-file-alt";
     }
   };

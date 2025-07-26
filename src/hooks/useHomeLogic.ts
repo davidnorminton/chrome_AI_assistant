@@ -57,9 +57,17 @@ export function useHomeLogic() {
       setTags(item.tags ?? []);
       setSuggested(item.suggestedQuestions ?? []);
       setLinks(item.links ?? []);
-      setSearchQuery("");
+      
+      // Set search query for search results
+      if (item.type === 'search' && item.title.startsWith("Search results for")) {
+        const match = item.title.match(/Search results for "([^"]+)"/);
+        setSearchQuery(match ? match[1] : "");
+      } else {
+        setSearchQuery("");
+      }
+      
       setSavedPageInfo(item.pageInfo ?? null);
-      if (item.links && item.links.length > 0 && item.title.startsWith("Search links for")) {
+      if (item.links && item.links.length > 0 && item.type === 'search') {
         setOutputHtml("");
       } else {
         setTimeout(() => {
@@ -82,9 +90,17 @@ export function useHomeLogic() {
       setTags(state.tags ?? []);
       setSuggested(state.suggestedQuestions ?? []);
       setLinks(state.links ?? []);
-      setSearchQuery("");
+      
+      // Set search query for search results
+      if (state.title?.startsWith("Search results for")) {
+        const match = state.title.match(/Search results for "([^"]+)"/);
+        setSearchQuery(match ? match[1] : "");
+      } else {
+        setSearchQuery("");
+      }
+      
       setSavedPageInfo(state.pageInfo ?? null);
-      if (state.links && state.links.length > 0 && state.title?.startsWith("Search links for")) {
+      if (state.links && state.links.length > 0 && state.title?.startsWith("Search results for")) {
         setOutputHtml("");
       } else {
         setOutputHtml(state.response!);
@@ -103,9 +119,17 @@ export function useHomeLogic() {
       setTags(item.tags ?? []);
       setSuggested(item.suggestedQuestions ?? []);
       setLinks(item.links ?? []);
-      setSearchQuery("");
+      
+      // Set search query for search results
+      if (item.type === 'search' && item.title.startsWith("Search results for")) {
+        const match = item.title.match(/Search results for "([^"]+)"/);
+        setSearchQuery(match ? match[1] : "");
+      } else {
+        setSearchQuery("");
+      }
+      
       setSavedPageInfo(item.pageInfo ?? null);
-      if (item.links && item.links.length > 0 && item.title.startsWith("Search links for")) {
+      if (item.links && item.links.length > 0 && item.type === 'search') {
         setOutputHtml("");
       } else {
         setTimeout(() => {
@@ -151,9 +175,13 @@ export function useHomeLogic() {
       });
 
       const historyTitle = userPrompt ? userPrompt : (info.title || "Page Summary");
+      
+      // Create title with favicon + page title for summaries
+      const summaryTitle = info.title ? `${info.title}` : "Page Summary";
 
       await addHistory({
-        title: historyTitle,
+        title: summaryTitle,
+        type: 'summary',
         response: res.text,
         tags: res.tags ?? [],
         suggestedQuestions: res.suggestedQuestions ?? [],
@@ -223,6 +251,7 @@ export function useHomeLogic() {
 
       await addHistory({
         title: saveTitle,
+        type: 'question',
         response: res.text,
         tags: res.tags ?? [],
         suggestedQuestions: res.suggestedQuestions ?? [],
@@ -259,11 +288,18 @@ export function useHomeLogic() {
       });
       const linksArr = res.links?.slice(0, 10) ?? [];
       setLinks(linksArr);
-      setOutputHtml(res.text);
+      
+      // Don't set output HTML when we have links - let LinkList handle the display
+      if (linksArr.length === 0) {
+        setOutputHtml(`<p>No results found for "${tag}".</p>`);
+      } else {
+        setOutputHtml(''); // Clear output HTML since LinkList will show the results
+      }
 
       await addHistory({
-        title: `Search links for "${tag}"`,
-        response: res.text,
+        title: `Search results for "${tag}"`,
+        type: 'search',
+        response: linksArr.length > 0 ? `Found ${linksArr.length} results for "${tag}":` : `No results found for "${tag}".`,
         tags: [],
         suggestedQuestions: [],
         links: linksArr,
@@ -315,8 +351,8 @@ export function useHomeLogic() {
   // Helper to determine if we should show the page header
   const shouldShowPageHeader = useCallback(() => {
     // Don't show header for search results
-    if (links.length > 0 && (nav?.currentIndex !== null && nav?.history[nav.currentIndex]?.title?.startsWith("Search links for") ||
-      (location.state as any)?.title?.startsWith("Search links for"))) {
+    if (links.length > 0 && (nav?.currentIndex !== null && nav?.history[nav.currentIndex]?.title?.startsWith("Search results for") ||
+      (location.state as any)?.title?.startsWith("Search results for"))) {
       return false;
     }
     
@@ -337,9 +373,9 @@ export function useHomeLogic() {
 
   // Helper to determine if we should show link list
   const shouldShowLinkList = useCallback(() => {
-    return links.length > 0 && (nav?.currentIndex !== null && nav?.history[nav.currentIndex]?.title?.startsWith("Search links for") ||
-      (location.state as any)?.title?.startsWith("Search links for"));
-  }, [links.length, nav, location.state]);
+    // Show link list whenever we have links (for search results)
+    return links.length > 0;
+  }, [links.length]);
 
   // Send news query function
   const sendNewsQuery = useCallback((query: string) => {

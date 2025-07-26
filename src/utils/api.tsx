@@ -46,12 +46,22 @@ Return exactly the JSON object.
 `.trim();
   } else if (action === 'get_links') {
     systemPrompt = `
-You are an AI assistant that returns a JSON array of exactly 10 high-quality links related to the user's query.
-Each object in the array must have:
+You are an AI assistant that searches for and returns high-quality links related to the user's query.
+Return exactly a JSON array of 10 links. Each object must have:
   - "title": string (clear, descriptive title)
-  - "url": string (valid URL)
+  - "url": string (valid URL starting with http:// or https://)
   - "description": string (brief description of the content)
-Return exactly the JSON array with 10 items.
+
+Example format:
+[
+  {
+    "title": "Example Title",
+    "url": "https://example.com",
+    "description": "Brief description of the content"
+  }
+]
+
+Return only the JSON array, no other text.
 `.trim();
   } else {
     systemPrompt = `
@@ -117,19 +127,30 @@ Return only the HTML.
       links: []
     };
   } else if (action === 'get_links') {
-    const parsedLinks = JSON.parse(raw);
-    const limited = Array.isArray(parsedLinks) ? parsedLinks.slice(0, 10) : []; // Limit to 10 links
-    return {
-      text: '',
-      model,
-      tags: [],
-      suggestedQuestions: [],
-      links: limited.map((l: any) => ({
-        title: l.title,
-        url: l.url,
-        description: l.description
-      }))
-    };
+    try {
+      const parsedLinks = JSON.parse(raw);
+      const limited = Array.isArray(parsedLinks) ? parsedLinks.slice(0, 10) : []; // Limit to 10 links
+      return {
+        text: '',
+        model,
+        tags: [],
+        suggestedQuestions: [],
+        links: limited.map((l: any) => ({
+          title: l.title || 'Untitled',
+          url: l.url || '#',
+          description: l.description || 'No description available'
+        }))
+      };
+    } catch (parseError) {
+      console.error('Failed to parse links JSON:', raw, parseError);
+      return {
+        text: 'Failed to parse search results',
+        model,
+        tags: [],
+        suggestedQuestions: [],
+        links: []
+      };
+    }
   } else {
     // direct_question
     return {

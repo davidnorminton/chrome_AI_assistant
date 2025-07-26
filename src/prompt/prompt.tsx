@@ -156,7 +156,7 @@ export default function Prompt({ onSend, onSummarize, loading, useContext, setUs
           {/* Summarize */}
           <button
             id="summarizeBtn"
-            className="nice-button"
+            className={`nice-button ${loading ? 'loading' : ''}`}
             title="Summarize"
             onClick={onSummarize}
             disabled={loading}
@@ -169,7 +169,7 @@ export default function Prompt({ onSend, onSummarize, loading, useContext, setUs
           <div className="end">
             <button
               id="cmdBtn"
-              className="icon-button send-button"
+              className={`icon-button send-button ${loading ? 'loading' : ''}`}
               title="Send"
               onClick={handleSendClick}
               disabled={loading}

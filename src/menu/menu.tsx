@@ -1,14 +1,32 @@
 import { Link } from 'react-router-dom';
-import { useContext, useState } from 'react';
+import { useContext, useState, useEffect, useRef } from 'react';
 import { HistoryNavigationContext, AppActionsContext } from '../App';
 
 export default function Menu() {
     const nav = useContext(HistoryNavigationContext);
     const actions = useContext(AppActionsContext);
     const [showNewsDropdown, setShowNewsDropdown] = useState(false);
+    const newsDropdownRef = useRef<HTMLDivElement>(null);
     
     console.log('Menu actions:', actions);
     console.log('Menu nav:', nav);
+    
+    // Handle clicking outside the news dropdown to close it
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (newsDropdownRef.current && !newsDropdownRef.current.contains(event.target as Node)) {
+                setShowNewsDropdown(false);
+            }
+        };
+
+        if (showNewsDropdown) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showNewsDropdown]);
     
     const handleWeatherRequest = () => {
         // Weather always needs location, show location form
@@ -251,7 +269,7 @@ export default function Menu() {
                 </button>
                 
                 {showNewsDropdown && (
-                    <div className="news-dropdown">
+                    <div className="news-dropdown" ref={newsDropdownRef}>
                         <button onClick={() => handleNewsOption('local')}>
                             <i className="fas fa-map-marker-alt"></i>
                             Local News

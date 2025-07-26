@@ -61,30 +61,24 @@ export default function Home() {
         />
 
         {/* Link List */}
-        {showLinkList ? (
-          <div id="responseBox">
-            <div id="output">
-              <LinkList
-                links={links}
-                searchQuery={searchQuery}
-                shouldShow={true}
-              />
-            </div>
-          </div>
-        ) : (
-          /* Content Display */
-          <ContentDisplay
-            outputHtml={outputHtml}
-            tags={tags}
-            suggested={suggested}
-            onTagClick={handleTagClick}
-            onSuggestedClick={handleSuggestedClick}
-            onClearContent={handleClearContent}
-            showWelcome={showWelcome}
-          >
-            <Welcome onSummarize={() => handleSummarize()} />
-          </ContentDisplay>
-        )}
+        <LinkList
+          links={links}
+          searchQuery={searchQuery}
+          shouldShow={showLinkList}
+        />
+
+        {/* Content Display */}
+        <ContentDisplay
+          outputHtml={outputHtml}
+          tags={tags}
+          suggested={suggested}
+          onTagClick={handleTagClick}
+          onSuggestedClick={handleSuggestedClick}
+          onClearContent={handleClearContent}
+          showWelcome={showWelcome}
+        >
+          <Welcome onSummarize={() => handleSummarize()} />
+        </ContentDisplay>
 
         {/* Prompt */}
         <Prompt
