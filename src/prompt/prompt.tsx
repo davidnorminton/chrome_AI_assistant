@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from "react";
 
 interface PromptProps {
   /** Called for the "Send" button */
-  onSend: (query: string, fileData: string | null, usePageContext: boolean) => void;
+  onSend: (query: string, fileData: string | null, usePageContext: boolean, useWebSearch: boolean) => void;
   /** Called for the "Summarize" button */
   onSummarize: () => void;
   /** Whether any request is in flight */
@@ -12,11 +12,15 @@ interface PromptProps {
   useContext: boolean;
   /** Setter for context toggle */
   setUseContext: (val: boolean) => void;
+  /** Whether to use web search */
+  useWebSearch: boolean;
+  /** Setter for web search toggle */
+  setUseWebSearch: (val: boolean) => void;
   /** Called when a screenshot is captured */
   onScreenshotCapture?: (imageData: string) => void;
 }
 
-export default function Prompt({ onSend, onSummarize, loading, useContext, setUseContext, onScreenshotCapture }: PromptProps) {
+export default function Prompt({ onSend, onSummarize, loading, useContext, setUseContext, useWebSearch, setUseWebSearch, onScreenshotCapture }: PromptProps) {
   const [text, setText] = useState("");
   const [fileData, setFileData] = useState<string | null>(null);
   const [isScreenshotMode, setIsScreenshotMode] = useState(false);
@@ -65,7 +69,7 @@ export default function Prompt({ onSend, onSummarize, loading, useContext, setUs
 
   const handleSendClick = () => {
     if (!text.trim() && !fileData) return;
-    onSend(text.trim(), fileData, useContext);
+    onSend(text.trim(), fileData, useContext, useWebSearch);
     setText("");
     setFileData(null);
   };
@@ -151,6 +155,24 @@ export default function Prompt({ onSend, onSummarize, loading, useContext, setUs
           >
             <i className="fas fa-book-open" />
             <span>Page Context</span>
+          </button>
+
+          {/* Toggle web search */}
+          <button
+            id="toggleWebSearchBtn"
+            className={`nice-button web-search-button ${useWebSearch ? "active" : ""}`}
+            onClick={() => {
+              const newWebSearchState = !useWebSearch;
+              setUseWebSearch(newWebSearchState);
+              // Disable page context when web search is enabled
+              if (newWebSearchState) {
+                setUseContext(false);
+              }
+            }}
+            disabled={loading}
+            title="Web Search"
+          >
+            <i className="fas fa-globe" />
           </button>
 
           {/* Summarize */}

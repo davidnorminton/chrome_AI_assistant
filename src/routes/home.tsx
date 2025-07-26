@@ -22,6 +22,8 @@ export default function Home() {
     savedPageInfo,
     usePageContext,
     setUsePageContext,
+    useWebSearch,
+    setUseWebSearch,
     screenshotData,
     showWelcome,
     
@@ -87,6 +89,8 @@ export default function Home() {
           loading={loading}
           useContext={usePageContext}
           setUseContext={setUsePageContext}
+          useWebSearch={useWebSearch}
+          setUseWebSearch={setUseWebSearch}
           onScreenshotCapture={handleScreenshotCapture}
         />
       </div>

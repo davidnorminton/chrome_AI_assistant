@@ -30,6 +30,7 @@ export function useHomeLogic() {
   });
   const [savedPageInfo, setSavedPageInfo] = useState<{ title: string; url: string; favicon: string } | null>(null);
   const [usePageContext, setUsePageContext] = useState(true);
+  const [useWebSearch, setUseWebSearch] = useState(false);
   const [screenshotData, setScreenshotData] = useState<string | null>(null);
   const lastProcessedIndexRef = useRef<number | null>(null);
 
@@ -204,7 +205,8 @@ export function useHomeLogic() {
   const handleSend = useCallback(async (
     query: string,
     fileData: string | null,
-    _useContext: boolean
+    _useContext: boolean,
+    _useWebSearch: boolean
   ) => {
     setLoading(true);
     setLinks([]);
@@ -220,6 +222,50 @@ export function useHomeLogic() {
       let finalQuery = query;
       if (_useContext && !imageData) {
         finalQuery = `Based on this page:\n${info.text}\n\nUser question: ${query}`;
+      } else if (_useWebSearch) {
+        // Disable page context when web search is active
+        setUsePageContext(false);
+        
+        // Use the same approach as tag search - get actual links
+        console.log('=== WEB SEARCH REQUEST ===');
+        console.log('Query:', query);
+        
+        const res: AIResponse = await sendQueryToAI({
+          query: query,
+          action: "get_links",
+        });
+        
+        console.log('=== WEB SEARCH RESPONSE ===');
+        console.log('Complete AI Response:', res);
+        console.log('Response text:', res.text);
+        console.log('Response links:', res.links);
+        console.log('Response tags:', res.tags);
+        console.log('Response suggestedQuestions:', res.suggestedQuestions);
+        
+        const linksArr = res.links?.slice(0, 15) ?? [];
+        console.log('Processed links array:', linksArr);
+        
+        setLinks(linksArr);
+        
+        // Don't set output HTML when we have links - let LinkList handle the display
+        if (linksArr.length === 0) {
+          setOutputHtml(`<p>No web search results found for "${query}".</p>`);
+        } else {
+          setOutputHtml(''); // Clear output HTML since LinkList will show the results
+        }
+
+        await addHistory({
+          title: `Web search results for "${query}"`,
+          type: 'search',
+          response: linksArr.length > 0 ? `Found ${linksArr.length} web search results for "${query}":` : `No web search results found for "${query}".`,
+          tags: [],
+          suggestedQuestions: [],
+          links: linksArr,
+        });
+        
+        setScreenshotData(null);
+        setLoading(false);
+        return; // Exit early since we handled the web search separately
       } else if (imageData) {
         finalQuery = query;
       }
@@ -420,7 +466,7 @@ export function useHomeLogic() {
       
       // Send the actual query to AI
       setTimeout(() => {
-        handleSend(actualQuery, null, false);
+        handleSend(actualQuery, null, false, false);
       }, 100);
       
       return;
@@ -435,7 +481,7 @@ export function useHomeLogic() {
     setLoading(true);
     
     // Send the query to AI
-    handleSend(query, null, false);
+    handleSend(query, null, false, false);
   }, [handleSend]);
 
   // Add event listeners for location form
@@ -591,7 +637,7 @@ export function useHomeLogic() {
       setLinks([]);
       setSearchQuery("");
       setLoading(true);
-      handleSend(query, null, false);
+      handleSend(query, null, false, false);
     }
   };
 
@@ -607,6 +653,8 @@ export function useHomeLogic() {
     savedPageInfo,
     usePageContext,
     setUsePageContext,
+    useWebSearch,
+    setUseWebSearch,
     screenshotData,
     showWelcome,
     
