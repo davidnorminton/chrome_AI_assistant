@@ -1,4 +1,4 @@
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 import { useContext, useState } from 'react';
 import { HistoryNavigationContext, AppActionsContext } from '../App';
 
@@ -70,8 +70,8 @@ export default function Menu() {
             return; // Exit early, will handle query after location is selected
         }
         
-        // Build and send query
-        buildAndSendQuery(option, location, country);
+        // Build and send query using context
+        buildAndSendQueryWithContext(option, location, country);
     };
     
     const saveLocation = (city: string, country: string) => {
@@ -113,21 +113,21 @@ export default function Menu() {
                 title = 'Weather';
                 break;
             default:
-                title = 'News';
+                title = 'Location Required';
         }
         
-        // Create location selection form HTML
+        // Create the location form HTML
         const formHTML = `
             <div class="location-selection-form">
-                <h3>Select Location for ${title}</h3>
+                <h3>${title}</h3>
+                <h4>Select your location:</h4>
                 
                 ${savedLocations.length > 0 ? `
                     <div class="saved-locations">
-                        <h4>Recently Used Locations</h4>
+                        <h5>Recent Locations:</h5>
                         <div class="location-buttons">
                             ${savedLocations.map((loc: any) => `
                                 <button class="location-btn" data-city="${loc.city}" data-country="${loc.country}">
-                                    <i class="fas fa-map-marker-alt"></i>
                                     ${loc.city}, ${loc.country}
                                 </button>
                             `).join('')}
@@ -135,34 +135,32 @@ export default function Menu() {
                     </div>
                 ` : ''}
                 
-                <div class="new-location-form">
-                    <h4>Enter New Location</h4>
-                    <div class="form-row">
-                        <input type="text" id="cityInput" placeholder="City/Town name" class="location-input">
-                        <input type="text" id="countryInput" placeholder="Country" class="location-input">
-                    </div>
-                    <div class="form-actions">
-                        <button id="useCurrentLocation" class="location-btn">
-                            <i class="fas fa-crosshairs"></i>
-                            Use Current Location
-                        </button>
-                        <button id="submitLocation" class="location-btn primary">
-                            <i class="fas fa-check"></i>
-                            Continue
-                        </button>
-                    </div>
+                <div class="form-row">
+                    <button id="useCurrentLocation" class="location-btn">
+                        <i class="fas fa-location-arrow"></i> Use Current Location
+                    </button>
+                </div>
+                
+                <div class="form-row">
+                    <input type="text" id="cityInput" placeholder="City" class="location-input">
+                    <input type="text" id="countryInput" placeholder="Country" class="location-input">
+                </div>
+                
+                <div class="form-actions">
+                    <button id="submitLocation" class="location-btn">
+                        Continue
+                    </button>
                 </div>
             </div>
         `;
         
-        // Send this form to the content area
+        // Send the form to the Home component via context
         if (actions?.sendNewsQuery) {
-            // We'll use a special format to show the form
             actions.sendNewsQuery(`LOCATION_FORM:${option}:${formHTML}`);
         }
     };
     
-    const buildAndSendQuery = (option: string, location: string, country: string) => {
+    const buildAndSendQueryWithContext = (option: string, location: string, country: string) => {
         let query = '';
         let loadingMessage = '';
         
@@ -188,10 +186,6 @@ export default function Menu() {
                     query = `Get the latest national news from across the country. Include top headlines, major political developments, economic news, and significant national events.`;
                     loadingMessage = 'Getting national news...';
                 }
-                break;
-            case 'world':
-                query = `Get the latest world news and top international headlines. Include major global events, international politics, economic developments, and significant world news.`;
-                loadingMessage = 'Getting world news...';
                 break;
             case 'events':
                 if (location && country) {
@@ -219,13 +213,10 @@ export default function Menu() {
                 break;
         }
         
-        // Send the query to AI
-        if (query) {
-            console.log('Sending query:', query);
-            if (actions?.sendNewsQuery) {
-                // Send the loading message along with the query
-                actions.sendNewsQuery(`LOADING:${loadingMessage}:${query}`);
-            }
+        // Send the query to AI via context
+        if (query && actions?.sendNewsQuery) {
+            console.log('Sending query via context:', query);
+            actions.sendNewsQuery(`LOADING:${loadingMessage}:${query}`);
         }
     };
     
