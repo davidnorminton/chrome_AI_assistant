@@ -293,6 +293,18 @@ export default function Menu() {
                     </div>
                 )}
             </div>
+            
+            {/* Clear Content Button - Bottom with large gap */}
+            <div className="clear-button-container">
+                <button 
+                    id="clearContentBtn" 
+                    className="menu-item clear-button" 
+                    onClick={() => actions?.clearContent?.()}
+                    title="Clear content"
+                >
+                    <i className="fas fa-trash-alt"></i>
+                </button>
+            </div>
         </nav>
     </div>
     )

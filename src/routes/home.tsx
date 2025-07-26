@@ -50,7 +50,10 @@ export default function Home() {
     if (actions?.setSendNewsQuery) {
       actions.setSendNewsQuery(sendNewsQuery);
     }
-  }, [actions, sendNewsQuery]);
+    if (actions?.setClearContent) {
+      actions.setClearContent(handleClearContent);
+    }
+  }, [actions, sendNewsQuery, handleClearContent]);
 
   // Calculate display states
   const showPageHeader = Boolean(outputHtml) && shouldShowPageHeader();
@@ -83,7 +86,6 @@ export default function Home() {
           suggested={suggested}
           onTagClick={handleTagClick}
           onSuggestedClick={handleSuggestedClick}
-          onClearContent={handleClearContent}
           showWelcome={showWelcome}
           screenshotData={restoredScreenshotData || undefined}
         >

@@ -1,4 +1,5 @@
 import React from 'react';
+import AILoadingAnimation from './AILoadingAnimation';
 
 interface ContentDisplayProps {
   outputHtml: string;
@@ -6,7 +7,6 @@ interface ContentDisplayProps {
   suggested: string[];
   onTagClick: (tag: string) => void;
   onSuggestedClick: (question: string) => void;
-  onClearContent: () => void;
   showWelcome: boolean;
   screenshotData?: string; // Screenshot data to display
   children?: React.ReactNode; // For Welcome component
@@ -18,7 +18,6 @@ export default function ContentDisplay({
   suggested,
   onTagClick,
   onSuggestedClick,
-  onClearContent,
   showWelcome,
   screenshotData,
   children
@@ -34,15 +33,6 @@ export default function ContentDisplay({
           </div>
         ) : outputHtml ? (
           <div key="content-container">
-            <div className="content-header">
-              <button 
-                className="clear-content-button"
-                onClick={onClearContent}
-                title="Clear content"
-              >
-                <i className="fas fa-times"></i>
-              </button>
-            </div>
             {screenshotData && (
               <div className="screenshot-display">
                 <img 
@@ -52,7 +42,14 @@ export default function ContentDisplay({
                 />
               </div>
             )}
-            <div dangerouslySetInnerHTML={{ __html: outputHtml }} />
+            {!outputHtml.includes('loading-status-message') && (
+              <div dangerouslySetInnerHTML={{ __html: outputHtml }} />
+            )}
+            {outputHtml.includes('loading-status-message') && (
+              <div className="ai-loading-container">
+                <AILoadingAnimation message={outputHtml.replace(/<[^>]*>/g, '')} />
+              </div>
+            )}
             {tags.length > 0 && (
               <div className="tags-container">
                 {tags.map((tag) => (

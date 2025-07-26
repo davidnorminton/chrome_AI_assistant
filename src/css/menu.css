@@ -164,4 +164,23 @@ html body #rightMenu button,
 .news-dropdown button:hover {
   background-color: #555555 !important;
   color: #ffffff !important;
+}
+
+/* Clear Button Container - Bottom with large gap */
+.clear-button-container {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.clear-button {
+  background-color: #4a4a4a !important;
+  border: 1px solid #666666 !important;
+}
+
+.clear-button:hover {
+  background-color: #ff4444 !important;
+  border-color: #ff6666 !important;
+  color: #ffffff !important;
 } 

@@ -183,7 +183,7 @@ export function useHomeLogic() {
 
   // Summarize handler
   const handleSummarize = useCallback(async (userPrompt?: string, customLoadingMessage?: string) => {
-    setOutputHtml(`<p class="loading-status-message centered-message">${customLoadingMessage || 'Asking AI for a summary...'}</p>`);
+    setOutputHtml(`<p class="loading-status-message centered-message">${customLoadingMessage || 'AI is analyzing the page...'}</p>`);
     setTags([]);
     setSuggested([]);
     setLinks([]);
@@ -253,7 +253,7 @@ export function useHomeLogic() {
     setLinks([]);
     setRestoredScreenshotData(null); // Clear restored screenshot data for new queries
     setSearchQuery("");
-    setOutputHtml("");
+    setOutputHtml(`<p class="loading-status-message centered-message">AI is thinking...</p>`);
     
     const imageData = screenshotData || fileData;
     
@@ -502,8 +502,8 @@ export function useHomeLogic() {
       const loadingMessage = parts[1];
       const actualQuery = parts.slice(2).join(':');
       
-      // Show the loading message
-      setOutputHtml(`<p class="loading-status-message centered-message">${loadingMessage}</p>`);
+              // Show the loading message
+        setOutputHtml(`<p class="loading-status-message centered-message">AI is processing your request...</p>`);
       setTags([]);
       setSuggested([]);
       setLinks([]);
@@ -520,7 +520,7 @@ export function useHomeLogic() {
     }
     
     // Regular query (for world news)
-    setOutputHtml(`<p class="loading-status-message centered-message">Getting latest news...</p>`);
+    setOutputHtml(`<p class="loading-status-message centered-message">AI is gathering the latest news...</p>`);
     setTags([]);
     setSuggested([]);
     setLinks([]);

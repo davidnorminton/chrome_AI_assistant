@@ -23,6 +23,8 @@ export interface HistoryNavContextType {
 export interface AppActionsContextType {
   sendNewsQuery: ((query: string) => void) | null;
   setSendNewsQuery: (fn: (query: string) => void) => void;
+  clearContent: (() => void) | null;
+  setClearContent: (fn: () => void) => void;
 }
 
 export const HistoryNavigationContext = createContext<HistoryNavContextType | undefined>(undefined);
@@ -33,12 +35,20 @@ export default function App() {
   const [currentIndex, setCurrentIndex] = useState<number>(0); // Always start at 0, never null
   const [initialized, setInitialized] = useState<boolean>(false); // Track if app has been initialized
   const [sendNewsQuery, setSendNewsQuery] = useState<((query: string) => void) | null>(null);
+  const [clearContent, setClearContent] = useState<(() => void) | null>(null);
 
   // Debug when setSendNewsQuery is called
   const setSendNewsQueryWithDebug = useCallback((fn: (query: string) => void) => {
     console.log('=== SET SEND NEWS QUERY CALLED ===');
     console.log('Setting sendNewsQuery function:', fn);
     setSendNewsQuery(() => fn);
+  }, []);
+
+  // Debug when setClearContent is called
+  const setClearContentWithDebug = useCallback((fn: () => void) => {
+    console.log('=== SET CLEAR CONTENT CALLED ===');
+    console.log('Setting clearContent function:', fn);
+    setClearContent(() => fn);
   }, []);
 
   useEffect(() => {
@@ -134,7 +144,9 @@ export default function App() {
     }}>
       <AppActionsContext.Provider value={{
         sendNewsQuery,
-        setSendNewsQuery: setSendNewsQueryWithDebug
+        setSendNewsQuery: setSendNewsQueryWithDebug,
+        clearContent,
+        setClearContent: setClearContentWithDebug
       }}>
         <Outlet />
         <Menu />
