@@ -1,15 +1,7 @@
 // src/utils/api.ts
 
-export interface AIResponse {
-  text: string;
-  model: string;
-  tags: string[];
-  suggestedQuestions?: string[];
-  links?: { title: string; url: string; description: string }[];
-  images?: { title: string; url: string; description: string; imageUrl: string }[];
-}
-
-export type AIAction = 'direct_question' | 'summarize_page' | 'get_links' | 'get_images' | 'summarize_file';
+import type { AIResponse, AIAction, AIModelConfig, AIContextConfig } from '../types';
+import { defaultAIContextManager } from './aiContextManager';
 
 // Base summarization prompt template for consistent, high-quality summaries
 const BASE_SUMMARIZATION_PROMPT = `
@@ -41,15 +33,22 @@ Use only basic HTML tags (<p>, <ul>, <li>, <strong>, <em>, <h3>).
 Return exactly the JSON object.
 `.trim();
 
-export async function sendQueryToAI({
-  query,
-  action,
-  file = null
-}: {
+export interface SendQueryOptions {
   query: string;
   action: AIAction;
   file?: string | null;
-}): Promise<AIResponse> {
+  contextConfig?: Partial<AIContextConfig>;
+  modelConfig?: Partial<AIModelConfig>;
+}
+
+export async function sendQueryToAI(options: SendQueryOptions): Promise<AIResponse> {
+  const { query, action, file, contextConfig, modelConfig } = options;
+
+  // Update context manager with provided configuration
+  if (contextConfig) {
+    defaultAIContextManager.updateConfig(contextConfig);
+  }
+
   // Load model & API key
   const { model, apiKey } = await new Promise<{ model: string; apiKey: string }>(resolve => {
     chrome.storage.local.get(['model', 'apiKey'], data =>
@@ -59,229 +58,167 @@ export async function sendQueryToAI({
       })
     );
   });
+  
   if (!apiKey) {
     throw new Error('API key not set in Settings');
   }
 
-  // Build system prompt
-  let systemPrompt: string;
-  if (action === 'summarize_page') {
-    systemPrompt = BASE_SUMMARIZATION_PROMPT + `
+  // Build system prompt using context manager
+  const systemPrompt = defaultAIContextManager.createSystemPrompt(action);
 
-SPECIFIC INSTRUCTIONS FOR WEB PAGE SUMMARIZATION:
-- Focus on the main content and purpose of the web page
-- Identify the page's primary topic, target audience, and key information
-- Highlight any important features, services, or products mentioned
-- Note any calls-to-action or important links
-- Consider the page's structure and navigation elements
-- Extract the most valuable information for someone who wants to understand the page quickly
+  // Prepare the content to send
+  let contentToSend: string;
+  let contentType: 'text' | 'image_url' = 'text';
 
-Analyze the provided web page content and create a comprehensive summary following the structure above.
-`.trim();
-  } else if (action === 'get_links') {
-    systemPrompt = `
-You are an AI assistant that searches for and returns high-quality links related to the user's query.
-Return exactly a JSON array of 10 links. Each object must have:
-  - "title": string (clear, descriptive title)
-  - "url": string (valid URL starting with http:// or https://)
-  - "description": string (brief description of the content)
-
-Example format:
-[
-  {
-    "title": "Example Title",
-    "url": "https://example.com",
-    "description": "Brief description of the content"
-  }
-]
-
-Return only the JSON array, no other text.
-`.trim();
-  } else if (action === 'get_images') {
-    systemPrompt = `
-You are an AI assistant that searches for and returns high-quality images related to the user's query.
-Return exactly a JSON array of 10 images. Each object must have:
-  - "title": string (clear, descriptive title)
-  - "url": string (valid URL starting with http:// or https://)
-  - "description": string (brief description of the image)
-  - "imageUrl": string (direct URL to the image file, starting with http:// or https://)
-
-Example format:
-[
-  {
-    "title": "Example Image Title",
-    "url": "https://example.com/image-page",
-    "description": "Brief description of the image content",
-    "imageUrl": "https://example.com/image.jpg"
-  }
-]
-
-Return only the JSON array, no other text.
-`.trim();
-  } else if (action === 'summarize_file') {
-    systemPrompt = BASE_SUMMARIZATION_PROMPT + `
-
-SPECIFIC INSTRUCTIONS FOR FILE ANALYSIS:
-- Analyze the uploaded file content thoroughly
-- Identify the document type, format, and structure
-- Extract key information, data, or insights from the file
-- Highlight important findings, conclusions, or recommendations
-- Note any technical details, specifications, or requirements
-- Consider the context and purpose of the document
-- Focus on actionable insights and valuable takeaways
-
-Analyze the provided file content and create a comprehensive summary following the structure above.
-`.trim();
-  } else {
-    systemPrompt = `
-You are an AI assistant for a browser sidebar.
-Format your response using HTML tags (<p>, <h1>, <ul>, <li>, etc.).
-After your answer, include 2–3 follow-up questions wrapped in:
-<div class="suggested-questions-container"><ul>…</ul></div>
-Return only the HTML.
-`.trim();
-  }
-
-  // Assemble request body
-  const messages: any[] = [
-    { role: 'system', content: systemPrompt }
-  ];
-  
-  // Handle file analysis
   if (file) {
-    // Check if it's an image file (starts with data:image/)
-    const isImage = file.startsWith('data:image/');
-    
-    if (isImage) {
-      // For image files, use the correct Perplexity format
-      messages.push({
-        role: 'user',
-        content: [
-          { type: 'text', text: query },
-          { type: 'image_url', image_url: { url: file } }
-        ]
-      });
+    if (file.startsWith('data:image/')) {
+      contentToSend = file;
+      contentType = 'image_url';
     } else {
-      // For PDF text (or other text content), send as regular text
-      // Limit the text length to avoid API issues
-      const maxLength = 8000; // Reasonable limit for API
-      const truncatedFile = file.length > maxLength 
-        ? file.substring(0, maxLength) + '\n\n[Content truncated due to length]'
-        : file;
-      
-      messages.push({
-        role: 'user',
-        content: `File content:\n${truncatedFile}\n\nUser question: ${query}`
-      });
+      // For text files, clean and truncate the content
+      contentToSend = cleanTextContent(file);
+      if (contentToSend.length > 8000) {
+        contentToSend = contentToSend.substring(0, 8000) + '...';
+        console.warn('File content truncated to 8000 characters');
+      }
     }
   } else {
-    messages.push({ role: 'user', content: query });
+    contentToSend = query;
   }
-  
-  const body: any = {
-    model,
-    messages,
-    temperature: 0.7,
-    stream: false
+
+  // Build the request payload
+  const payload: any = {
+    model: modelConfig?.model || model,
+    messages: [
+      {
+        role: 'system',
+        content: systemPrompt
+      },
+      {
+        role: 'user',
+        content: contentToSend
+      }
+    ]
   };
 
-  // Call API
-  const resp = await fetch('https://api.perplexity.ai/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(body)
-  });
-  const dataResp = await resp.json();
-  if (!resp.ok) {
-    throw new Error(dataResp.error || resp.statusText);
+  // Add optional parameters if provided
+  if (modelConfig?.temperature !== undefined) {
+    payload.temperature = modelConfig.temperature;
+  }
+  if (modelConfig?.maxTokens !== undefined) {
+    payload.max_tokens = modelConfig.maxTokens;
   }
 
-  // Clean and parse
-  let raw = dataResp.choices?.[0]?.message?.content ?? '';
-  raw = raw.replace(/^```json/, '').replace(/```$/, '').trim();
+  try {
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
 
-  if (action === 'summarize_page') {
-    const parsed = JSON.parse(raw);
-    return {
-      text: parsed.summary,
-      model,
-      tags: (parsed.tags ?? []).slice(0, 6), // Limit to 6 tags
-      suggestedQuestions: (parsed.suggestedQuestions ?? []).slice(0, 3), // Limit to 3 questions
-      links: []
-    };
-  } else if (action === 'summarize_file') {
-    const parsed = JSON.parse(raw);
-    return {
-      text: parsed.summary,
-      model,
-      tags: (parsed.tags ?? []).slice(0, 6), // Limit to 6 tags
-      suggestedQuestions: (parsed.suggestedQuestions ?? []).slice(0, 3), // Limit to 3 questions
-      links: []
-    };
-  } else if (action === 'get_links') {
-    try {
-      const parsedLinks = JSON.parse(raw);
-      const limited = Array.isArray(parsedLinks) ? parsedLinks.slice(0, 10) : []; // Limit to 10 links
-      return {
-        text: '',
-        model,
-        tags: [],
-        suggestedQuestions: [],
-        links: limited.map((l: any) => ({
-          title: l.title || 'Untitled',
-          url: l.url || '#',
-          description: l.description || 'No description available'
-        }))
-      };
-    } catch (parseError) {
-      console.error('Failed to parse links JSON:', raw, parseError);
-      return {
-        text: 'Failed to parse search results',
-        model,
-        tags: [],
-        suggestedQuestions: [],
-        links: []
-      };
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`API request failed: ${response.status} ${response.statusText} - ${errorData.error?.message || 'Unknown error'}`);
     }
-  } else if (action === 'get_images') {
-    try {
-      const parsedImages = JSON.parse(raw);
-      const limited = Array.isArray(parsedImages) ? parsedImages.slice(0, 10) : []; // Limit to 10 images
-      return {
-        text: '',
-        model,
-        tags: [],
-        suggestedQuestions: [],
-        links: [],
-        images: limited.map((img: any) => ({
-          title: img.title || 'Untitled',
-          url: img.url || '#',
-          description: img.description || 'No description available',
-          imageUrl: img.imageUrl || '#'
-        }))
-      };
-    } catch (parseError) {
-      console.error('Failed to parse images JSON:', raw, parseError);
-      return {
-        text: 'Failed to parse image search results',
-        model,
-        tags: [],
-        suggestedQuestions: [],
-        links: [],
-        images: []
-      };
+
+    const data = await response.json();
+    const aiResponse = data.choices[0]?.message?.content;
+
+    if (!aiResponse) {
+      throw new Error('No response content received from AI');
     }
-  } else {
-    // direct_question
-    return {
-      text: raw,
-      model,
-      tags: [],
-      suggestedQuestions: [],
-      links: []
-    };
+
+    // Parse the AI response
+    return parseAIResponse(aiResponse, action);
+  } catch (error) {
+    console.error('Error calling Perplexity API:', error);
+    throw error;
   }
 }
+
+// Helper function to clean text content
+function cleanTextContent(text: string): string {
+  return text
+    .replace(/[^\x00-\x7F]/g, '') // Remove non-ASCII characters
+    .replace(/\s+/g, ' ') // Normalize whitespace
+    .replace(/[^\w\s.,!?;:()\[\]{}"'`~@#$%^&*+=|\\<>/-]/g, '') // Remove special characters
+    .trim();
+}
+
+// Parse AI response based on action type
+function parseAIResponse(response: string, action: AIAction): AIResponse {
+  try {
+    // Try to parse as JSON first
+    const parsed = JSON.parse(response);
+    
+    if (action === 'get_links') {
+      // For link searches, expect an array of links
+      if (Array.isArray(parsed)) {
+        return {
+          text: `Found ${parsed.length} relevant links`,
+          model: 'perplexity',
+          tags: [],
+          links: parsed.slice(0, 15), // Limit to 15 links
+        };
+      }
+    } else {
+      // For other actions, expect structured response
+      if (parsed.summary && Array.isArray(parsed.tags) && Array.isArray(parsed.suggestedQuestions)) {
+        return {
+          text: parsed.summary,
+          model: 'perplexity',
+          tags: parsed.tags,
+          suggestedQuestions: parsed.suggestedQuestions,
+        };
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to parse AI response as JSON, treating as plain text');
+  }
+
+  // Fallback: treat as plain text
+  return {
+    text: response,
+    model: 'perplexity',
+    tags: [],
+  };
+}
+
+// Enhanced function with context management
+export async function sendQueryWithContext(
+  userQuery: string,
+  pageInfo: { text: string; url: string; title: string; favicon: string },
+  options: {
+    fileData?: string | null;
+    contextConfig?: Partial<AIContextConfig>;
+    modelConfig?: Partial<AIModelConfig>;
+    useWebSearch?: boolean;
+  } = {}
+): Promise<AIResponse> {
+  const { fileData, contextConfig, modelConfig, useWebSearch } = options;
+
+  // Update context manager
+  if (contextConfig) {
+    defaultAIContextManager.updateConfig(contextConfig);
+  }
+
+  // Determine action
+  const action = defaultAIContextManager.determineAction(userQuery, fileData, useWebSearch);
+
+  // Build context-aware query
+  const contextQuery = defaultAIContextManager.buildQuery(userQuery, pageInfo, action, fileData);
+
+  return sendQueryToAI({
+    query: contextQuery,
+    action,
+    file: fileData,
+    contextConfig,
+    modelConfig,
+  });
+}
+
+// Export the context manager for external use
+export { defaultAIContextManager };

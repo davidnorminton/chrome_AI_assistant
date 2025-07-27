@@ -1,0 +1,394 @@
+/* Settings Panel Styles */
+.settings-panel {
+  padding: 16px;
+  max-width: 100%;
+  margin: 0 auto;
+  background: #1a1a1a;
+  min-height: 100vh;
+  color: #fff;
+}
+
+.settings-loading {
+  text-align: center;
+  padding: 40px;
+  color: #888;
+}
+
+.settings-header {
+  margin-bottom: 20px;
+  text-align: left;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #4a9eff;
+}
+
+.settings-header h2 {
+  color: #fff;
+  margin-bottom: 6px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.settings-subtitle {
+  color: #888;
+  font-size: 13px;
+  margin: 0;
+}
+
+.settings-content {
+  background: #2a2a2a;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  margin-bottom: 16px;
+}
+
+/* Setting Groups */
+.setting-group {
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #3a3a3a;
+}
+
+.setting-group:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.setting-group-title {
+  color: #fff;
+  font-size: 16px;
+  margin-bottom: 16px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #4a9eff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+
+.setting-group-title i {
+  color: #4a9eff;
+  font-size: 14px;
+}
+
+/* Setting Items */
+.setting-item {
+  margin-bottom: 16px;
+}
+
+.setting-item:last-child {
+  margin-bottom: 0;
+}
+
+.setting-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  color: #fff;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.setting-label i {
+  color: #4a9eff;
+  width: 14px;
+  font-size: 12px;
+}
+
+.setting-required {
+  color: #ff6b6b;
+  font-weight: bold;
+}
+
+/* Input Containers */
+.setting-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.setting-input,
+.setting-select,
+.setting-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  background: #3a3a3a;
+  border: 1px solid #555;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+.setting-input:focus,
+.setting-select:focus,
+.setting-textarea:focus {
+  outline: none;
+  border-color: #4a9eff;
+  box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.1);
+}
+
+.setting-textarea {
+  resize: vertical;
+  min-height: 60px;
+  font-family: inherit;
+}
+
+.setting-select {
+  cursor: pointer;
+}
+
+.setting-select option {
+  background: #3a3a3a;
+  color: #fff;
+}
+
+/* Input Status */
+.input-status {
+  position: absolute;
+  right: 12px;
+  color: #4a9eff;
+}
+
+.status-valid {
+  color: #4caf50;
+}
+
+.status-required {
+  color: #ff6b6b;
+}
+
+/* Checkboxes */
+.setting-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.setting-checkbox-input {
+  width: 16px;
+  height: 16px;
+  accent-color: #4a9eff;
+  cursor: pointer;
+}
+
+.setting-checkbox label {
+  color: #fff;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.setting-checkbox label i {
+  color: #4a9eff;
+  width: 14px;
+  font-size: 11px;
+}
+
+/* Range Slider */
+.setting-range {
+  width: 100%;
+  height: 6px;
+  background: #555;
+  border-radius: 3px;
+  outline: none;
+  -webkit-appearance: none;
+  margin: 12px 0;
+}
+
+.setting-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #4a9eff;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.setting-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: #4a9eff;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.setting-range-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #888;
+  margin-top: 8px;
+}
+
+/* Help Text */
+.setting-help {
+  color: #888;
+  font-size: 11px;
+  margin-top: 4px;
+  line-height: 1.3;
+}
+
+.setting-help a {
+  color: #4a9eff;
+  text-decoration: none;
+}
+
+.setting-help a:hover {
+  text-decoration: underline;
+}
+
+/* Validation */
+.setting-validation {
+  background: #ff6b6b20;
+  border: 1px solid #ff6b6b;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.setting-validation h4 {
+  color: #ff6b6b;
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.setting-validation ul {
+  margin: 0;
+  padding-left: 20px;
+  color: #ff6b6b;
+  font-size: 14px;
+}
+
+.setting-validation li {
+  margin-bottom: 4px;
+}
+
+/* Actions */
+.setting-actions {
+  margin-top: 24px;
+  text-align: center;
+}
+
+.setting-save-btn {
+  background: #4a9eff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.setting-save-btn:hover:not(:disabled) {
+  background: #3a8eef;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(74, 158, 255, 0.3);
+}
+
+.setting-save-btn:disabled {
+  background: #555;
+  color: #888;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.setting-save-btn i {
+  font-size: 14px;
+}
+
+/* Save Message */
+.save-message {
+  margin-top: 12px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.save-message.success {
+  background: #4caf5020;
+  color: #4caf50;
+  border: 1px solid #4caf50;
+}
+
+.save-message.error {
+  background: #ff6b6b20;
+  color: #ff6b6b;
+  border: 1px solid #ff6b6b;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .settings-panel {
+    padding: 12px;
+  }
+  
+  .settings-content {
+    padding: 16px;
+  }
+  
+  .setting-group-title {
+    font-size: 15px;
+  }
+  
+  .setting-save-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Scrollbar Styling */
+.settings-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.settings-panel::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+.settings-panel::-webkit-scrollbar-thumb {
+  background: #4a4a4a;
+  border-radius: 3px;
+}
+
+.settings-panel::-webkit-scrollbar-thumb:hover {
+  background: #5a5a5a;
+}
+
+/* Focus States */
+.setting-input:focus,
+.setting-select:focus,
+.setting-textarea:focus {
+  border-color: #4a9eff;
+  box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.15);
+}
+
+/* Hover Effects */
+.setting-checkbox:hover label {
+  color: #4a9eff;
+}
+
+.setting-save-btn:hover:not(:disabled) {
+  background: #3a8eef;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(74, 158, 255, 0.3);
+} 

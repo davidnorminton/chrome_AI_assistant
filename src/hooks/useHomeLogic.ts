@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef, useContext } from "react";
 import { useLocation } from "react-router-dom";
 import { getPageInfoFromTab, type PageInfo } from "../utils/tabs";
-import { sendQueryToAI, type AIResponse } from "../utils/api";
+import { sendQueryToAI } from "../utils/api";
+import type { AIResponse } from "../types";
 import { addHistory } from "../utils/storage";
 import { processImagesWithBase64 } from "../utils/imageUtils";
 import { HistoryNavigationContext, AppActionsContext } from "../App";

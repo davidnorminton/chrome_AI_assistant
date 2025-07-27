@@ -6,7 +6,8 @@
   gap: 8px;
 }
 
-.tag {
+.tag,
+.tag-item {
   background-color: #4a9eff;
   color: white;
   padding: 4px 12px;
@@ -17,7 +18,8 @@
   user-select: none;
 }
 
-.tag:hover {
+.tag:hover,
+.tag-item:hover {
   background-color: #66b3ff;
 }
 
