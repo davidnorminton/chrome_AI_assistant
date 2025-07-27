@@ -49,12 +49,12 @@
 
 .history-item-content {
   flex: 1;
-  min-width: 0;
 }
 
 .history-item-title {
   font-weight: 600;
   font-size: 14px;
+  margin-top: 0;
   margin-bottom: 4px;
   color: #ffffff;
   overflow: hidden;
@@ -86,24 +86,46 @@
 }
 
 .history-delete {
-  background: none;
-  border: none;
-  color: #ff6b6b;
-  cursor: pointer;
-  font-size: 14px;
-  padding: 5px;
+  background: red;
+  color: white;
+  padding: 8px;
   border-radius: 50%;
+  border: 0;
+  cursor: pointer;
+  font-size: 12px;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
 }
 
 .history-delete:hover {
   background-color: #ff6b6b;
   color: #ffffff;
+  transform: scale(1.1);
+}
+
+.history-delete-btn {
+  background: red;
+  color: white;
+  padding: 8px;
+  border-radius: 50%;
+  border: 0;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+
+.history-delete-btn:hover {
+  background-color: #ff4444;
+  color: white;
   transform: scale(1.1);
 }
 
@@ -140,13 +162,12 @@
 }
 
 .history-content {
-  background-color: #3a3a3a;
-  border-radius: 12px;
-  padding: 20px;
-  max-width: 90%;
+  background-color: rgb(58, 58, 58);
   max-height: 80%;
   overflow-y: auto;
   position: relative;
+  border-radius: 12px;
+  padding: 0px;
 }
 
 .history-controls {
@@ -154,7 +175,7 @@
   top: 0;
   z-index: 100;
   background-color: #3a3a3a;
-  padding: 15px 0;
+  padding: 15px;
   border-bottom: 1px solid #555555;
   margin-bottom: 20px;
 }

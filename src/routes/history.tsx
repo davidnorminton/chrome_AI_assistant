@@ -157,10 +157,9 @@ export default function History() {
       {/* Header */}
       <div className="history-header">
         <div className="history-header-left">
-          <h2>History</h2>
-          <span className="history-count">
+          <h2>History <span className="history-count">
             {displayedItems.length} of {filteredAndSortedItems.length} items
-          </span>
+          </span></h2>
         </div>
         <div className="history-header-right">
           <button
@@ -266,16 +265,6 @@ export default function History() {
                     </p>
                     <div className="history-item-meta">
                       <span className="history-item-time">{formatDate(item.timestamp)}</span>
-                      {item.tags && item.tags.length > 0 && (
-                        <div className="history-item-tags">
-                          {item.tags.slice(0, 3).map((tag, index) => (
-                            <span key={index} className="history-tag">{tag}</span>
-                          ))}
-                          {item.tags.length > 3 && (
-                            <span className="history-tag-more">+{item.tags.length - 3}</span>
-                          )}
-                        </div>
-                      )}
                     </div>
                   </div>
                   <button

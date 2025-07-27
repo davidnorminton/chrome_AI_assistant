@@ -105,20 +105,7 @@ html body #rightMenu button,
   color: #666666;
 }
 
-/* Bottom Controls */
-#bottomControls {
-  position: fixed;
-  bottom: 15px;
-  left: 15px;
-  width: calc(100% - 60px);
-  background-color: #4a4a4a;
-  border: 1px solid #555555;
-  border-radius: 8px;
-  padding: 0;
-  color: #ffffff;
-  z-index: 999;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
+
 
 /* Main prompt area */
 .main-prompt-area {
@@ -505,10 +492,12 @@ html body #rightMenu button,
 }
 
 .history-content {
-  background-color: #3a3a3a;
+  background-color: rgb(58, 58, 58);
   color: #ffffff;
-  border-radius: 8px;
-  overflow: hidden;
+  border-radius: 12px;
+  overflow-y: auto;
+  position: relative;
+  padding: 0px;
 }
 
 .history-controls {
@@ -520,7 +509,7 @@ html body #rightMenu button,
   background-color: #4a4a4a;
   border: 1px solid #555555;
   border-radius: 8px;
-  padding: 20px;
+  padding: 15px;
   position: sticky;
   top: 0;
   z-index: 100;

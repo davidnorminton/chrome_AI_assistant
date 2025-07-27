@@ -1,11 +1,16 @@
 /* Bottom Controls */
 #bottomControls {
-  margin: 15px;
-  display: block;
   position: fixed;
-  bottom: 0;
-  left: 0;
-  min-width: calc(100% - 73px);
+  bottom: 15px;
+  left: 15px;
+  width: calc(100% - 73px);
+  background-color: #4a4a4a;
+  border: 1px solid #555555;
+  border-radius: 8px;
+  padding: 0;
+  color: #ffffff;
+  z-index: 999;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 /* Action Buttons Row */
