@@ -424,6 +424,14 @@
   color: #e0e0e0;
 }
 
+/* Code blocks styling */
+.summary-content pre {
+  position: relative;
+  margin: 16px 0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
 /* Content header styling */
 .content-header p {
   font-size: 17px !important;

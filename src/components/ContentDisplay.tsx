@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import AILoadingAnimation from './AILoadingAnimation';
 
 interface ContentDisplayProps {
@@ -17,6 +19,68 @@ interface ContentDisplayProps {
   currentHistoryItemFileName?: string | null;
 }
 
+// Component to render syntax highlighted code blocks
+const SyntaxHighlightedContent: React.FC<{ html: string }> = ({ html }) => {
+  const [processedContent, setProcessedContent] = useState<React.ReactNode[]>([]);
+
+  useEffect(() => {
+    const processContent = () => {
+      const container = document.createElement('div');
+      container.innerHTML = html;
+      
+      const codeBlocks = container.querySelectorAll('pre code');
+      const contentParts: React.ReactNode[] = [];
+      let lastIndex = 0;
+      
+      codeBlocks.forEach((codeBlock, index) => {
+        const code = codeBlock.textContent || '';
+        const language = codeBlock.className.match(/language-(\w+)/)?.[1] || 'javascript';
+        
+        // Add text before this code block
+        const beforeText = html.substring(lastIndex, html.indexOf(codeBlock.outerHTML, lastIndex));
+        if (beforeText) {
+          contentParts.push(
+            <div key={`text-${index}`} dangerouslySetInnerHTML={{ __html: beforeText }} />
+          );
+        }
+        
+        // Add syntax highlighted code block
+        contentParts.push(
+          <SyntaxHighlighter
+            key={`code-${index}`}
+            language={language}
+            style={tomorrow}
+            customStyle={{
+              margin: '16px 0',
+              borderRadius: '6px',
+              fontSize: '14px',
+              lineHeight: '1.5'
+            }}
+          >
+            {code}
+          </SyntaxHighlighter>
+        );
+        
+        lastIndex = html.indexOf(codeBlock.outerHTML, lastIndex) + codeBlock.outerHTML.length;
+      });
+      
+      // Add remaining text after the last code block
+      const remainingText = html.substring(lastIndex);
+      if (remainingText) {
+        contentParts.push(
+          <div key="text-end" dangerouslySetInnerHTML={{ __html: remainingText }} />
+        );
+      }
+      
+      setProcessedContent(contentParts);
+    };
+    
+    processContent();
+  }, [html]);
+
+  return <>{processedContent}</>;
+};
+
 export default function ContentDisplay({
   outputHtml,
   tags,
@@ -34,6 +98,7 @@ export default function ContentDisplay({
 }: ContentDisplayProps) {
   // Debug screenshot data
   console.log('ContentDisplay - screenshotData:', screenshotData ? 'present' : 'not present');
+
   // Determine if we should show the file name in the content area
   const fileNameToShow =
     (currentHistoryItemType === 'file_analysis' && currentHistoryItemFileName) ? currentHistoryItemFileName :
@@ -80,7 +145,7 @@ export default function ContentDisplay({
               </div>
             )}
             {!outputHtml.includes('loading-status-message') && (
-              <div dangerouslySetInnerHTML={{ __html: outputHtml }} />
+              <SyntaxHighlightedContent html={outputHtml} />
             )}
             {outputHtml.includes('loading-status-message') && (
               <div className="ai-loading-container">
