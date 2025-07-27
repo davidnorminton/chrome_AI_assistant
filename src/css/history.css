@@ -3,7 +3,7 @@
   background-color: #4a4a4a;
   border: 1px solid #555555;
   border-radius: 12px;
-  margin-bottom: 15px;
+  margin-bottom: 0;
   cursor: pointer;
   transition: all 0.2s ease;
   overflow: hidden;

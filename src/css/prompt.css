@@ -38,7 +38,6 @@
   padding-left: 15px;
   padding-right: 15px;
   position: relative;
-  margin-left: 15px;
   color: #e0e0e0;
   border-radius: 8px;
 }
@@ -257,4 +256,78 @@
 .image-search-button.active:hover {
   background-color: #34ce57; /* Lighter green */
   color: #ffffff;
+}
+
+/* Responsive Menu Styles */
+.responsive-menu-container {
+  position: relative;
+  display: inline-block;
+}
+
+.menu-toggle-button {
+  background: none;
+  border: none;
+  color: #cccccc;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  font-size: 16px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+}
+
+.menu-toggle-button:hover {
+  background-color: #555555;
+  color: #ffffff;
+}
+
+.responsive-menu {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  background-color: #4a4a4a;
+  border: 1px solid #555555;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1001;
+  min-width: 150px;
+  padding: 8px 0;
+  margin-bottom: 8px;
+}
+
+.responsive-menu .menu-item {
+  width: 100%;
+  background: none;
+  border: none;
+  color: #ffffff;
+  padding: 10px 16px;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  display: block;
+  transition: background-color 0.2s ease;
+  white-space: nowrap;
+}
+
+.responsive-menu .menu-item:hover {
+  background-color: #555555;
+}
+
+.responsive-menu .menu-item.active {
+  background-color: #4a9eff;
+  color: #ffffff;
+}
+
+.responsive-menu .menu-item:disabled {
+  color: #666666;
+  cursor: not-allowed;
+}
+
+.responsive-menu .menu-item:disabled:hover {
+  background-color: transparent;
 } 
