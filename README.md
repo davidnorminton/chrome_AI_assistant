@@ -9,8 +9,17 @@ A modern Chrome extension that adds an AI assistant to any webpage. Built with R
 - **Page summarization** - Get quick summaries of web content
 - **Context-aware responses** - AI understands the current page content
 - **Web search integration** - Search the web for real, clickable links
-- **Image search** - Search for images with thumbnails and descriptions
-- **File upload support** - Upload images and documents for analysis
+- **File upload support** - Upload images, PDFs, and documents for analysis
+- **YouTube video analysis** - Automatic transcription and summarization of YouTube videos
+- **Configurable AI context** - Customize how the AI processes information
+
+### 🎛️ Advanced AI Configuration
+- **Context Levels** - Choose between Minimal, Standard, or Comprehensive context
+- **Custom Instructions** - Add personalized AI behavior instructions
+- **Context Length Control** - Adjustable character limits (1,000-20,000)
+- **Metadata Inclusion** - Toggle page title/URL in context
+- **Model Parameters** - Temperature and token limit controls
+- **Page Context Toggle** - Include/exclude current page content
 
 ### 📱 User Interface
 - **Modern UI** - Clean, responsive interface with dark theme
@@ -18,6 +27,7 @@ A modern Chrome extension that adds an AI assistant to any webpage. Built with R
 - **Sticky controls** - Search and filter controls stay at the top
 - **Loading animations** - Visual feedback during AI processing
 - **Responsive design** - Works on different screen sizes
+- **Enhanced settings panel** - Comprehensive configuration options
 
 ### 📚 Content Management
 - **History management** - Save and revisit previous conversations
@@ -25,14 +35,24 @@ A modern Chrome extension that adds an AI assistant to any webpage. Built with R
 - **Export capability** - Download your history as JSON
 - **Tags and suggestions** - AI-generated follow-up questions and tags
 - **Link collections** - Save and organize web search results
+- **File analysis history** - Track uploaded files and their analyses
 
 ### 🎯 Smart Features
 - **Page context toggle** - Include/exclude current page content
-- **Automatic mode switching** - Web search and image search disable page context
+- **Automatic mode switching** - Web search and file upload disable page context
 - **Screenshot capture** - Take screenshots for AI analysis
 - **Location-based news** - Get local, national, and world news
 - **Weather integration** - Current weather and forecasts
 - **Event discovery** - Find local events and activities
+- **File processing** - Support for PDFs, text files, and images
+- **Syntax highlighting** - Code blocks with IDE-style coloring
+
+### 🔧 Developer Features
+- **Modular architecture** - Clean, maintainable code structure
+- **Type safety** - Comprehensive TypeScript interfaces
+- **Context management** - Centralized AI context configuration
+- **Error handling** - Robust error management and validation
+- **Performance optimization** - Reduced CSS bundle size by 26.6%
 
 ## Technology Stack
 
@@ -41,18 +61,22 @@ A modern Chrome extension that adds an AI assistant to any webpage. Built with R
 - **TypeScript** - Type-safe development
 - **Vite** - Fast build tooling and development server
 - **CSS Modules** - Modular styling architecture
+- **React Router** - Client-side navigation
+- **React Syntax Highlighter** - Code block formatting
 
 ### 🔧 Backend & APIs
 - **Chrome Extension APIs** - Browser integration and permissions
 - **Perplexity AI** - Advanced AI capabilities for text and image analysis
 - **OpenStreetMap Nominatim** - Location-based services
 - **Geolocation API** - Automatic location detection
+- **AI Context Manager** - Centralized context configuration
 
 ### 📦 Architecture
 - **Manifest V3** - Latest Chrome extension standard
 - **Context API** - Global state management
-- **React Router** - Client-side navigation
 - **Modular CSS** - Organized styling structure
+- **Custom Hooks** - Reusable AI logic components
+- **Type-safe APIs** - Comprehensive TypeScript interfaces
 
 ## Development
 
@@ -62,6 +86,7 @@ This project uses a modern development setup with:
 - TypeScript ESLint configuration for type-aware linting
 - Chrome Extension Manifest V3
 - Modular CSS architecture for maintainable styles
+- AI Context Management system for flexible configuration
 
 ### 🚀 Quick Start
 ```bash
@@ -87,7 +112,15 @@ src/
 ├── hooks/         # Custom React hooks
 ├── routes/        # Page components
 ├── utils/         # Utility functions
-└── types.ts       # TypeScript definitions
+├── types.ts       # TypeScript definitions
+└── menu/          # Navigation components
+
+public/            # Chrome extension files
+├── manifest.json  # Extension manifest
+├── background.js  # Service worker
+├── content.js     # Content script
+├── sidebar.html   # Sidebar template
+└── icon.png       # Extension icon
 ```
 
 ## Installation
@@ -159,6 +192,7 @@ The extension requires a Perplexity AI API key:
    - Click the ORLA extension icon
    - Go to **Settings** tab
    - Enter your Perplexity AI API key
+   - Configure AI context settings (optional)
    - Save the settings
 
 3. **Test the Setup**
@@ -174,13 +208,21 @@ The extension requires a Perplexity AI API key:
 
 ### 🔍 Search Features
 - **Web Search**: Click the globe icon to search the web for real links
-- **Image Search**: Click the camera icon to search for images
+- **File Upload**: Upload images, PDFs, and documents for analysis
 - **Page Context**: Toggle the book icon to include/exclude current page content
 
 ### 📁 File Management
-- Upload images and documents for AI analysis
-- Take screenshots directly from web pages
-- View your conversation history in the history tab
+- **Upload Files**: Support for PDFs, text files, images, and more
+- **Screenshot Capture**: Take screenshots directly from web pages
+- **File Analysis**: AI-powered analysis of uploaded content
+- **History Tracking**: View your file analysis history
+
+### 🎛️ AI Configuration
+- **Context Levels**: Choose Minimal, Standard, or Comprehensive context
+- **Custom Instructions**: Add personalized AI behavior
+- **Model Parameters**: Adjust temperature and token limits
+- **Context Length**: Set character limits (1,000-20,000)
+- **Metadata Control**: Include/exclude page title and URL
 
 ### 📰 News & Events
 - Access local, national, and world news
@@ -193,3 +235,42 @@ The extension requires a Perplexity AI API key:
 - Search through your history with filters
 - Export your data as JSON
 - Tags and suggested questions help you continue conversations
+- File analysis history with uploaded content tracking
+
+### 🎬 YouTube Integration
+- **Automatic Detection**: Recognizes YouTube video pages
+- **Transcription Analysis**: Uses video transcripts for summarization
+- **User Confirmation**: Asks before analyzing video content
+- **Rich Metadata**: Includes video title and description
+
+### 💻 Code Support
+- **Syntax Highlighting**: Code blocks with IDE-style coloring
+- **Language Detection**: Automatic language identification
+- **Theme Support**: Dark theme optimized for code display
+- **Copy Support**: Easy code copying functionality
+
+## Recent Updates
+
+### 🆕 Latest Features (v2.0+)
+- **AI Context Management**: Configurable context levels and custom instructions
+- **Enhanced File Support**: PDF, text file, and image analysis
+- **YouTube Integration**: Automatic video transcription and analysis
+- **Syntax Highlighting**: Code blocks with professional formatting
+- **Improved Settings**: Comprehensive configuration panel
+- **Performance Optimization**: 26.6% CSS reduction and faster loading
+- **Modular Architecture**: Clean, maintainable code structure
+
+### 🔧 Technical Improvements
+- **Type Safety**: Enhanced TypeScript interfaces
+- **Error Handling**: Robust error management
+- **Context Management**: Centralized AI configuration
+- **Code Organization**: Modular CSS and component structure
+- **Build Optimization**: Reduced bundle sizes and faster builds
+
+## Contributing
+
+This project is actively maintained and welcomes contributions. The codebase follows modern React and TypeScript best practices with a focus on maintainability and performance.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
