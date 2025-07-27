@@ -185,7 +185,26 @@ html body #rightMenu button,
   color: #ffffff !important;
 }
 
-/* Settings Button Container - Below clear button */
+/* Help Button Container - Above settings button */
+.help-button-container {
+  position: absolute;
+  bottom: 104px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.help-button {
+  background-color: #4a4a4a !important;
+  border: 1px solid #666666 !important;
+}
+
+.help-button:hover {
+  background-color: #555555 !important;
+  border-color: #777777 !important;
+  color: #4a9eff !important;
+}
+
+/* Settings Button Container - Below help button */
 .settings-button-container {
   position: absolute;
   bottom: 60px;

@@ -9,6 +9,7 @@ import App from "./App";
 import Home from "./routes/home";
 import Settings from "./routes/settings";
 import History from "./routes/history";
+import Help from "./routes/help";
 
 const router = createBrowserRouter([
   {
@@ -18,6 +19,7 @@ const router = createBrowserRouter([
       { index: true, element: <Home /> },
       { path: "settings", element: <Settings /> },
       { path: "history", element: <History /> },
+      { path: "help", element: <Help /> },
     ],
   },
 ],

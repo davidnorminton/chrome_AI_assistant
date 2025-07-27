@@ -303,7 +303,14 @@ export default function Menu() {
                 </button>
             </div>
             
-            {/* Settings Button - Below clear button */}
+            {/* Help Button - Above settings button */}
+            <div className="help-button-container">
+                <Link to="/help" id="helpToggle" className="menu-item help-button" title="Help & Documentation">
+                    <i className="fas fa-question-circle"></i>
+                </Link>
+            </div>
+            
+            {/* Settings Button - Below help button */}
             <div className="settings-button-container">
                 <Link to="/settings" id="settingsToggle" className="menu-item settings-button">
                     <i className="fas fa-cog"></i>

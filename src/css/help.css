@@ -1,0 +1,304 @@
+/* Help Page Styles */
+.help-container {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 20px;
+  color: #ffffff;
+  font-family: 'Roboto', sans-serif;
+}
+
+.help-header {
+  text-align: center;
+  margin-bottom: 40px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #4a9eff;
+}
+
+.help-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  color: #4a9eff;
+  font-weight: 600;
+}
+
+.help-header p {
+  font-size: 1.1rem;
+  color: #b0b0b0;
+  margin: 0;
+}
+
+.help-content {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.help-section {
+  background: #2a2a2a;
+  border-radius: 12px;
+  padding: 25px;
+  border: 1px solid #3a3a3a;
+}
+
+.help-section h2 {
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+  color: #4a9eff;
+  font-weight: 600;
+  border-bottom: 2px solid #4a9eff;
+  padding-bottom: 10px;
+}
+
+.help-card {
+  background: #1e1e1e;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid #3a3a3a;
+  transition: all 0.3s ease;
+}
+
+.help-card:hover {
+  border-color: #4a9eff;
+  box-shadow: 0 4px 12px rgba(74, 158, 255, 0.1);
+}
+
+.help-card h3 {
+  font-size: 1.3rem;
+  margin-bottom: 15px;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.help-card h4 {
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+  color: #4a9eff;
+  font-weight: 500;
+}
+
+.help-card p {
+  margin-bottom: 15px;
+  line-height: 1.6;
+  color: #d0d0d0;
+}
+
+.help-card ul, .help-card ol {
+  margin-bottom: 15px;
+  padding-left: 20px;
+}
+
+.help-card li {
+  margin-bottom: 8px;
+  line-height: 1.5;
+  color: #d0d0d0;
+}
+
+.help-card strong {
+  color: #4a9eff;
+  font-weight: 600;
+}
+
+/* Feature Examples */
+.feature-example {
+  background: #2d2d2d;
+  border-radius: 6px;
+  padding: 15px;
+  margin: 15px 0;
+  border-left: 4px solid #4a9eff;
+}
+
+.feature-example strong {
+  color: #4a9eff;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.feature-example ul {
+  margin: 10px 0 0 0;
+  padding-left: 20px;
+}
+
+.feature-example li {
+  margin-bottom: 5px;
+  color: #b0b0b0;
+}
+
+/* Feature Notes */
+.feature-note {
+  background: #2a2a2a;
+  border-radius: 6px;
+  padding: 12px;
+  margin: 15px 0;
+  border-left: 4px solid #ffa726;
+}
+
+.feature-note strong {
+  color: #ffa726;
+}
+
+/* Configuration Options */
+.config-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+  margin: 15px 0;
+}
+
+.config-option {
+  background: #2d2d2d;
+  border-radius: 6px;
+  padding: 15px;
+  border: 1px solid #3a3a3a;
+}
+
+.config-option h4 {
+  color: #4a9eff;
+  margin-bottom: 8px;
+  font-size: 1rem;
+}
+
+.config-option p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #b0b0b0;
+}
+
+/* History Types */
+.history-types {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin: 15px 0;
+}
+
+.history-type {
+  background: #2d2d2d;
+  border-radius: 6px;
+  padding: 15px;
+  text-align: center;
+  border: 1px solid #3a3a3a;
+  transition: all 0.3s ease;
+}
+
+.history-type:hover {
+  border-color: #4a9eff;
+  transform: translateY(-2px);
+}
+
+.history-type h4 {
+  color: #4a9eff;
+  margin-bottom: 8px;
+  font-size: 1rem;
+}
+
+.history-type p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #b0b0b0;
+}
+
+/* Troubleshooting */
+.troubleshooting-item {
+  background: #2d2d2d;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-left: 4px solid #ff6b6b;
+}
+
+.troubleshooting-item h4 {
+  color: #ff6b6b;
+  margin-bottom: 8px;
+  font-size: 1rem;
+}
+
+.troubleshooting-item p {
+  margin: 0;
+  color: #d0d0d0;
+}
+
+.troubleshooting-item strong {
+  color: #4a9eff;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .help-container {
+    padding: 15px;
+  }
+  
+  .help-header h1 {
+    font-size: 2rem;
+  }
+  
+  .help-section {
+    padding: 20px;
+  }
+  
+  .help-card {
+    padding: 15px;
+  }
+  
+  .config-options,
+  .history-types {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .help-header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .help-section h2 {
+    font-size: 1.5rem;
+  }
+  
+  .help-card h3 {
+    font-size: 1.2rem;
+  }
+}
+
+/* Scrollbar Styling */
+.help-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.help-container::-webkit-scrollbar-track {
+  background: #1e1e1e;
+}
+
+.help-container::-webkit-scrollbar-thumb {
+  background: #4a9eff;
+  border-radius: 4px;
+}
+
+.help-container::-webkit-scrollbar-thumb:hover {
+  background: #66b3ff;
+}
+
+/* Animation for cards */
+.help-card {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Stagger animation for multiple cards */
+.help-section:nth-child(1) .help-card { animation-delay: 0.1s; }
+.help-section:nth-child(2) .help-card { animation-delay: 0.2s; }
+.help-section:nth-child(3) .help-card { animation-delay: 0.3s; }
+.help-section:nth-child(4) .help-card { animation-delay: 0.4s; }
+.help-section:nth-child(5) .help-card { animation-delay: 0.5s; }
+.help-section:nth-child(6) .help-card { animation-delay: 0.6s; }
+.help-section:nth-child(7) .help-card { animation-delay: 0.7s; } 
