@@ -5,6 +5,7 @@ import { sendQueryToAI, type AIResponse } from "../utils/api";
 import { addHistory } from "../utils/storage";
 import { processImagesWithBase64 } from "../utils/imageUtils";
 import { HistoryNavigationContext, AppActionsContext } from "../App";
+import { getYouTubeVideoInfo, YouTubeVideoInfo } from "../utils/youtube";
 
 interface LinkItem {
   title: string;
@@ -183,6 +184,73 @@ export function useHomeLogic() {
 
   // Summarize handler
   const handleSummarize = useCallback(async (userPrompt?: string, customLoadingMessage?: string) => {
+    // Check if we're on a YouTube video page
+    const youtubeInfo = await getYouTubeVideoInfo();
+    
+    if (youtubeInfo.isYouTubeVideo && !userPrompt) {
+      // Show confirmation dialog for YouTube video summarization
+      const confirmSummarize = confirm(
+        `Would you like to summarize this YouTube video?\n\n"${youtubeInfo.title}"\n\nThis will use the video's transcription for summarization.`
+      );
+      
+      if (!confirmSummarize) {
+        return;
+      }
+      
+      // Use transcription for YouTube video summarization
+      if (youtubeInfo.transcription) {
+        setOutputHtml(`<p class="loading-status-message centered-message">AI is analyzing the video transcription...</p>`);
+        setTags([]);
+        setSuggested([]);
+        setLinks([]);
+        setRestoredScreenshotData(null);
+        setSearchQuery("");
+        setLoading(true);
+        
+        try {
+          const res: AIResponse = await sendQueryToAI({
+            query: `Summarize this YouTube video based on its transcription:\n\n${youtubeInfo.transcription}`,
+            action: "summarize_page",
+          });
+
+          setOutputHtml(res.text);
+          setTags(res.tags ?? []);
+          setSuggested(res.suggestedQuestions ?? []);
+
+          // Save page info for header display
+          setSavedPageInfo({
+            title: youtubeInfo.title || "YouTube Video",
+            url: window.location.href,
+            favicon: "https://www.youtube.com/favicon.ico",
+          });
+
+          await addHistory({
+            title: youtubeInfo.title || "YouTube Video Summary",
+            type: 'summary',
+            response: res.text,
+            tags: res.tags ?? [],
+            suggestedQuestions: res.suggestedQuestions ?? [],
+            pageInfo: {
+              title: youtubeInfo.title || "YouTube Video",
+              url: window.location.href,
+              favicon: "https://www.youtube.com/favicon.ico",
+            },
+          });
+        } catch (e: any) {
+          setOutputHtml(`<p class="error">Error summarizing video: ${e.message}</p>`);
+          setTags([]);
+          setSuggested([]);
+        } finally {
+          setLoading(false);
+        }
+        return;
+      } else {
+        // No transcription available, fall back to regular page summarization
+        setOutputHtml(`<p class="error">No transcription available for this video. Summarizing the page content instead.</p>`);
+      }
+    }
+
+    // Regular page summarization (for non-YouTube pages or when transcription is not available)
     setOutputHtml(`<p class="loading-status-message centered-message">${customLoadingMessage || 'AI is analyzing the page...'}</p>`);
     setTags([]);
     setSuggested([]);
