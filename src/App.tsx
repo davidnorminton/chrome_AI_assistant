@@ -6,6 +6,7 @@ import { Outlet } from 'react-router-dom';
 import { createContext, useState, useEffect, useCallback } from 'react';
 import { getHistory } from './utils/storage';
 import type { HistoryItem } from './types';
+import { StreamingProvider } from './context/StreamingContext';
 
 // Import STORAGE_KEY from storage utility
 const STORAGE_KEY = "extensionHistory";
@@ -149,8 +150,10 @@ export default function App() {
         clearContent,
         setClearContent: setClearContentWithDebug
       }}>
-        <Outlet />
-        <Menu />
+        <StreamingProvider>
+          <Outlet />
+          <Menu />
+        </StreamingProvider>
       </AppActionsContext.Provider>
     </HistoryNavigationContext.Provider>
   )

@@ -41,7 +41,6 @@ export function useAILogic(): UseAILogicReturn {
   // Send a general query with context
   const sendQuery = useCallback(async (query: string, options: SendQueryOptions = {}) => {
     setLoading(true);
-    setOutputHtml(`<p class="loading-status-message centered-message">AI is thinking...</p>`);
     setTags([]);
     setSuggested([]);
     setLinks([]);
@@ -86,7 +85,6 @@ export function useAILogic(): UseAILogicReturn {
   // Summarize the current page
   const summarizePage = useCallback(async (userPrompt?: string) => {
     setLoading(true);
-    setOutputHtml(`<p class="loading-status-message centered-message">AI is analyzing the page...</p>`);
     setTags([]);
     setSuggested([]);
     setLinks([]);
@@ -170,7 +168,6 @@ export function useAILogic(): UseAILogicReturn {
   // Search the web
   const searchWeb = useCallback(async (query: string) => {
     setLoading(true);
-    setOutputHtml(`<p class="loading-status-message centered-message">Searching the web...</p>`);
     setTags([]);
     setSuggested([]);
     setLinks([]);
@@ -214,7 +211,6 @@ export function useAILogic(): UseAILogicReturn {
   // Analyze a file
   const analyzeFile = useCallback(async (fileData: string, fileName?: string) => {
     setLoading(true);
-    setOutputHtml(`<p class="loading-status-message centered-message">AI is analyzing the file...</p>`);
     setTags([]);
     setSuggested([]);
     setLinks([]);

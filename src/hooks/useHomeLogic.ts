@@ -7,6 +7,7 @@ import { addHistory } from "../utils/storage";
 import { processImagesWithBase64 } from "../utils/imageUtils";
 import { HistoryNavigationContext, AppActionsContext } from "../App";
 import { getYouTubeVideoInfo, YouTubeVideoInfo } from "../utils/youtube";
+import { useStreaming } from '../context/StreamingContext';
 
 interface LinkItem {
   title: string;
@@ -42,8 +43,10 @@ export function useHomeLogic() {
   const [currentHistoryItemFileName, setCurrentHistoryItemFileName] = useState<string | null>(null);
   const lastProcessedIndexRef = useRef<number | null>(null);
 
+  const { startStream, stopStream, isStreaming, streamContent, resetStream } = useStreaming();
+
   // Simple logic: show welcome only when there's no content
-  const showWelcome = !outputHtml && tags.length === 0 && suggested.length === 0 && links.length === 0;
+  const showWelcome = !outputHtml && !isStreaming && streamContent === '' && tags.length === 0 && suggested.length === 0 && links.length === 0;
 
   // Debug restoredScreenshotData changes
   useEffect(() => {
@@ -68,6 +71,12 @@ export function useHomeLogic() {
     // Prevent processing the same index multiple times
     if (nav?.currentIndex === lastProcessedIndexRef.current) {
       console.log('Skipping - same index already processed');
+      return;
+    }
+
+    // Don't restore history if we're currently loading or streaming
+    if (loading || isStreaming) {
+      console.log('Skipping - currently loading or streaming');
       return;
     }
 
@@ -189,7 +198,7 @@ export function useHomeLogic() {
       lastProcessedIndexRef.current = 0;
       console.log('Set lastProcessedIndexRef to 0 (fallback)');
     }
-  }, [location.state, nav?.currentIndex, nav?.history]);
+  }, [location.state, nav?.currentIndex, nav?.history, nav?.initialized, loading, isStreaming]);
 
   // Summarize handler
   const handleSummarize = useCallback(async (userPrompt?: string, customLoadingMessage?: string) => {
@@ -208,13 +217,13 @@ export function useHomeLogic() {
       
       // Use transcription for YouTube video summarization
       if (youtubeInfo.transcription) {
-        setOutputHtml(`<p class="loading-status-message centered-message">AI is analyzing the video transcription...</p>`);
+        console.log('Using video transcription for analysis');
+        setLoading(true);
         setTags([]);
         setSuggested([]);
         setLinks([]);
         setRestoredScreenshotData(null);
         setSearchQuery("");
-        setLoading(true);
         
         try {
           const res: AIResponse = await sendQueryToAI({
@@ -260,7 +269,6 @@ export function useHomeLogic() {
     }
 
     // Regular page summarization (for non-YouTube pages or when transcription is not available)
-    setOutputHtml(`<p class="loading-status-message centered-message">${customLoadingMessage || 'AI is analyzing the page...'}</p>`);
     setTags([]);
     setSuggested([]);
     setLinks([]);
@@ -331,7 +339,6 @@ export function useHomeLogic() {
     setLinks([]);
     setRestoredScreenshotData(null); // Clear restored screenshot data for new queries
     setSearchQuery("");
-    setOutputHtml(`<p class="loading-status-message centered-message">AI is thinking...</p>`);
     
     const imageData = screenshotData || fileData;
     
@@ -349,6 +356,13 @@ export function useHomeLogic() {
         // Use the same approach as tag search - get actual links
         console.log('=== WEB SEARCH REQUEST ===');
         console.log('Query:', query);
+        
+        setLoading(true);
+        setTags([]);
+        setSuggested([]);
+        setLinks([]);
+        setRestoredScreenshotData(null);
+        setSearchQuery(query);
         
         const res: AIResponse = await sendQueryToAI({
           query: query,
@@ -401,16 +415,38 @@ export function useHomeLogic() {
         queryToSend = "Please analyze and summarize this file";
       }
       
-      const res: AIResponse = await sendQueryToAI({
-        query: queryToSend,
-        action: action,
-        file: imageData,
-      });
-
-      setOutputHtml(res.text);
-      setTags(res.tags ?? []);
-      setSuggested(res.suggestedQuestions ?? []);
-
+      // Use regular API call for general questions, streaming for specific actions
+      if (imageData) {
+        // For file analysis, use streaming
+        await startStream(queryToSend, action, imageData);
+        setTags([]);
+        setSuggested([]);
+      } else {
+        // For general questions, use regular API call
+        const res: AIResponse = await sendQueryToAI({
+          query: queryToSend,
+          action: action,
+        });
+        
+        setOutputHtml(res.text);
+        setTags(res.tags ?? []);
+        setSuggested(res.suggestedQuestions ?? []);
+        
+        // Save to history
+        await addHistory({
+          title: query.length > 50 ? query.substring(0, 50) + "..." : query,
+          type: 'question',
+          response: res.text,
+          tags: res.tags ?? [],
+          suggestedQuestions: res.suggestedQuestions ?? [],
+          pageInfo: {
+            title: info.title || "",
+            url: info.url || "",
+            favicon: info.favicon || "",
+          },
+        });
+      }
+      
       // Save page info for header display if this is a context-based question
       if (_useContext && !imageData) {
         setSavedPageInfo({
@@ -420,27 +456,6 @@ export function useHomeLogic() {
         });
       }
 
-      const titleRes = await sendQueryToAI({
-        query: `Suggest a concise title (5 words or less) for this response: ${res.text}`,
-        action: "direct_question",
-      });
-      const saveTitle = titleRes.text.replace(/<[^>]+>/g, "").split("\n")[0] || "AI Response";
-
-      await addHistory({
-        title: saveTitle,
-        type: imageData ? 'file_analysis' : 'question',
-        response: res.text,
-        tags: res.tags ?? [],
-        suggestedQuestions: res.suggestedQuestions ?? [],
-        screenshotData: imageData || undefined,
-        fileName: imageData ? fileName || undefined : undefined,
-        pageInfo: {
-          title: info.title || "",
-          url: info.url || "",
-          favicon: info.favicon || "",
-        },
-      });
-      
       setScreenshotData(null);
     } catch (e: any) {
       setOutputHtml(`<p class="error">${e.message}</p>`);
@@ -449,16 +464,16 @@ export function useHomeLogic() {
     } finally {
       setLoading(false);
     }
-  }, [screenshotData]);
+  }, [screenshotData, startStream]);
 
   // Tag click handler
   const handleTagClick = useCallback(async (tag: string) => {
     setLoading(true);
-    setLinks([]);
-    setSearchQuery(tag);
     setTags([]);
     setSuggested([]);
-    setOutputHtml(`<p class="loading-status-message centered-message">Searching for "${tag}"...</p>`);
+    setLinks([]);
+    setRestoredScreenshotData(null);
+    setSearchQuery(tag);
     
     try {
       const res: AIResponse = await sendQueryToAI({
@@ -491,14 +506,21 @@ export function useHomeLogic() {
   }, []);
 
   // Suggested question click handler
-  const handleSuggestedClick = useCallback((question: string) => {
+  const handleSuggestedClick = useCallback(async (question: string) => {
     setLoading(true);
-    setLinks([]);
-    setSearchQuery("");
     setTags([]);
     setSuggested([]);
-    setOutputHtml(`<p class="loading-status-message centered-message">Asking AI "${question}"...</p>`);
-    handleSummarize(question, `Asking AI "${question}"...`);
+    setLinks([]);
+    setRestoredScreenshotData(null);
+    setSearchQuery("");
+    
+    try {
+      await handleSummarize(question);
+    } catch (e: any) {
+      setOutputHtml(`<p class="error">${e.message}</p>`);
+    } finally {
+      setLoading(false);
+    }
   }, [handleSummarize]);
 
   // Screenshot capture handler
@@ -559,41 +581,60 @@ export function useHomeLogic() {
 
 
   // Send news query function
-  const sendNewsQuery = useCallback((query: string) => {
-    console.log('=== SEND NEWS QUERY CALLED ===');
-    console.log('Query:', query);
+  const sendNewsQuery = useCallback(async (query: string) => {
+    setLoading(true);
+    setTags([]);
+    setSuggested([]);
+    setLinks([]);
+    setRestoredScreenshotData(null);
+    setSearchQuery("");
     
-    // Check if this is a location form
-    if (query.startsWith('LOCATION_FORM:')) {
-      const parts = query.split(':');
-      const option = parts[1];
-      const formHTML = parts.slice(2).join(':');
+    try {
+      // Check if this is a location form
+      if (query.startsWith('LOCATION_FORM:')) {
+        const parts = query.split(':');
+        const option = parts[1];
+        const formHTML = parts.slice(2).join(':');
+        
+        // Show the location form
+        setOutputHtml(formHTML);
+        setTags([]);
+        setSuggested([]);
+        setLinks([]);
+        setRestoredScreenshotData(null); // Clear screenshot data
+        setSearchQuery("");
+        setLoading(false);
+        
+        // Add event listeners after a short delay to ensure DOM is ready
+        setTimeout(() => {
+          addLocationFormListeners(option);
+        }, 100);
+        
+        return;
+      }
       
-      // Show the location form
-      setOutputHtml(formHTML);
-      setTags([]);
-      setSuggested([]);
-      setLinks([]);
-      setRestoredScreenshotData(null); // Clear screenshot data
-      setSearchQuery("");
-      setLoading(false);
+      // Check if this is a loading message with query
+      if (query.startsWith('LOADING:')) {
+        const parts = query.split(':');
+        const loadingMessage = parts[1];
+        const actualQuery = parts.slice(2).join(':');
+        
+        setTags([]);
+        setSuggested([]);
+        setLinks([]);
+        setRestoredScreenshotData(null); // Clear screenshot data
+        setSearchQuery("");
+        setLoading(true);
+        
+        // Send the actual query to AI
+        setTimeout(() => {
+          handleSend(actualQuery, null, false, false);
+        }, 100);
+        
+        return;
+      }
       
-      // Add event listeners after a short delay to ensure DOM is ready
-      setTimeout(() => {
-        addLocationFormListeners(option);
-      }, 100);
-      
-      return;
-    }
-    
-    // Check if this is a loading message with query
-    if (query.startsWith('LOADING:')) {
-      const parts = query.split(':');
-      const loadingMessage = parts[1];
-      const actualQuery = parts.slice(2).join(':');
-      
-              // Show the loading message
-        setOutputHtml(`<p class="loading-status-message centered-message">AI is processing your request...</p>`);
+      // Regular query (for world news)
       setTags([]);
       setSuggested([]);
       setLinks([]);
@@ -601,25 +642,15 @@ export function useHomeLogic() {
       setSearchQuery("");
       setLoading(true);
       
-      // Send the actual query to AI
-      setTimeout(() => {
-        handleSend(actualQuery, null, false, false);
-      }, 100);
-      
-      return;
+      // Send the query to AI
+      handleSend(query, null, false, false);
+    } catch (e: any) {
+      setOutputHtml(`<p class="error">${e.message}</p>`);
+      setTags([]);
+      setSuggested([]);
+    } finally {
+      setLoading(false);
     }
-    
-    // Regular query (for world news)
-    setOutputHtml(`<p class="loading-status-message centered-message">AI is gathering the latest news...</p>`);
-    setTags([]);
-    setSuggested([]);
-    setLinks([]);
-    setRestoredScreenshotData(null); // Clear screenshot data
-    setSearchQuery("");
-    setLoading(true);
-    
-    // Send the query to AI
-            handleSend(query, null, false, false);
   }, [handleSend]);
 
   // Add event listeners for location form
@@ -769,7 +800,6 @@ export function useHomeLogic() {
     // Send the query to AI
     if (query) {
       console.log('Sending query:', query);
-      setOutputHtml(`<p class="loading-status-message centered-message">${loadingMessage}</p>`);
       setTags([]);
       setSuggested([]);
       setLinks([]);
@@ -813,5 +843,9 @@ export function useHomeLogic() {
     shouldShowLinkList,
 
     sendNewsQuery,
+    isStreaming,
+    streamContent,
+    stopStream,
+    resetStream
   };
 } 

@@ -1,7 +1,12 @@
-/* Import all modular CSS files */
+/* Import all CSS modules */
 @import './base.css';
 @import './header.css';
 @import './menu.css';
+@import './content.css';
 @import './prompt.css';
 @import './history.css';
-@import './content.css'; 
+@import './settings.css';
+@import './notes.css';
+@import './help.css';
+@import './tooltips.css';
+@import './markdown.css'; 

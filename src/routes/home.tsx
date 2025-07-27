@@ -69,9 +69,8 @@ export default function Home() {
   };
 
   // Calculate display states
-  const isAILoading = outputHtml.includes('loading-status-message');
-  const showPageHeader = Boolean(outputHtml) && shouldShowPageHeader() && !isAILoading;
-  const showLinkList = shouldShowLinkList() && !isAILoading;
+  const showPageHeader = Boolean(outputHtml) && shouldShowPageHeader() && !loading;
+  const showLinkList = shouldShowLinkList() && !loading;
 
 
   return (
@@ -108,8 +107,20 @@ export default function Home() {
           processingFileName={processingFileName}
           processingFileType={processingFileType}
           currentHistoryItemType={currentHistoryItemType}
+          currentHistoryItemFileName={currentHistoryItemFileName}
+          loading={loading}
         >
-          <Welcome onSummarize={() => handleSummarize()} />
+          <Welcome 
+            onSummarize={() => handleSummarize()} 
+            onGeneralQuestion={() => {
+              // Focus the textarea and set placeholder for general question
+              const textarea = document.getElementById('cmdInput') as HTMLTextAreaElement;
+              if (textarea) {
+                textarea.focus();
+                textarea.placeholder = "Ask anything";
+              }
+            }}
+          />
         </ContentDisplay>
 
         {/* Prompt */}

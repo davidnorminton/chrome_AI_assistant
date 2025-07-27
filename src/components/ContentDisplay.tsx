@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import AILoadingAnimation from './AILoadingAnimation';
+import { MarkdownRenderer } from './MarkdownRenderer';
+import { useStreaming } from '../context/StreamingContext';
 
 interface ContentDisplayProps {
   outputHtml: string;
@@ -17,6 +19,7 @@ interface ContentDisplayProps {
   processingFileType?: string | null;
   currentHistoryItemType?: string | null;
   currentHistoryItemFileName?: string | null;
+  loading?: boolean; // Add loading prop
 }
 
 // Component to render syntax highlighted code blocks
@@ -51,7 +54,6 @@ const SyntaxHighlightedContent: React.FC<{ html: string }> = ({ html }) => {
             language={language}
             style={tomorrow}
             customStyle={{
-              margin: '16px 0',
               borderRadius: '6px',
               fontSize: '14px',
               lineHeight: '1.5'
@@ -94,92 +96,101 @@ export default function ContentDisplay({
   processingFileName,
   processingFileType,
   currentHistoryItemType,
-  currentHistoryItemFileName
+  currentHistoryItemFileName,
+  loading
 }: ContentDisplayProps) {
+  const { isStreaming, streamContent } = useStreaming();
+  
   // Debug screenshot data
   console.log('ContentDisplay - screenshotData:', screenshotData ? 'present' : 'not present');
 
   // Determine if we should show the file name in the content area
   const fileNameToShow =
-    (currentHistoryItemType === 'file_analysis' && currentHistoryItemFileName) ? currentHistoryItemFileName :
-    (isProcessingFile && processingFileName && processingFileType && processingFileType !== 'screenshot') ? processingFileName :
-    undefined;
-  const showFileNameInContent =
-    (currentHistoryItemType === 'file_analysis' && currentHistoryItemFileName) ||
-    (isProcessingFile && processingFileName && processingFileType && processingFileType !== 'screenshot');
+    currentHistoryItemFileName ||
+    (isProcessingFile && processingFileName) ||
+    null;
+
+  // Determine content to display
+  const displayContent = isStreaming ? streamContent : outputHtml;
+  const isStreamingOrLoading = isStreaming || loading;
 
   return (
     <div id="responseBox">
       <div id="output">
-        {showWelcome ? (
-          <div key="welcome-container">
-            {children}
+        {/* Loading Animation - Show only when loading and not streaming */}
+        {loading && !showWelcome && !isStreaming && (
+          <div className="loading-container">
+            <AILoadingAnimation />
           </div>
-        ) : isProcessingFile ? (
-          <div key="processing-container" className="file-processing-notice">
+        )}
+
+        {/* Screenshot Display - Only show when not loading */}
+        {!loading && screenshotData && (
+          <div className="screenshot-display">
+            <img
+              src={screenshotData}
+              alt="Screenshot"
+              style={{ maxHeight: '250px', maxWidth: '100%', borderRadius: '8px' }}
+            />
+          </div>
+        )}
+
+        {/* File Processing Notice - Only show when not loading */}
+        {!loading && isProcessingFile && processingFileName && (
+          <div className="file-processing-notice">
             <div className="processing-spinner"></div>
-            <div className="processing-text">
-              <p>Processing file...</p>
-              <p className="file-info">
-                <strong>{processingFileName}</strong>
-                <span className="file-type">({processingFileType})</span>
-              </p>
-              <p className="processing-note">This may take a moment for large files</p>
-            </div>
+            <p>Processing {processingFileType || 'file'}: {processingFileName}</p>
           </div>
-        ) : outputHtml ? (
-          <div key="content-container">
-            {/* Show file name above AI response for file analysis */}
-            {showFileNameInContent && fileNameToShow && (
-              <div className="file-name-display" style={{ marginBottom: 12 }}>
-                {fileNameToShow}
-              </div>
-            )}
-            {screenshotData && !isProcessingFile && currentHistoryItemType !== 'file_analysis' && (
-              <div className="screenshot-display">
-                <img 
-                  src={screenshotData} 
-                  alt="Screenshot" 
-                  className="screenshot-image"
-                />
-              </div>
-            )}
-            {!outputHtml.includes('loading-status-message') && (
-              <SyntaxHighlightedContent html={outputHtml} />
-            )}
-            {outputHtml.includes('loading-status-message') && (
-              <div className="ai-loading-container">
-                <AILoadingAnimation message={outputHtml.replace(/<[^>]*>/g, '')} />
-              </div>
-            )}
-            {/* Hide tags and suggested questions during AI loading */}
-            {!outputHtml.includes('loading-status-message') && tags.length > 0 && (
-              <div className="tags-container">
-                {tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="tag-item"
-                    onClick={() => onTagClick(tag)}
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
-            {!outputHtml.includes('loading-status-message') && suggested.length > 0 && (
-              <div className="suggested-questions-container">
-                <ul>
-                  {suggested.map((q) => (
-                    <li key={q} onClick={() => onSuggestedClick(q)}>
-                      {q}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+        )}
+
+        {/* File Name Display - Only show when not loading */}
+        {!loading && fileNameToShow && (
+          <div className="file-name-display">
+            <i className="fas fa-file"></i>
+            {fileNameToShow}
+          </div>
+        )}
+
+        {/* Welcome Component - Only show when not loading */}
+        {!loading && showWelcome && children}
+
+        {/* Content Display - Only show when not loading */}
+        {!loading && !showWelcome && (displayContent || isStreaming) && (
+          <div className="content-display">
+            {isStreaming ? (
+              <MarkdownRenderer content={displayContent} className="streaming" isStreaming={true} />
+            ) : (
+              <SyntaxHighlightedContent html={displayContent} />
             )}
           </div>
-        ) : (
-          <div key="empty-container"></div>
+        )}
+
+        {/* Tags - Only show when not loading */}
+        {!loading && !isStreamingOrLoading && tags.length > 0 && (
+          <div className="tags-container">
+            {tags.map((tag, index) => (
+              <span
+                key={index}
+                className="tag"
+                onClick={() => onTagClick(tag)}
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Suggested Questions - Only show when not loading */}
+        {!loading && !isStreamingOrLoading && suggested.length > 0 && (
+          <div className="suggested-questions-container">
+            <ul>
+              {suggested.map((question, index) => (
+                <li key={index} onClick={() => onSuggestedClick(question)}>
+                  {question}
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </div>
     </div>

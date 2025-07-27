@@ -5,13 +5,15 @@ import { useState, useEffect } from "react";
 
 interface WelcomeProps {
   onSummarize?: () => void;
+  onGeneralQuestion?: () => void;
 }
 
-export default function Welcome({ onSummarize }: WelcomeProps) {
+export default function Welcome({ onSummarize, onGeneralQuestion }: WelcomeProps) {
   const [pageTitle, setPageTitle] = useState<string>("");
 
   console.log('=== WELCOME COMPONENT RENDERED ===');
   console.log('onSummarize available:', !!onSummarize);
+  console.log('onGeneralQuestion available:', !!onGeneralQuestion);
   console.log('pageTitle:', pageTitle);
 
   // Get page title on mount
@@ -40,19 +42,39 @@ export default function Welcome({ onSummarize }: WelcomeProps) {
     }
   };
 
+  const handleGeneralQuestionClick = () => {
+    console.log('=== GENERAL QUESTION BUTTON CLICKED ===');
+    if (onGeneralQuestion) {
+      console.log('Calling onGeneralQuestion function');
+      onGeneralQuestion();
+    } else {
+      console.log('onGeneralQuestion function not available');
+    }
+  };
+
   return (
     <div className="intro orla">
         <h1>ORLA</h1>
         <p>Your personal A.I. browser assistant</p>
         <img src={ icon } width="250" height="250" />
-        {pageTitle && onSummarize && (
-          <button 
-            className="summarize-page-btn"
-            onClick={handleSummarizeClick}
-          >
-            Summarize "{pageTitle}"
-          </button>
-        )}
+        <div className="welcome-buttons">
+          {onGeneralQuestion && (
+            <button 
+              className="general-question-btn"
+              onClick={handleGeneralQuestionClick}
+            >
+              Ask a General Question
+            </button>
+          )}
+          {pageTitle && onSummarize && (
+            <button 
+              className="summarize-page-btn"
+              onClick={handleSummarizeClick}
+            >
+              Summarize "{pageTitle}"
+            </button>
+          )}
+        </div>
     </div>
   );
 }
