@@ -1,9 +1,10 @@
 // src/prompt/Prompt.tsx
 import { useState, useRef, useEffect } from "react";
+import { extractTextFromPDF, isPDFFile, extractTextFromFile, isTextFile } from "../utils/pdfUtils";
 
 interface PromptProps {
   /** Called for the "Send" button */
-  onSend: (query: string, fileData: string | null, usePageContext: boolean, useWebSearch: boolean) => void;
+  onSend: (query: string, fileData: string | null, usePageContext: boolean, useWebSearch: boolean, fileName?: string | null) => void;
   /** Called for the "Summarize" button */
   onSummarize: () => void;
   /** Whether any request is in flight */
@@ -18,15 +19,22 @@ interface PromptProps {
   setUseWebSearch: (val: boolean) => void;
   /** Called when a screenshot is captured */
   onScreenshotCapture?: (imageData: string) => void;
+  /** Called when file processing state changes */
+  onFileProcessingChange?: (isProcessing: boolean, fileName: string | null, fileType: string | null) => void;
 }
 
-export default function Prompt({ onSend, onSummarize, loading, useContext, setUseContext, useWebSearch, setUseWebSearch, onScreenshotCapture }: PromptProps) {
+export default function Prompt({ onSend, onSummarize, loading, useContext, setUseContext, useWebSearch, setUseWebSearch, onScreenshotCapture, onFileProcessingChange }: PromptProps) {
   const [text, setText] = useState("");
   const [fileData, setFileData] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [fileType, setFileType] = useState<string | null>(null);
   const [isScreenshotMode, setIsScreenshotMode] = useState(false);
   const [canTakeScreenshot, setCanTakeScreenshot] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
   const [isSmallPanel, setIsSmallPanel] = useState(false);
+  const [isProcessingFile, setIsProcessingFile] = useState(false);
+  const [processingFileName, setProcessingFileName] = useState<string | null>(null);
+  const [processingFileType, setProcessingFileType] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -61,6 +69,13 @@ export default function Prompt({ onSend, onSummarize, loading, useContext, setUs
     ta.style.height = ta.scrollHeight + "px";
   }, [text]);
 
+  // Notify parent when file processing state changes
+  useEffect(() => {
+    if (onFileProcessingChange) {
+      onFileProcessingChange(isProcessingFile, processingFileName, processingFileType);
+    }
+  }, [isProcessingFile, processingFileName, processingFileType, onFileProcessingChange]);
+
   // Check panel size and handle menu clicks
   useEffect(() => {
     const checkPanelSize = () => {
@@ -93,20 +108,105 @@ export default function Prompt({ onSend, onSummarize, loading, useContext, setUs
     };
   }, [showMenu]);
 
-  // When a file is selected, read it as Data URL
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // File type validation for Perplexity (images, PDFs, and text files supported)
+  const isValidFileType = (file: File): boolean => {
+    const validTypes = [
+      'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+      'application/pdf',
+      'text/plain', 'text/csv', 'application/json',
+      'text/xml', 'text/html', 'application/javascript',
+      'text/markdown', 'text/yaml', 'text/x-yaml'
+    ];
+    return validTypes.includes(file.type);
+  };
+
+  // When a file is selected, validate and read it
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return setFileData(null);
-    const reader = new FileReader();
-    reader.onload = () => setFileData(reader.result as string);
-    reader.readAsDataURL(file);
+    if (!file) {
+      setFileData(null);
+      setFileName(null);
+      setFileType(null);
+      return;
+    }
+
+    // Validate file type
+    if (!isValidFileType(file)) {
+      alert(`File type "${file.type}" is not supported. Please upload an image file (JPEG, PNG, GIF, WebP), PDF, or text file (TXT, CSV, JSON, etc.).`);
+      return;
+    }
+
+    // Check file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File size must be less than 10MB.');
+      return;
+    }
+
+    // Start processing state
+    setIsProcessingFile(true);
+    setProcessingFileName(file.name);
+    setProcessingFileType(file.type);
+
+    try {
+      // Handle different file types
+      if (isPDFFile(file)) {
+        const pdfText = await extractTextFromPDF(file);
+        setFileData(pdfText);
+        setFileName(file.name);
+        setFileType(file.type);
+        // Disable page context when file is uploaded
+        setUseContext(false);
+      } else if (isTextFile(file)) {
+        const textContent = await extractTextFromFile(file);
+        setFileData(textContent);
+        setFileName(file.name);
+        setFileType(file.type);
+        // Disable page context when file is uploaded
+        setUseContext(false);
+      } else {
+        // Handle image files
+        const reader = new FileReader();
+        reader.onload = () => {
+          setFileData(reader.result as string);
+          setFileName(file.name);
+          setFileType(file.type);
+          // Disable page context when file is uploaded
+          setUseContext(false);
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch (error) {
+      alert(`Error processing file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      // Clear processing state
+      setIsProcessingFile(false);
+      setProcessingFileName(null);
+      setProcessingFileType(null);
+    }
+  };
+
+  // Remove uploaded file
+  const removeFile = () => {
+    setFileData(null);
+    setFileName(null);
+    setFileType(null);
+    // Re-enable page context when file is removed
+    setUseContext(true);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleSendClick = () => {
     if (!text.trim() && !fileData) return;
-    onSend(text.trim(), fileData, useContext, useWebSearch);
+    onSend(text.trim(), fileData, useContext, useWebSearch, fileName);
     setText("");
     setFileData(null);
+    setFileName(null);
+    setFileType(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleScreenshotClick = () => {
@@ -124,6 +224,8 @@ export default function Prompt({ onSend, onSummarize, loading, useContext, setUs
       if (message.action === "screenshotCaptured" && message.imageData) {
         setIsScreenshotMode(false);
         setFileData(message.imageData);
+        // Disable page context when screenshot is taken
+        setUseContext(false);
         if (onScreenshotCapture) {
           onScreenshotCapture(message.imageData);
         }
@@ -148,6 +250,24 @@ export default function Prompt({ onSend, onSummarize, loading, useContext, setUs
           disabled={loading}
         />
 
+        {/* File display */}
+        {fileName && (
+          <div className="uploaded-file-display">
+            <div className="file-info">
+              <i className="fas fa-file"></i>
+              <span className="file-name">{fileName}</span>
+              <span className="file-type">({fileType})</span>
+            </div>
+            <button
+              className="remove-file-btn"
+              onClick={removeFile}
+              title="Remove file"
+            >
+              <i className="fas fa-times"></i>
+            </button>
+          </div>
+        )}
+
         <div className="action-buttons-row">
           {/* Hidden file input */}
           <input
@@ -155,7 +275,7 @@ export default function Prompt({ onSend, onSummarize, loading, useContext, setUs
             id="hiddenFileInput"
             ref={fileInputRef}
             style={{ display: "none" }}
-            accept="image/*,application/pdf,.txt"
+            accept="image/*,.pdf,.txt,.csv,.json,.xml,.html,.js,.md,.yml,.yaml"
             onChange={handleFileChange}
           />
 

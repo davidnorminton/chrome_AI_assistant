@@ -10,6 +10,11 @@ interface ContentDisplayProps {
   showWelcome: boolean;
   screenshotData?: string; // Screenshot data to display
   children?: React.ReactNode; // For Welcome component
+  isProcessingFile?: boolean;
+  processingFileName?: string | null;
+  processingFileType?: string | null;
+  currentHistoryItemType?: string | null;
+  currentHistoryItemFileName?: string | null;
 }
 
 export default function ContentDisplay({
@@ -20,10 +25,24 @@ export default function ContentDisplay({
   onSuggestedClick,
   showWelcome,
   screenshotData,
-  children
+  children,
+  isProcessingFile,
+  processingFileName,
+  processingFileType,
+  currentHistoryItemType,
+  currentHistoryItemFileName
 }: ContentDisplayProps) {
   // Debug screenshot data
   console.log('ContentDisplay - screenshotData:', screenshotData ? 'present' : 'not present');
+  // Determine if we should show the file name in the content area
+  const fileNameToShow =
+    (currentHistoryItemType === 'file_analysis' && currentHistoryItemFileName) ? currentHistoryItemFileName :
+    (isProcessingFile && processingFileName && processingFileType && processingFileType !== 'screenshot') ? processingFileName :
+    undefined;
+  const showFileNameInContent =
+    (currentHistoryItemType === 'file_analysis' && currentHistoryItemFileName) ||
+    (isProcessingFile && processingFileName && processingFileType && processingFileType !== 'screenshot');
+
   return (
     <div id="responseBox">
       <div id="output">
@@ -31,9 +50,27 @@ export default function ContentDisplay({
           <div key="welcome-container">
             {children}
           </div>
+        ) : isProcessingFile ? (
+          <div key="processing-container" className="file-processing-notice">
+            <div className="processing-spinner"></div>
+            <div className="processing-text">
+              <p>Processing file...</p>
+              <p className="file-info">
+                <strong>{processingFileName}</strong>
+                <span className="file-type">({processingFileType})</span>
+              </p>
+              <p className="processing-note">This may take a moment for large files</p>
+            </div>
+          </div>
         ) : outputHtml ? (
           <div key="content-container">
-            {screenshotData && (
+            {/* Show file name above AI response for file analysis */}
+            {showFileNameInContent && fileNameToShow && (
+              <div className="file-name-display" style={{ marginBottom: 12 }}>
+                {fileNameToShow}
+              </div>
+            )}
+            {screenshotData && !isProcessingFile && currentHistoryItemType !== 'file_analysis' && (
               <div className="screenshot-display">
                 <img 
                   src={screenshotData} 

@@ -330,4 +330,69 @@
 
 .responsive-menu .menu-item:disabled:hover {
   background-color: transparent;
+}
+
+/* Uploaded File Display */
+.uploaded-file-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #4a4a4a;
+  border: 1px solid #555555;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 8px 0;
+  max-width: 100%;
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.file-info i {
+  color: #4a9eff;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.file-name {
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.file-type {
+  color: #aaaaaa;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.remove-file-btn {
+  background: none;
+  border: none;
+  color: #ff6b6b;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.remove-file-btn:hover {
+  background-color: #ff6b6b;
+  color: #ffffff;
 } 

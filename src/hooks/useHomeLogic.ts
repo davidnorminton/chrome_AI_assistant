@@ -37,6 +37,8 @@ export function useHomeLogic() {
 
   const [screenshotData, setScreenshotData] = useState<string | null>(null);
   const [restoredScreenshotData, setRestoredScreenshotData] = useState<string | null>(null);
+  const [currentHistoryItemType, setCurrentHistoryItemType] = useState<string | null>(null);
+  const [currentHistoryItemFileName, setCurrentHistoryItemFileName] = useState<string | null>(null);
   const lastProcessedIndexRef = useRef<number | null>(null);
 
   // Simple logic: show welcome only when there's no content
@@ -83,6 +85,8 @@ export function useHomeLogic() {
       setSuggested(item.suggestedQuestions ?? []);
       setLinks(item.links ?? []);
       setRestoredScreenshotData(item.screenshotData || null);
+      setCurrentHistoryItemType(item.type);
+      setCurrentHistoryItemFileName(item.fileName || null);
       
       // Set search query for search results
       if (item.type === 'search' && item.title.startsWith("Search results for")) {
@@ -149,6 +153,8 @@ export function useHomeLogic() {
       setSuggested([]);
       setLinks([]);
       setRestoredScreenshotData(null);
+      setCurrentHistoryItemType(null);
+      setCurrentHistoryItemFileName(null);
 
       setSearchQuery("");
       setSavedPageInfo(null);
@@ -160,6 +166,8 @@ export function useHomeLogic() {
       setSuggested(item.suggestedQuestions ?? []);
       setLinks(item.links ?? []);
       setRestoredScreenshotData(item.screenshotData || null);
+      setCurrentHistoryItemType(item.type);
+      setCurrentHistoryItemFileName(item.fileName || null);
       
       // Set search query for search results
       if (item.type === 'search' && item.title.startsWith("Search results for")) {
@@ -315,7 +323,8 @@ export function useHomeLogic() {
     query: string,
     fileData: string | null,
     _useContext: boolean,
-    _useWebSearch: boolean
+    _useWebSearch: boolean,
+    fileName?: string | null
   ) => {
     setLoading(true);
     setLinks([]);
@@ -380,9 +389,20 @@ export function useHomeLogic() {
         finalQuery = query;
       }
 
+      // Determine action based on whether we have a file
+      const action = imageData ? "summarize_file" : "direct_question";
+      
+      // If there's a file, combine the user's query with file analysis request
+      let queryToSend = finalQuery;
+      if (imageData && query.trim()) {
+        queryToSend = `Analyze this file and answer: ${query.trim()}`;
+      } else if (imageData && !query.trim()) {
+        queryToSend = "Please analyze and summarize this file";
+      }
+      
       const res: AIResponse = await sendQueryToAI({
-        query: finalQuery,
-        action: "direct_question",
+        query: queryToSend,
+        action: action,
         file: imageData,
       });
 
@@ -407,11 +427,12 @@ export function useHomeLogic() {
 
       await addHistory({
         title: saveTitle,
-        type: 'question',
+        type: imageData ? 'file_analysis' : 'question',
         response: res.text,
         tags: res.tags ?? [],
         suggestedQuestions: res.suggestedQuestions ?? [],
         screenshotData: imageData || undefined,
+        fileName: imageData ? fileName || undefined : undefined,
         pageInfo: {
           title: info.title || "",
           url: info.url || "",
@@ -774,6 +795,8 @@ export function useHomeLogic() {
 
     screenshotData,
     restoredScreenshotData,
+    currentHistoryItemType,
+    currentHistoryItemFileName,
     showWelcome,
     
     // Handlers

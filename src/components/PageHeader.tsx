@@ -10,9 +10,11 @@ interface PageHeaderProps {
   savedPageInfo: PageInfo | null;
   pageInfo: PageInfo;
   shouldShow: boolean;
+  currentHistoryItemType?: string | null;
+  currentHistoryItemFileName?: string | null;
 }
 
-export default function PageHeader({ savedPageInfo, pageInfo, shouldShow }: PageHeaderProps) {
+export default function PageHeader({ savedPageInfo, pageInfo, shouldShow, currentHistoryItemType, currentHistoryItemFileName }: PageHeaderProps) {
   if (!shouldShow) return null;
 
   return (
@@ -24,11 +26,15 @@ export default function PageHeader({ savedPageInfo, pageInfo, shouldShow }: Page
           className="header-favicon"
         />
       )}
-      {(savedPageInfo?.title || pageInfo.title) && (
+      {currentHistoryItemType === 'file_analysis' && currentHistoryItemFileName ? (
+        <span className="file-name-display">
+          {currentHistoryItemFileName}
+        </span>
+      ) : (savedPageInfo?.title || pageInfo.title) ? (
         <a href={savedPageInfo?.url || pageInfo.url} target="_blank" rel="noopener noreferrer">
           {savedPageInfo?.title || pageInfo.title}
         </a>
-      )}
+      ) : null}
     </div>
   );
 } 

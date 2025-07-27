@@ -1,5 +1,5 @@
 // src/routes/home.tsx
-import { useEffect, useContext } from "react";
+import { useEffect, useContext, useState } from "react";
 import Welcome from "../welcome/welcome";
 import Prompt from "../prompt/prompt";
 import ContentDisplay from "../components/ContentDisplay";
@@ -11,6 +11,10 @@ import { AppActionsContext } from "../App";
 
 export default function Home() {
   const actions = useContext(AppActionsContext);
+  const [isProcessingFile, setIsProcessingFile] = useState(false);
+  const [processingFileName, setProcessingFileName] = useState<string | null>(null);
+  const [processingFileType, setProcessingFileType] = useState<string | null>(null);
+  
   const {
     // State
     outputHtml,
@@ -28,6 +32,8 @@ export default function Home() {
 
     screenshotData,
     restoredScreenshotData,
+    currentHistoryItemType,
+    currentHistoryItemFileName,
     showWelcome,
     
     // Handlers
@@ -55,6 +61,13 @@ export default function Home() {
     }
   }, [actions, sendNewsQuery, handleClearContent]);
 
+  // Handle file processing state changes
+  const handleFileProcessingChange = (isProcessing: boolean, fileName: string | null, fileType: string | null) => {
+    setIsProcessingFile(isProcessing);
+    setProcessingFileName(fileName);
+    setProcessingFileType(fileType);
+  };
+
   // Calculate display states
   const showPageHeader = Boolean(outputHtml) && shouldShowPageHeader();
   const showLinkList = shouldShowLinkList();
@@ -68,6 +81,8 @@ export default function Home() {
           savedPageInfo={savedPageInfo}
           pageInfo={pageInfo}
           shouldShow={showPageHeader}
+          currentHistoryItemType={currentHistoryItemType}
+          currentHistoryItemFileName={currentHistoryItemFileName}
         />
 
         {/* Link List */}
@@ -88,6 +103,10 @@ export default function Home() {
           onSuggestedClick={handleSuggestedClick}
           showWelcome={showWelcome}
           screenshotData={restoredScreenshotData || undefined}
+          isProcessingFile={isProcessingFile}
+          processingFileName={processingFileName}
+          processingFileType={processingFileType}
+          currentHistoryItemType={currentHistoryItemType}
         >
           <Welcome onSummarize={() => handleSummarize()} />
         </ContentDisplay>
@@ -101,8 +120,8 @@ export default function Home() {
           setUseContext={setUsePageContext}
           useWebSearch={useWebSearch}
           setUseWebSearch={setUseWebSearch}
-
           onScreenshotCapture={handleScreenshotCapture}
+          onFileProcessingChange={handleFileProcessingChange}
         />
       </div>
     </div>
