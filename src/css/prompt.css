@@ -80,15 +80,7 @@
   cursor: pointer;
 }
 
-/* Main Prompt Area */
-.main-prompt-area {
-  /* display: flex; */
-  /* flex-direction: column; */
-  /* gap: 10px; */
-  /* padding: 15px; */
-  /* border-radius: 8px; */
-  /* margin: 10px; */
-}
+
 
 #newChatBtn > span, #toggleContextBtn > span {
   font-size: 0.9em;
@@ -203,27 +195,11 @@
   color: #ffffff;
 }
 
-/* Loading animation for submit button */
-.send-button.loading {
-  background-color: #4a9eff;
-  animation: pulse 1.5s ease-in-out infinite;
-}
 
-@keyframes pulse {
-  0% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
-  100% {
-    opacity: 1;
-  }
-}
 
-.nice-button.loading {
-  animation: pulse 1.5s ease-in-out infinite;
-}
+
+
+
 
 /* Image Search Button */
 .image-search-button {
