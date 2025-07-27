@@ -297,9 +297,10 @@
 
 .ai-loading-message {
   margin-top: 15px;
+  margin-bottom: 20px;
   text-align: center;
   color: #4a9eff;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   animation: ai-message-pulse 2s ease-in-out infinite;
 }

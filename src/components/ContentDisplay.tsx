@@ -87,7 +87,8 @@ export default function ContentDisplay({
                 <AILoadingAnimation message={outputHtml.replace(/<[^>]*>/g, '')} />
               </div>
             )}
-            {tags.length > 0 && (
+            {/* Hide tags and suggested questions during AI loading */}
+            {!outputHtml.includes('loading-status-message') && tags.length > 0 && (
               <div className="tags-container">
                 {tags.map((tag) => (
                   <span
@@ -100,7 +101,7 @@ export default function ContentDisplay({
                 ))}
               </div>
             )}
-            {suggested.length > 0 && (
+            {!outputHtml.includes('loading-status-message') && suggested.length > 0 && (
               <div className="suggested-questions-container">
                 <ul>
                   {suggested.map((q) => (

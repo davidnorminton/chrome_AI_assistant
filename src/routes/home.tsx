@@ -69,8 +69,9 @@ export default function Home() {
   };
 
   // Calculate display states
-  const showPageHeader = Boolean(outputHtml) && shouldShowPageHeader();
-  const showLinkList = shouldShowLinkList();
+  const isAILoading = outputHtml.includes('loading-status-message');
+  const showPageHeader = Boolean(outputHtml) && shouldShowPageHeader() && !isAILoading;
+  const showLinkList = shouldShowLinkList() && !isAILoading;
 
 
   return (
