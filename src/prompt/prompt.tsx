@@ -282,12 +282,12 @@ export default function Prompt({ onSend, onSummarize, loading, useContext, setUs
           {/* File upload */}
           <button
             id="fileUploadBtn"
-            className="icon-button file-upload-button"
-            title="Upload File"
+            className="icon-button file-upload-button tooltip"
             onClick={() => fileInputRef.current?.click()}
             disabled={loading}
           >
             <i className="fas fa-plus" />
+            <span className="tooltiptext">Upload File</span>
           </button>
 
           {/* Responsive buttons - show full buttons on large panels */}
@@ -296,29 +296,30 @@ export default function Prompt({ onSend, onSummarize, loading, useContext, setUs
               {/* Screenshot button */}
               <button
                 id="screenshotBtn"
-                className={`icon-button screenshot-button ${isScreenshotMode ? 'active' : ''}`}
-                title="Take Screenshot"
+                className={`icon-button screenshot-button tooltip ${isScreenshotMode ? 'active' : ''}`}
                 onClick={handleScreenshotClick}
                 disabled={loading || !canTakeScreenshot}
               >
                 <i className="fas fa-camera" />
+                <span className="tooltiptext">Screenshot</span>
               </button>
 
               {/* Toggle context */}
               <button
                 id="toggleContextBtn"
-                className={`nice-button context-toggle-button ${useContext ? "active" : ""}`}
+                className={`nice-button context-toggle-button tooltip ${useContext ? "active" : ""}`}
                 onClick={() => setUseContext(!useContext)}
                 disabled={loading}
               >
                 <i className="fas fa-book-open" />
                 <span>Page Context</span>
+                <span className="tooltiptext">{useContext ? "Disable Page Context" : "Enable Page Context"}</span>
               </button>
 
               {/* Toggle web search */}
               <button
                 id="toggleWebSearchBtn"
-                className={`nice-button web-search-button ${useWebSearch ? "active" : ""}`}
+                className={`nice-button web-search-button tooltip ${useWebSearch ? "active" : ""}`}
                 onClick={() => {
                   const newWebSearchState = !useWebSearch;
                   setUseWebSearch(newWebSearchState);
@@ -328,21 +329,21 @@ export default function Prompt({ onSend, onSummarize, loading, useContext, setUs
                   }
                 }}
                 disabled={loading}
-                title="Web Search"
               >
                 <i className="fas fa-globe" />
+                <span className="tooltiptext">{useWebSearch ? "Disable Web Search" : "Enable Web Search"}</span>
               </button>
 
               {/* Summarize */}
               <button
                 id="summarizeBtn"
-                className={`nice-button ${loading ? 'loading' : ''}`}
-                title="Summarize"
+                className={`nice-button tooltip ${loading ? 'loading' : ''}`}
                 onClick={onSummarize}
                 disabled={loading}
                 data-action="summarize"
               >
                 <span>Summarize</span>
+                <span className="tooltiptext">Summarize</span>
               </button>
             </>
           )}
@@ -353,22 +354,23 @@ export default function Prompt({ onSend, onSummarize, loading, useContext, setUs
               {/* Page Context button - always visible */}
               <button
                 id="toggleContextBtn"
-                className={`nice-button context-toggle-button ${useContext ? "active" : ""}`}
+                className={`nice-button context-toggle-button tooltip ${useContext ? "active" : ""}`}
                 onClick={() => setUseContext(!useContext)}
                 disabled={loading}
               >
                 <i className="fas fa-book-open" />
                 <span>Page Context</span>
+                <span className="tooltiptext">{useContext ? "Disable Page Context" : "Enable Page Context"}</span>
               </button>
 
               {/* 3-dots menu for other options */}
               <div className="responsive-menu-container" ref={menuRef}>
                 <button
-                  className="icon-button menu-toggle-button"
+                  className="icon-button menu-toggle-button tooltip"
                   onClick={() => setShowMenu(!showMenu)}
-                  title="More options"
                 >
                   <i className="fas fa-ellipsis-h" />
+                  <span className="tooltiptext">More Options</span>
                 </button>
                 
                 {showMenu && (
@@ -417,14 +419,14 @@ export default function Prompt({ onSend, onSummarize, loading, useContext, setUs
           <div className="end">
             <button
               id="cmdBtn"
-              className={`icon-button send-button ${loading ? 'loading' : ''}`}
-              title="Send"
+              className={`icon-button send-button tooltip ${loading ? 'loading' : ''}`}
               onClick={handleSendClick}
               disabled={loading}
             >
               {loading
                 ? <div id="loaderIcon" className="spinner" />
                 : <i id="arrowIcon" className="fas fa-arrow-up" />}
+              <span className="tooltiptext">Send</span>
             </button>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import './App.css'
 import './css/index.css' // Updated to use modular CSS structure
+import './css/tooltips.css' // Tooltip styles
 import Menu from './menu/menu'
 import { Outlet } from 'react-router-dom';
 import { createContext, useState, useEffect, useCallback } from 'react';

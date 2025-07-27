@@ -1,0 +1,100 @@
+/* Tooltip Styles */
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: auto;
+  background-color: #000000;
+  color: #ffffff;
+  text-align: center;
+  border-radius: 4px;
+  padding: 6px 10px;
+  position: absolute;
+  z-index: 1000;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Menu tooltips - appear to the left of the icon */
+.menu-item.tooltip .tooltiptext {
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-right: 8px;
+}
+
+/* Prompt button tooltips - appear above the buttons */
+.nice-button.tooltip .tooltiptext,
+.icon-button.tooltip .tooltiptext {
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 8px;
+  pointer-events: none;
+}
+
+/* Show tooltip on hover */
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Ensure tooltips work for specific button types */
+.context-toggle-button.tooltip:hover .tooltiptext,
+.web-search-button.tooltip:hover .tooltiptext {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* More specific rules for buttons with multiple classes */
+.nice-button.context-toggle-button.tooltip:hover .tooltiptext,
+.nice-button.web-search-button.tooltip:hover .tooltiptext {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Even more specific for active states */
+.nice-button.context-toggle-button.tooltip.active:hover .tooltiptext,
+.nice-button.web-search-button.tooltip.active:hover .tooltiptext {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Direct hover rule for toggleContextBtn */
+#toggleContextBtn:hover > .tooltiptext {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Arrow for menu tooltips (pointing right) */
+.menu-item.tooltip .tooltiptext::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  margin-top: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent transparent transparent #000000;
+}
+
+/* Arrow for prompt tooltips (pointing down) */
+.nice-button.tooltip .tooltiptext::after,
+.icon-button.tooltip .tooltiptext::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #000000 transparent transparent transparent;
+} 

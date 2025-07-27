@@ -25,6 +25,15 @@
   border: 0;
 }
 
+/* Override text-align for circular buttons that need centering */
+.action-buttons-row .context-toggle-button,
+.action-buttons-row .web-search-button {
+  text-align: center;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
 .action-buttons-row .context-toggle {
   flex-shrink: 0;
   min-width: fit-content;
@@ -119,6 +128,7 @@
   flex-shrink: 0;
   width: 36px;
   height: 36px;
+  position: relative;
 }
 
 .context-toggle-button:hover {
@@ -152,6 +162,7 @@
   flex-shrink: 0;
   width: 36px;
   height: 36px;
+  position: relative;
 }
 
 .web-search-button:hover {
@@ -169,9 +180,16 @@
   color: #ffffff;
 }
 
-#toggleContextBtn span {
-  margin-left: 8px;
-  font-size: 14px;
+#toggleContextBtn span:not(.tooltiptext) {
+  display: none;
+}
+
+/* Ensure tooltip doesn't affect button layout */
+.context-toggle-button .tooltiptext,
+.web-search-button .tooltiptext {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1001;
 }
 
 /* Clear Content Button */

@@ -241,28 +241,32 @@ export default function Menu() {
     return (
     <div id="rightMenu">
         <nav>
-            <Link to="/" id="homeToggle" className="menu-item">
+            <Link to="/" id="homeToggle" className="menu-item tooltip">
                 <i className="fas fa-comments"></i>
+                <span className="tooltiptext">Chat</span>
             </Link>
-            <button id="historyBackBtn" title="Previous Result" className="menu-item" onClick={nav?.goBack} disabled={!nav?.canGoBack}>
+            <button id="historyBackBtn" className="menu-item tooltip" onClick={nav?.goBack} disabled={!nav?.canGoBack}>
                 <i className="fas fa-arrow-left"></i>
+                <span className="tooltiptext">Previous</span>
             </button>
-            <button id="historyForwardBtn" title="Next Result" className="menu-item" onClick={nav?.goForward} disabled={!nav?.canGoForward}>
+            <button id="historyForwardBtn" className="menu-item tooltip" onClick={nav?.goForward} disabled={!nav?.canGoForward}>
                 <i className="fas fa-arrow-right"></i>
+                <span className="tooltiptext">Next</span>
             </button>
-            <Link to="/history" id="historyToggle" className="menu-item">
+            <Link to="/history" id="historyToggle" className="menu-item tooltip">
                 <i className="fas fa-history"></i>
+                <span className="tooltiptext">History</span>
             </Link>
             
             {/* News/Events Button */}
             <div className="news-dropdown-container">
                 <button 
                     id="newsBtn" 
-                    className="menu-item news-button" 
+                    className="menu-item news-button tooltip" 
                     onClick={() => setShowNewsDropdown(!showNewsDropdown)}
-                    title="News & Events"
                 >
                     <i className="fas fa-newspaper"></i>
+                    <span className="tooltiptext">News</span>
                 </button>
                 
                 {showNewsDropdown && (
@@ -292,33 +296,36 @@ export default function Menu() {
             </div>
             
             {/* Notes Button */}
-            <Link to="/notes" id="notesToggle" className="menu-item notes-button" title="Notes">
+            <Link to="/notes" id="notesToggle" className="menu-item notes-button tooltip">
                 <i className="fas fa-sticky-note"></i>
+                <span className="tooltiptext">Notes</span>
             </Link>
             
             {/* Clear Content Button - Bottom with large gap */}
             <div className="clear-button-container">
                 <button 
                     id="clearContentBtn" 
-                    className="menu-item clear-button" 
+                    className="menu-item clear-button tooltip" 
                     onClick={() => actions?.clearContent?.()}
-                    title="Clear content"
                 >
                     <i className="fas fa-trash-alt"></i>
+                    <span className="tooltiptext">Clear</span>
                 </button>
             </div>
             
             {/* Help Button - Above settings button */}
             <div className="help-button-container">
-                <Link to="/help" id="helpToggle" className="menu-item help-button" title="Help & Documentation">
+                <Link to="/help" id="helpToggle" className="menu-item help-button tooltip">
                     <i className="fas fa-question-circle"></i>
+                    <span className="tooltiptext">Help</span>
                 </Link>
             </div>
             
             {/* Settings Button - Below help button */}
             <div className="settings-button-container">
-                <Link to="/settings" id="settingsToggle" className="menu-item settings-button">
+                <Link to="/settings" id="settingsToggle" className="menu-item settings-button tooltip">
                     <i className="fas fa-cog"></i>
+                    <span className="tooltiptext">Settings</span>
                 </Link>
             </div>
         </nav>
