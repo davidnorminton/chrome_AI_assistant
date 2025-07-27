@@ -291,6 +291,11 @@ export default function Menu() {
                 )}
             </div>
             
+            {/* Notes Button */}
+            <Link to="/notes" id="notesToggle" className="menu-item notes-button" title="Notes">
+                <i className="fas fa-sticky-note"></i>
+            </Link>
+            
             {/* Clear Content Button - Bottom with large gap */}
             <div className="clear-button-container">
                 <button 

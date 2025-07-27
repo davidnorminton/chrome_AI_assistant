@@ -36,6 +36,7 @@ A modern Chrome extension that adds an AI assistant to any webpage. Built with R
 - **Tags and suggestions** - AI-generated follow-up questions and tags
 - **Link collections** - Save and organize web search results
 - **File analysis history** - Track uploaded files and their analyses
+- **Notes & Todo Lists** - Create and organize notes with interactive checkboxes
 
 ### 🎯 Smart Features
 - **Page context toggle** - Include/exclude current page content
@@ -46,6 +47,7 @@ A modern Chrome extension that adds an AI assistant to any webpage. Built with R
 - **Event discovery** - Find local events and activities
 - **File processing** - Support for PDFs, text files, and images
 - **Syntax highlighting** - Code blocks with IDE-style coloring
+- **Note organization** - Color-coded notes with auto-save functionality
 
 ### 🔧 Developer Features
 - **Modular architecture** - Clean, maintainable code structure
@@ -236,6 +238,16 @@ The extension requires a Perplexity AI API key:
 - Export your data as JSON
 - Tags and suggested questions help you continue conversations
 - File analysis history with uploaded content tracking
+- Notes and todo lists with auto-save and color coding
+
+### 📝 Notes & Todo Lists
+- **Create Notes**: Regular text notes or interactive todo lists
+- **Todo Lists**: Type "- " to automatically create checkboxes
+- **Interactive Editing**: Click checkboxes to mark tasks complete
+- **Color Coding**: Choose from 8 different background colors
+- **Auto-save**: Notes are automatically saved as you type
+- **Smart Management**: Add items, delete rows, and keyboard navigation
+- **Organization**: Visual indicators for note types and creation dates
 
 ### 🎬 YouTube Integration
 - **Automatic Detection**: Recognizes YouTube video pages
@@ -259,6 +271,7 @@ The extension requires a Perplexity AI API key:
 - **Improved Settings**: Comprehensive configuration panel
 - **Performance Optimization**: 26.6% CSS reduction and faster loading
 - **Modular Architecture**: Clean, maintainable code structure
+- **Notes & Todo Lists**: Interactive note-taking with checkboxes and color coding
 
 ### 🔧 Technical Improvements
 - **Type Safety**: Enhanced TypeScript interfaces

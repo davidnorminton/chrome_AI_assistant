@@ -224,6 +224,56 @@ const Help: React.FC = () => {
           </div>
         </section>
 
+        {/* Notes & Organization Section */}
+        <section className="help-section">
+          <h2>📝 Notes & Organization</h2>
+          
+          <div className="help-card">
+            <h3>📋 Creating Notes</h3>
+            <p>Create and organize your thoughts with two types of notes.</p>
+            <ul>
+              <li><strong>Regular Notes:</strong> Free-form text for general notes and ideas</li>
+              <li><strong>Todo Lists:</strong> Interactive checkboxes for task management</li>
+              <li><strong>Color Coding:</strong> Choose from 8 different background colors</li>
+              <li><strong>Auto-save:</strong> Notes are automatically saved as you type</li>
+            </ul>
+          </div>
+
+          <div className="help-card">
+            <h3>✅ Todo List Features</h3>
+            <p>Interactive task management with checkboxes and smart editing.</p>
+            <ul>
+              <li><strong>Checkbox Creation:</strong> Type "- " to automatically create checkboxes</li>
+              <li><strong>Interactive Editing:</strong> Click checkboxes to mark tasks complete</li>
+              <li><strong>Add Items:</strong> Use the "Add Item" button for new tasks</li>
+              <li><strong>Delete Rows:</strong> Hover over items to see delete buttons</li>
+              <li><strong>Keyboard Navigation:</strong> Use Enter to add new items, Backspace to delete</li>
+            </ul>
+          </div>
+
+          <div className="help-card">
+            <h3>🎨 Note Customization</h3>
+            <p>Personalize your notes with colors and organization.</p>
+            <ul>
+              <li><strong>Color Selection:</strong> 8 different background colors available</li>
+              <li><strong>Type Indicators:</strong> Visual icons show note vs todo list</li>
+              <li><strong>Preview Text:</strong> See note content in the sidebar</li>
+              <li><strong>Creation Date:</strong> Automatic timestamps for organization</li>
+            </ul>
+          </div>
+
+          <div className="help-card">
+            <h3>📱 Note Management</h3>
+            <p>Efficiently organize and manage your notes.</p>
+            <ul>
+              <li><strong>Sidebar View:</strong> All notes visible in the left panel</li>
+              <li><strong>Quick Selection:</strong> Click any note to edit or view</li>
+              <li><strong>Delete Notes:</strong> Hover over notes to see delete buttons</li>
+              <li><strong>Search & Filter:</strong> Find notes quickly with search functionality</li>
+            </ul>
+          </div>
+        </section>
+
         {/* Interface Features Section */}
         <section className="help-section">
           <h2>🖥️ Interface Features</h2>
