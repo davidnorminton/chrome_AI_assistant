@@ -59,10 +59,17 @@ export default function SettingsPanel() {
       // Basic encoding for API key (not encryption, but better than plain text)
       const encodedApiKey = btoa(apiKey.trim());
       
+      // Update modelConfig with current state
+      const updatedModelConfig = {
+        ...modelConfig,
+        apiKey: encodedApiKey,
+        model: model
+      };
+      
       await chrome.storage.local.set({
         apiKey: encodedApiKey,
-        model: modelConfig.model,
-        aiModelConfig: modelConfig,
+        model: model,
+        aiModelConfig: updatedModelConfig,
         aiContextConfig: contextConfig,
       });
 
@@ -81,8 +88,8 @@ export default function SettingsPanel() {
         "aiContextConfig"
       ]);
 
+      // Handle API key
       if (data.apiKey) {
-        // Decode the API key
         try {
           setApiKey(atob(data.apiKey));
         } catch {
@@ -90,11 +97,30 @@ export default function SettingsPanel() {
           setApiKey(data.apiKey);
         }
       }
-      if (data.model) setModel(data.model);
-      if (data.aiModelConfig) setModelConfig(data.aiModelConfig);
-      if (data.aiContextConfig) setContextConfig(data.aiContextConfig);
+
+      // Handle model
+      if (data.model) {
+        setModel(data.model);
+        setModelConfig(prev => ({ ...prev, model: data.model }));
+      }
+
+      // Handle AI model config
+      if (data.aiModelConfig) {
+        setModelConfig(data.aiModelConfig);
+        // Also update the model state if it's in the config
+        if (data.aiModelConfig.model) {
+          setModel(data.aiModelConfig.model);
+        }
+      }
+
+      // Handle AI context config
+      if (data.aiContextConfig) {
+        setContextConfig(data.aiContextConfig);
+      }
     } catch (error) {
       console.error('Error loading settings:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 

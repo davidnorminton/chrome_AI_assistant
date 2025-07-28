@@ -148,12 +148,12 @@
 
 /* Inactive state - gray background */
 .context-toggle-button.inactive {
-  background-color: #6c757d;
+  background-color: rgb(108, 117, 125);
   color: #ffffff;
 }
 
 .context-toggle-button.inactive:hover {
-  background-color: #5a6268;
+  background-color: rgb(90, 98, 104);
   color: #ffffff;
 }
 

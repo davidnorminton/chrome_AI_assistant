@@ -314,7 +314,7 @@ export default function Prompt({ onSend, onSummarize, loading, useContext, setUs
               {/* Toggle context */}
               <button
                 id="toggleContextBtn"
-                className={`nice-button context-toggle-button tooltip ${useContext ? "active" : ""}`}
+                className={`nice-button context-toggle-button tooltip ${useContext ? "active" : "inactive"}`}
                 onClick={() => setUseContext(!useContext)}
                 disabled={loading || Boolean(fileData && fileData.startsWith('data:image/'))}
               >
@@ -366,7 +366,7 @@ export default function Prompt({ onSend, onSummarize, loading, useContext, setUs
               {/* Page Context button - always visible */}
               <button
                 id="toggleContextBtn"
-                className={`nice-button context-toggle-button tooltip ${useContext ? "active" : ""}`}
+                className={`nice-button context-toggle-button tooltip ${useContext ? "active" : "inactive"}`}
                 onClick={() => setUseContext(!useContext)}
                 disabled={loading || Boolean(fileData && fileData.startsWith('data:image/'))}
               >

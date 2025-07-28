@@ -115,8 +115,7 @@ ${pageContext}`;
       return { tags: [], suggestedQuestions: [] };
     }
         }, []);
-  const [usePageContext, setUsePageContext] = useState(true);
-  const [useWebSearch, setUseWebSearch] = useState(false);
+
   const [userSettings, setUserSettings] = useState<{
     contextConfig: AIContextConfig;
     modelConfig: AIModelConfig;
@@ -803,6 +802,75 @@ ${pageContext}`;
     }
   };
 
+  // Setter functions for context and web search
+  const setUsePageContext = useCallback(async (value: boolean) => {
+    try {
+      const currentConfig = userSettings?.contextConfig || {
+        usePageContext: true,
+        useWebSearch: false,
+        contextLevel: 'standard',
+        includeMetadata: true,
+        includeLinks: true,
+        includeImages: false,
+        maxContextLength: 8000,
+        customInstructions: undefined,
+        showTags: true,
+        showSuggestedQuestions: true,
+      };
+      
+      const newContextConfig = {
+        ...currentConfig,
+        usePageContext: value
+      };
+      
+      await chrome.storage.local.set({
+        aiContextConfig: newContextConfig
+      });
+      
+      // Update local state
+      setUserSettings(prev => prev ? {
+        ...prev,
+        contextConfig: newContextConfig
+      } : null);
+    } catch (error) {
+      console.error('Error updating page context setting:', error);
+    }
+  }, [userSettings?.contextConfig]);
+
+  const setUseWebSearch = useCallback(async (value: boolean) => {
+    try {
+      const currentConfig = userSettings?.contextConfig || {
+        usePageContext: true,
+        useWebSearch: false,
+        contextLevel: 'standard',
+        includeMetadata: true,
+        includeLinks: true,
+        includeImages: false,
+        maxContextLength: 8000,
+        customInstructions: undefined,
+        showTags: true,
+        showSuggestedQuestions: true,
+      };
+      
+      const newContextConfig = {
+        ...currentConfig,
+        useWebSearch: value
+      };
+      
+      await chrome.storage.local.set({
+        aiContextConfig: newContextConfig
+      });
+      
+      // Update local state
+      setUserSettings(prev => prev ? {
+        ...prev,
+        contextConfig: newContextConfig
+      } : null);
+    } catch (error) {
+      console.error('Error updating web search setting:', error);
+    }
+  }, [userSettings?.contextConfig]);
+
   return {
     outputHtml,
     tags,
@@ -831,8 +899,8 @@ ${pageContext}`;
     shouldShowLinkList: () => !loading && links.length > 0 && !isStreaming,
     sendNewsQuery,
     usePageContext: userSettings?.contextConfig?.usePageContext ?? true,
-    setUsePageContext: () => {}, // This will be handled by settings
+    setUsePageContext,
     useWebSearch: userSettings?.contextConfig?.useWebSearch ?? false,
-    setUseWebSearch: () => {}, // This will be handled by settings
+    setUseWebSearch,
   };
 } 
