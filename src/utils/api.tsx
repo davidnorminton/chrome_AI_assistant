@@ -53,7 +53,7 @@ export async function sendQueryToAI(options: SendQueryOptions): Promise<AIRespon
   const { model, apiKey, modelConfig: existingModelConfig } = await new Promise<{ model: string; apiKey: string; modelConfig: any }>(resolve => {
     chrome.storage.local.get(['model', 'apiKey', 'aiModelConfig'], data =>
       resolve({
-        model: data.model ?? 'sonar-small-online',
+        model: data.model ?? 'sonar-small',
         apiKey: data.apiKey,
         modelConfig: data.aiModelConfig || {}
       })

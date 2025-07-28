@@ -5,9 +5,9 @@ import { defaultAIContextManager } from "../utils/aiContextManager";
 
 // Define both the values _and_ user-friendly labels
 const modelOptions = [
-  { value: "sonar-small-online", label: "Sonar Small (Online)", description: "Fast and efficient for most tasks" },
-  { value: "sonar-pro",        label: "Sonar Pro",          description: "Advanced capabilities for complex tasks" },
-  { value: "sonar",            label: "Sonar",              description: "Balanced performance and features" },
+  { value: "sonar-small", label: "Sonar Small", description: "Fast and efficient for most tasks" },
+  { value: "sonar-pro",   label: "Sonar Pro",   description: "Advanced capabilities for complex tasks" },
+  { value: "sonar",       label: "Sonar",       description: "Balanced performance and features" },
 ];
 
 const contextLevelOptions = [

@@ -36,7 +36,7 @@ export const StreamingProvider = ({ children }: { children: ReactNode }) => {
       // Get API key and model from storage
       const result = await chrome.storage.local.get(['apiKey', 'model', 'aiModelConfig']);
       const apiKey = result.apiKey;
-      const model = result.model ?? 'sonar-small-online';
+      const model = result.model ?? 'sonar-small';
       const modelConfig = result.aiModelConfig || {};
       
       if (!apiKey) {

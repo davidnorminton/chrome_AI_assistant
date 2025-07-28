@@ -8,47 +8,31 @@ interface WelcomeProps {
   onGeneralQuestion?: () => void;
 }
 
-export default function Welcome({ onSummarize, onGeneralQuestion }: WelcomeProps) {
-  const [pageTitle, setPageTitle] = useState<string>("");
+export function Welcome({ onSummarize, onGeneralQuestion }: WelcomeProps) {
+  const [pageTitle, setPageTitle] = useState<string>('');
 
-  console.log('=== WELCOME COMPONENT RENDERED ===');
-  console.log('onSummarize available:', !!onSummarize);
-  console.log('onGeneralQuestion available:', !!onGeneralQuestion);
-  console.log('pageTitle:', pageTitle);
-
-  // Get page title on mount
   useEffect(() => {
-    const getTitle = async () => {
+    const getPageInfo = async () => {
       try {
         const info = await getPageInfoFromTab();
-        if (info.title) {
-          setPageTitle(info.title);
-          console.log('Set page title to:', info.title);
-        }
+        setPageTitle(info.title);
       } catch (error) {
-        console.log('Could not get page title:', error);
+        // Handle error silently
       }
     };
-    getTitle();
+
+    getPageInfo();
   }, []);
 
-  const handleSummarizeClick = () => {
-    console.log('=== SUMMARIZE BUTTON CLICKED ===');
+  const handleSummarize = () => {
     if (onSummarize) {
-      console.log('Calling onSummarize function');
       onSummarize();
-    } else {
-      console.log('onSummarize function not available');
     }
   };
 
-  const handleGeneralQuestionClick = () => {
-    console.log('=== GENERAL QUESTION BUTTON CLICKED ===');
+  const handleGeneralQuestion = () => {
     if (onGeneralQuestion) {
-      console.log('Calling onGeneralQuestion function');
       onGeneralQuestion();
-    } else {
-      console.log('onGeneralQuestion function not available');
     }
   };
 
@@ -61,7 +45,7 @@ export default function Welcome({ onSummarize, onGeneralQuestion }: WelcomeProps
           {onGeneralQuestion && (
             <button 
               className="general-question-btn"
-              onClick={handleGeneralQuestionClick}
+              onClick={handleGeneralQuestion}
             >
               Ask a General Question
             </button>
@@ -69,7 +53,7 @@ export default function Welcome({ onSummarize, onGeneralQuestion }: WelcomeProps
           {pageTitle && onSummarize && (
             <button 
               className="summarize-page-btn"
-              onClick={handleSummarizeClick}
+              onClick={handleSummarize}
             >
               Summarize "{pageTitle}"
             </button>

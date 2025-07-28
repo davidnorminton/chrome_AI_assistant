@@ -62,7 +62,7 @@ export function useHomeLogic() {
       showSuggestedQuestions: true,
     };
     const modelConfig = result.aiModelConfig || {
-      model: result.model || 'sonar-small-online',
+      model: result.model || 'sonar-small',
       apiKey: '',
       temperature: 0.7,
       maxTokens: 4000,
@@ -72,14 +72,12 @@ export function useHomeLogic() {
   };
 
   // Parallel query for tags and suggested questions
-  const fetchTagsAndQuestions = async (pageContext: string) => {
+  const fetchTagsAndQuestions = useCallback(async (pageContext: string) => {
     try {
       const settings = await getUserSettings();
-      console.log('Fetching tags and questions with settings:', settings);
       
       // Only fetch if user has enabled these features
       if (!settings.showTags && !settings.showSuggestedQuestions) {
-        console.log('Both tags and questions disabled, returning empty arrays');
         return { tags: [], suggestedQuestions: [] };
       }
 
@@ -93,7 +91,6 @@ export function useHomeLogic() {
 Page Content:
 ${pageContext}`;
 
-      console.log('Making API call for tags and questions...');
       const structuredResponse = await sendQueryToAI({
         query: analysisQuery,
         action: "direct_question",
@@ -101,23 +98,17 @@ ${pageContext}`;
         modelConfig: userSettings?.modelConfig,
       });
 
-      console.log('Raw API response:', structuredResponse);
-      console.log('Response text:', structuredResponse.text);
-      console.log('Response tags:', structuredResponse.tags);
-      console.log('Response suggestedQuestions:', structuredResponse.suggestedQuestions);
-
       const result = {
         tags: settings.showTags ? (structuredResponse.tags ?? []) : [],
         suggestedQuestions: settings.showSuggestedQuestions ? (structuredResponse.suggestedQuestions ?? []) : [],
       };
       
-      console.log('Tags and questions result:', result);
       return result;
     } catch (error) {
       console.error('Error fetching tags and questions:', error);
       return { tags: [], suggestedQuestions: [] };
     }
-  };
+        }, []);
   const [usePageContext, setUsePageContext] = useState(true);
   const [useWebSearch, setUseWebSearch] = useState(false);
   const [userSettings, setUserSettings] = useState<{
@@ -137,7 +128,7 @@ ${pageContext}`;
 
   // Debug restoredScreenshotData changes
   useEffect(() => {
-    console.log('restoredScreenshotData changed to:', restoredScreenshotData ? 'has data' : 'null/undefined');
+    // Debug logging removed for production
   }, [restoredScreenshotData]);
 
   // Fetch page metadata on mount
@@ -158,39 +149,24 @@ ${pageContext}`;
 
   // Restore from history when clicked or when nav changes
   useEffect(() => {
-    console.log('=== HISTORY NAVIGATION EFFECT ===');
-    console.log('nav?.currentIndex:', nav?.currentIndex);
-    console.log('lastProcessedIndexRef.current:', lastProcessedIndexRef.current);
-    console.log('nav?.history?.length:', nav?.history?.length);
-    
     // Prevent processing the same index multiple times
     if (nav?.currentIndex === lastProcessedIndexRef.current) {
-      console.log('Skipping - same index already processed');
       return;
     }
 
     // Don't restore history if we're currently loading or streaming
     if (loading || isStreaming) {
-      console.log('Skipping - currently loading or streaming');
       return;
     }
 
     // Don't restore history if we have active content being displayed
     if (outputHtml && outputHtml.trim() !== '') {
-      console.log('Skipping - active content being displayed');
       return;
     }
 
     // Check if we have valid history and a valid index
     if (nav && nav.history && nav.history.length > 0 && nav.currentIndex >= 0 && nav.currentIndex < nav.history.length && nav.history[nav.currentIndex]) {
-      console.log('Processing valid history item at index:', nav.currentIndex);
       const item = nav.history[nav.currentIndex];
-      console.log('=== HISTORY RESTORATION ===');
-      console.log('Item type:', item.type);
-      console.log('Item title:', item.title);
-      console.log('Item links:', item.links);
-      console.log('Item screenshotData:', item.screenshotData ? 'present' : 'not present');
-      console.log('Setting restoredScreenshotData to:', item.screenshotData ? 'screenshot data' : 'null');
       
       setTags(item.tags ?? []);
       setSuggested(item.suggestedQuestions ?? []);
@@ -208,98 +184,40 @@ ${pageContext}`;
       }
       
       setSavedPageInfo(item.pageInfo ?? null);
-      console.log('Display logic - item.links:', item.links?.length);
-      console.log('Display logic - item.type:', item.type);
       
       if (item.links && item.links.length > 0 && item.type === 'search') {
-        console.log('Setting output HTML to empty for search results');
         setOutputHtml("");
-      } else {
-        console.log('Setting output HTML to response:', item.response);
-        setTimeout(() => {
-          setOutputHtml(item.response);
-        }, 100);
+      } else if (item.response) {
+        setOutputHtml(item.response);
       }
+      
       lastProcessedIndexRef.current = nav.currentIndex;
-      console.log('Set lastProcessedIndexRef to:', nav.currentIndex);
-      if (location.state) {
-        window.history.replaceState(null, '', window.location.pathname);
+    } else if (nav && nav.history && nav.history.length > 0 && nav.currentIndex === 0) {
+      // Handle location state response
+      const item = nav.history[0];
+      if (item.type === 'summary') {
+        setTags(item.tags ?? []);
+        setSuggested(item.suggestedQuestions ?? []);
+        setLinks(item.links ?? []);
+        setOutputHtml(item.response || "");
+        setCurrentHistoryItemType(item.type);
+        setCurrentHistoryItemFileName(item.fileName || null);
+        setSavedPageInfo(item.pageInfo ?? null);
+        lastProcessedIndexRef.current = nav?.currentIndex;
       }
-    } else if (location.state && (location.state as any).response) {
-      console.log('Processing location state response');
-      const state = location.state as {
-        response?: string;
-        tags?: string[];
-        suggestedQuestions?: string[];
-        links?: LinkItem[];
-        title?: string;
-        pageInfo?: { title: string; url: string; favicon: string };
-      };
-      setTags(state.tags ?? []);
-      setSuggested(state.suggestedQuestions ?? []);
-      setLinks(state.links ?? []);
-      setRestoredScreenshotData(null); // No screenshot data in location state
-      
-      // Set search query for search results
-      if (state.title?.startsWith("Search results for")) {
-        const match = state.title.match(/Search results for "([^"]+)"/);
-        setSearchQuery(match ? match[1] : "");
-      } else {
-        setSearchQuery("");
-      }
-      
-      setSavedPageInfo(state.pageInfo ?? null);
-      if (state.links && state.links.length > 0 && state.title?.startsWith("Search results for")) {
-        setOutputHtml("");
-      } else {
-        setOutputHtml(state.response!);
-      }
-      window.history.replaceState(null, '', window.location.pathname);
-      lastProcessedIndexRef.current = nav?.currentIndex ?? null;
-      console.log('Set lastProcessedIndexRef to (location state):', nav?.currentIndex);
-    } else if (!nav || !nav.history || nav.history.length === 0 || !nav.initialized) {
-      console.log('Clearing state - no valid history');
-      setOutputHtml("");
+    } else {
+      // Clear state if no valid history
       setTags([]);
       setSuggested([]);
       setLinks([]);
+      setOutputHtml("");
       setRestoredScreenshotData(null);
       setCurrentHistoryItemType(null);
       setCurrentHistoryItemFileName(null);
-
-      setSearchQuery("");
       setSavedPageInfo(null);
-      lastProcessedIndexRef.current = null;
-    } else if (nav && nav.history && nav.history.length > 0 && nav.initialized) {
-      console.log('Processing first history item (fallback)');
-      const item = nav.history[0];
-      setTags(item.tags ?? []);
-      setSuggested(item.suggestedQuestions ?? []);
-      setLinks(item.links ?? []);
-      setRestoredScreenshotData(item.screenshotData || null);
-      setCurrentHistoryItemType(item.type);
-      setCurrentHistoryItemFileName(item.fileName || null);
-      
-      // Set search query for search results
-      if (item.type === 'search' && item.title.startsWith("Search results for")) {
-        const match = item.title.match(/Search results for "([^"]+)"/);
-        setSearchQuery(match ? match[1] : "");
-      } else {
-        setSearchQuery("");
-      }
-      
-      setSavedPageInfo(item.pageInfo ?? null);
-      if (item.links && item.links.length > 0 && item.type === 'search') {
-        setOutputHtml("");
-      } else {
-        setTimeout(() => {
-          setOutputHtml(item.response);
-        }, 100);
-      }
-      lastProcessedIndexRef.current = 0;
-      console.log('Set lastProcessedIndexRef to 0 (fallback)');
+      setSearchQuery("");
     }
-  }, [location.state, nav?.currentIndex, nav?.history, nav?.initialized, loading, isStreaming]);
+  }, [nav, loading, isStreaming, outputHtml]);
 
   // Summarize handler
   const handleSummarize = useCallback(async (userPrompt?: string, customLoadingMessage?: string) => {
@@ -401,7 +319,6 @@ ${pageContext}`;
         try {
           const { tags: fetchedTags, suggestedQuestions: fetchedQuestions } = await fetchTagsAndQuestions(info.text);
           
-          console.log('Setting tags and questions in state (summary):', { fetchedTags, fetchedQuestions });
           setTags(fetchedTags);
           setSuggested(fetchedQuestions);
           
@@ -610,7 +527,6 @@ ${pageContext}`;
             fetchedTags = result.tags;
             fetchedQuestions = result.suggestedQuestions;
             
-            console.log('Setting tags and questions in state:', { fetchedTags, fetchedQuestions });
             setTags(fetchedTags);
             setSuggested(fetchedQuestions);
           }

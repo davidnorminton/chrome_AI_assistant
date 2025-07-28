@@ -152,6 +152,12 @@ export default function History() {
     return text.substring(0, maxLength) + "...";
   };
 
+  const handleHistoryItemClick = (item: HistoryItem, index: number) => {
+    if (nav) {
+      nav.setIndex(index);
+    }
+  };
+
   return (
     <div className="history-page">
       {/* Header */}
@@ -245,8 +251,6 @@ export default function History() {
                 onClick={() => {
                   if (nav) {
                     const index = nav.history.findIndex(h => h.id === item.id);
-                    console.log('History click: nav.history', nav.history);
-                    console.log('History click: item.id', item.id, 'index', index);
                     if (index >= 0) {
                       nav.setIndex(index);
                       navigate("/");

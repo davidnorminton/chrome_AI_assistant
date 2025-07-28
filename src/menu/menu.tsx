@@ -8,9 +8,6 @@ export default function Menu() {
     const [showNewsDropdown, setShowNewsDropdown] = useState(false);
     const newsDropdownRef = useRef<HTMLDivElement>(null);
     
-    console.log('Menu actions:', actions);
-    console.log('Menu nav:', nav);
-    
     // Handle clicking outside the news dropdown to close it
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -39,7 +36,6 @@ export default function Menu() {
         // World news doesn't need location, go directly to query
         if (option === 'world') {
             const query = `Get the latest world news and top international headlines. Include major global events, international politics, economic developments, and significant world news.`;
-            console.log('Sending world news query:', query);
             if (actions?.sendNewsQuery) {
                 actions.sendNewsQuery(query);
             }
@@ -76,13 +72,10 @@ export default function Menu() {
             location = addressParts[0]; // Get city name
             country = addressParts[addressParts.length - 1]; // Get country name
             
-            console.log('Detected location:', location, 'Country:', country);
-            
             // Save this location for future use
             saveLocation(location, country);
             
         } catch (error) {
-            console.log('Could not get location automatically, will show location form');
             // Show location selection form instead of popup
             showLocationForm(option);
             return; // Exit early, will handle query after location is selected
@@ -233,7 +226,6 @@ export default function Menu() {
         
         // Send the query to AI via context
         if (query && actions?.sendNewsQuery) {
-            console.log('Sending query via context:', query);
             actions.sendNewsQuery(`LOADING:${loadingMessage}:${query}`);
         }
     };

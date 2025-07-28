@@ -20,6 +20,9 @@ interface ContentDisplayProps {
   currentHistoryItemType?: string | null;
   currentHistoryItemFileName?: string | null;
   loading?: boolean; // Add loading prop
+  pageInfo?: { title: string; url: string }; // Added pageInfo prop
+  links?: string[]; // Added links prop
+  fileData?: string; // Added fileData prop
 }
 
 // Component to render syntax highlighted code blocks
@@ -97,22 +100,44 @@ export default function ContentDisplay({
   processingFileType,
   currentHistoryItemType,
   currentHistoryItemFileName,
-  loading
+  loading,
+  pageInfo,
+  links,
+  fileData
 }: ContentDisplayProps) {
   const { isStreaming, streamContent } = useStreaming();
   
-  // Debug screenshot data
-  console.log('ContentDisplay - screenshotData:', screenshotData ? 'present' : 'not present');
-  console.log('ContentDisplay - tags:', tags, 'suggested:', suggested, 'isStreaming:', isStreaming);
+  const shouldShowPageHeader = () => {
+    return Boolean(pageInfo?.title || pageInfo?.url);
+  };
 
-  // Clear loading state when streaming starts
-  useEffect(() => {
-    if (isStreaming && loading) {
-      // This will trigger the parent component to clear loading
-      // We can't directly set loading here, but we can signal it
-      console.log('Streaming started, should clear loading');
-    }
-  }, [isStreaming, loading]);
+  const shouldShowLinkList = () => {
+    return Boolean(links && links.length > 0);
+  };
+
+  const shouldShowTags = () => {
+    return Boolean(tags && tags.length > 0 && !isStreaming);
+  };
+
+  const shouldShowSuggested = () => {
+    return Boolean(suggested && suggested.length > 0 && !isStreaming);
+  };
+
+  const shouldShowScreenshotDisplay = () => {
+    return Boolean(screenshotData && !fileData);
+  };
+
+  // Show loading animation when loading or streaming
+  if (loading && !showWelcome) {
+    return (
+      <div className="content-display">
+        <div className="loading-container">
+          <div className="loading-text">AI is thinking...</div>
+          <div className="loading-animation"></div>
+        </div>
+      </div>
+    );
+  }
 
   // Determine if we should show the file name in the content area
   const fileNameToShow =

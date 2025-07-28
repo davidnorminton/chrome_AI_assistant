@@ -1,6 +1,6 @@
 // src/routes/home.tsx
 import { useEffect, useContext, useState } from "react";
-import Welcome from "../welcome/welcome";
+import { Welcome } from "../welcome/welcome";
 import Prompt from "../prompt/prompt";
 import ContentDisplay from "../components/ContentDisplay";
 import PageHeader from "../components/PageHeader";

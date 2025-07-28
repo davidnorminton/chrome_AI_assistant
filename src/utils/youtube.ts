@@ -52,33 +52,30 @@ export function extractVideoId(url: string): string | null {
 export async function extractYouTubeTranscription(): Promise<string | null> {
   try {
     // Look for the transcript button
-    const transcriptButton = document.querySelector('button[aria-label*="transcript"], button[aria-label*="Transcript"]');
+    const transcriptButton = document.querySelector('button[aria-label*="transcript"], button[aria-label*="Transcript"], button[title*="transcript"], button[title*="Transcript"]');
     if (!transcriptButton) {
-      console.log('Transcript button not found');
       return null;
     }
 
-    // Click the transcript button to open transcript panel
-    (transcriptButton as HTMLElement).click();
-    
-    // Wait for transcript panel to load
+    // Click the transcript button
+    (transcriptButton as HTMLButtonElement).click();
+
+    // Wait for transcript panel to appear
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Look for transcript content
-    const transcriptPanel = document.querySelector('[data-testid="transcript-panel"], .ytd-transcript-segment-renderer');
+    // Find the transcript panel
+    const transcriptPanel = document.querySelector('[role="dialog"], .ytd-transcript-renderer, [aria-label*="transcript"], [aria-label*="Transcript"]');
     if (!transcriptPanel) {
-      console.log('Transcript panel not found');
       return null;
     }
 
-    // Extract transcript text
-    const transcriptSegments = document.querySelectorAll('.ytd-transcript-segment-renderer .segment-text');
-    if (transcriptSegments.length === 0) {
-      console.log('No transcript segments found');
+    // Find all transcript segments
+    const segments = transcriptPanel.querySelectorAll('[role="button"], .ytd-transcript-segment-renderer, [data-timestamp]');
+    if (!segments || segments.length === 0) {
       return null;
     }
 
-    const transcription = Array.from(transcriptSegments)
+    const transcription = Array.from(segments)
       .map(segment => (segment as HTMLElement).textContent?.trim())
       .filter(text => text && text.length > 0)
       .join(' ');
