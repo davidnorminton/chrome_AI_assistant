@@ -225,78 +225,8 @@ ${pageContext}`;
     }
   }, [nav, loading, isStreaming, outputHtml]);
 
-  // Summarize handler
-  const handleSummarize = useCallback(async (userPrompt?: string, customLoadingMessage?: string) => {
-    // Check if we're on a YouTube video page
-    const youtubeInfo = await getYouTubeVideoInfo();
-    
-    if (youtubeInfo.isYouTubeVideo && !userPrompt) {
-      // Show confirmation dialog for YouTube video summarization
-      const confirmSummarize = confirm(
-        `Would you like to summarize this YouTube video?\n\n"${youtubeInfo.title}"\n\nThis will use the video's transcription for summarization.`
-      );
-      
-      if (!confirmSummarize) {
-        return;
-      }
-      
-      // Use transcription for YouTube video summarization
-      if (youtubeInfo.transcription) {
-        console.log('Using video transcription for analysis');
-        setLoading(true);
-        setTags([]);
-        setSuggested([]);
-        setLinks([]);
-        setRestoredScreenshotData(null);
-        setSearchQuery("");
-        
-        try {
-          const res: AIResponse = await sendQueryToAI({
-            query: `Summarize this YouTube video based on its transcription:\n\n${youtubeInfo.transcription}`,
-            action: "summarize_page",
-          });
-
-          setOutputHtml(res.text);
-          setTags(res.tags ?? []);
-          setSuggested(res.suggestedQuestions ?? []);
-
-          // Save page info for header display
-          setSavedPageInfo({
-            title: youtubeInfo.title || "YouTube Video",
-            url: window.location.href,
-            favicon: "https://www.youtube.com/favicon.ico",
-          });
-
-          await addHistory({
-            title: youtubeInfo.title || "YouTube Video Summary",
-            type: 'summary',
-            response: res.text,
-            tags: res.tags ?? [],
-            suggestedQuestions: res.suggestedQuestions ?? [],
-            pageInfo: {
-              title: youtubeInfo.title || "YouTube Video",
-              url: window.location.href,
-              favicon: "https://www.youtube.com/favicon.ico",
-            },
-          });
-        } catch (e: any) {
-          setOutputHtml(`<p class="error">Error summarizing video: ${e.message}</p>`);
-          setTags([]);
-          setSuggested([]);
-        } finally {
-          setLoading(false);
-        }
-        return;
-      } else {
-        // No transcription available, fall back to regular page summarization
-        setOutputHtml(`<p class="error">No transcription available for this video. Summarizing the page content instead.</p>`);
-      }
-    }
-
-    // Regular page summarization (for non-YouTube pages or when transcription is not available)
-    setTags([]);
-    setSuggested([]);
-    setLinks([]);
+  // Summarize page handler
+  const handleSummarize = useCallback(async (userPrompt?: string) => {
     setRestoredScreenshotData(null); // Clear screenshot data when summarizing
     setSearchQuery("");
     setLoading(true);
@@ -310,7 +240,14 @@ ${pageContext}`;
         ? `Based on this page:\n${info.text}\n\nUser question: ${userPrompt}`
         : info.text;
 
-      // Use streaming for summarization with two-step process
+      // Start both API calls simultaneously
+      let fetchedTags: string[] = [];
+      let fetchedQuestions: string[] = [];
+      
+      // Start the tags/questions API call immediately
+      const tagsPromise = fetchTagsAndQuestions(info.text);
+      
+      // Use streaming for summarization
       await startStream(query, "summarize_page", null, async (streamedContent) => {
         // Convert markdown to HTML and save to outputHtml
         const md = new (await import('markdown-it')).default({
@@ -321,62 +258,41 @@ ${pageContext}`;
         const htmlContent = md.render(streamedContent);
         setOutputHtml(htmlContent);
         
-        // Step 2: Get structured data after streaming completes
+        // Wait for tags/questions to complete
         try {
-          const { tags: fetchedTags, suggestedQuestions: fetchedQuestions } = await fetchTagsAndQuestions(info.text);
+          const result = await tagsPromise;
+          fetchedTags = result.tags;
+          fetchedQuestions = result.suggestedQuestions;
           
           setTags(fetchedTags);
           setSuggested(fetchedQuestions);
-          
-          // Save page info for header display
-          setSavedPageInfo({
-            title: info.title || "",
-            url: info.url || "",
-            favicon: info.favicon || "",
-          });
-
-          const historyTitle = userPrompt ? userPrompt : (info.title || "Page Summary");
-          const summaryTitle = info.title ? `${info.title}` : "Page Summary";
-
-          await addHistory({
-            title: summaryTitle,
-            type: 'summary',
-            response: streamedContent,
-            tags: fetchedTags,
-            suggestedQuestions: fetchedQuestions,
-            pageInfo: {
-              title: info.title || "",
-              url: info.url || "",
-              favicon: info.favicon || "",
-            },
-          });
         } catch (error) {
           console.error('Error getting structured data:', error);
-          // Still save the streamed content even if metadata fails
-          setSavedPageInfo({
+          // Continue without tags/questions if they fail
+        }
+        
+        // Save page info for header display
+        setSavedPageInfo({
+          title: info.title || "",
+          url: info.url || "",
+          favicon: info.favicon || "",
+        });
+
+        const historyTitle = userPrompt ? userPrompt : (info.title || "Page Summary");
+        const summaryTitle = info.title ? `${info.title}` : "Page Summary";
+
+        await addHistory({
+          title: summaryTitle,
+          type: 'summary',
+          response: streamedContent,
+          tags: fetchedTags,
+          suggestedQuestions: fetchedQuestions,
+          pageInfo: {
             title: info.title || "",
             url: info.url || "",
             favicon: info.favicon || "",
-          });
-
-          const historyTitle = userPrompt ? userPrompt : (info.title || "Page Summary");
-          const summaryTitle = info.title ? `${info.title}` : "Page Summary";
-
-          setTimeout(async () => {
-            await addHistory({
-              title: summaryTitle,
-              type: 'summary',
-              response: streamedContent,
-              tags: [],
-              suggestedQuestions: [],
-              pageInfo: {
-                title: info.title || "",
-                url: info.url || "",
-                favicon: info.favicon || "",
-              },
-            });
-          }, 1000); // Delay history saving by 1 second
-        }
+          },
+        });
       }, () => {
         // Clear loading state when streaming starts
         setLoading(false);
@@ -398,106 +314,33 @@ ${pageContext}`;
     _useWebSearch: boolean,
     fileName?: string | null
   ) => {
-    setLoading(true);
-    setLinks([]);
-    setRestoredScreenshotData(null); // Clear restored screenshot data for new queries
-    setSearchQuery("");
-    resetStream(); // Reset streaming content for new query
+    if (loading || isStreaming) return;
     
-    const imageData = screenshotData || fileData;
+    setLoading(true);
+    setOutputHtml("");
+    setTags([]);
+    setSuggested([]);
+    setLinks([]);
+    resetStream(); // Reset streaming content for new query
     
     try {
       const info = await getPageInfoFromTab();
       setPageInfo(info);
-
-      // Use settings instead of local state
-      const settings = userSettings?.contextConfig || {
-        usePageContext: true,
-        useWebSearch: false,
-      };
+      if (info.error) throw new Error(info.error);
 
       let finalQuery = query;
-      if (settings.usePageContext && !imageData) {
-        const sanitizedQuery = sanitizeInput(query);
-        finalQuery = `Based on this page:\n${info.text}\n\nUser question: ${sanitizedQuery}`;
-      } else if (settings.useWebSearch) {
-        // Disable page context when web search is active
-        setUsePageContext(false);
-        
-        // Use the same approach as tag search - get actual links
-        console.log('=== WEB SEARCH REQUEST ===');
-        console.log('Query:', query);
-        
-        setLoading(true);
-        setTags([]);
-        setSuggested([]);
-        setLinks([]);
-        setRestoredScreenshotData(null);
-        setSearchQuery(query);
-        
-        const res: AIResponse = await sendQueryToAI({
-          query: query,
-          action: "get_links",
-        });
-        
-        console.log('=== WEB SEARCH RESPONSE ===');
-        console.log('Complete AI Response:', res);
-        console.log('Response text:', res.text);
-        console.log('Response links:', res.links);
-        console.log('Response tags:', res.tags);
-        console.log('Response suggestedQuestions:', res.suggestedQuestions);
-        
-        const linksArr = res.links?.slice(0, 15) ?? [];
-        console.log('Processed links array:', linksArr);
-        
-        setLinks(linksArr);
-        
-        // Don't set output HTML when we have links - let LinkList handle the display
-        if (linksArr.length === 0) {
-          setOutputHtml(`<p>No web search results found for "${query}".</p>`);
-        } else {
-          setOutputHtml(''); // Clear output HTML since LinkList will show the results
-        }
+      let action: AIAction = "direct_question";
+      let imageData: string | null = null;
 
-        await addHistory({
-          title: `Web search results for "${query}"`,
-          type: 'search',
-          response: linksArr.length > 0 ? `Found ${linksArr.length} web search results for "${query}":` : `No web search results found for "${query}".`,
-          tags: [],
-          suggestedQuestions: [],
-          links: linksArr,
-        });
+      // Handle file uploads
+      if (fileData) {
+        imageData = fileData;
+        action = fileData.startsWith('data:image/') ? "direct_question" : "summarize_file";
         
-        setScreenshotData(null);
-        setLoading(false);
-        return; // Exit early since we handled the web search separately
-      } else if (imageData) {
-        finalQuery = sanitizeInput(query);
-      }
-
-      // Determine action based on whether we have a file and its type
-      let action: AIAction;
-      if (imageData) {
-        // Check if it's an image (screenshot) or a text file
-        if (imageData.startsWith('data:image/')) {
-          action = "direct_question"; // Screenshots should use direct question
-        } else {
-          action = "summarize_file"; // Text files use summarize_file
-        }
-      } else {
-        action = "direct_question";
-      }
-      
-      // If there's a file, combine the user's query with file analysis request
-      let queryToSend = finalQuery;
-      if (imageData) {
-        if (imageData.startsWith('data:image/')) {
-          // For screenshots, use the user's query directly or ask about the image
-          if (query.trim()) {
-            queryToSend = query.trim();
-          } else {
-            queryToSend = "Please analyze and describe this screenshot";
-          }
+        let queryToSend = "";
+        if (fileData.startsWith('data:image/')) {
+          // For images, use the user's query directly
+          queryToSend = query.trim() || "Please analyze this image";
         } else {
           // For text files, combine the user's query with file analysis request
           if (query.trim()) {
@@ -506,10 +349,50 @@ ${pageContext}`;
             queryToSend = "Please analyze and summarize this file";
           }
         }
+        finalQuery = queryToSend;
+      } else {
+        // Handle regular queries
+        if (userSettings?.contextConfig?.usePageContext && !imageData) {
+          const sanitizedQuery = sanitizeInput(query);
+          finalQuery = `Based on this page:\n${info.text}\n\nUser question: ${sanitizedQuery}`;
+        } else if (userSettings?.contextConfig?.useWebSearch) {
+          // Disable page context when web search is active
+          const sanitizedQuery = sanitizeInput(query);
+          finalQuery = `Search the web for: ${sanitizedQuery}`;
+          action = "get_links";
+          
+          // Handle web search separately
+          try {
+            const res: AIResponse = await sendQueryToAI({
+              query: sanitizedQuery,
+              action: "get_links",
+            });
+            const linksArr = res.links?.slice(0, 15) ?? [];
+            setLinks(linksArr);
+            setOutputHtml(`<div class="search-results"><h3>Web Search Results for: "${sanitizedQuery}"</h3><p>Found ${linksArr.length} results. You can now ask follow-up questions about these results.</p></div>`);
+          } catch (error) {
+            setOutputHtml(`<p class="error">Web search failed: ${error instanceof Error ? error.message : 'Unknown error'}</p>`);
+          }
+          
+          setLoading(false);
+          return; // Exit early since we handled the web search separately
+        } else if (imageData) {
+          finalQuery = sanitizeInput(query);
+        }
       }
       
-      // Use streaming for all queries with two-step process
-      await startStream(queryToSend, action, imageData, async (streamedContent) => {
+      // Start both API calls simultaneously
+      let fetchedTags: string[] = [];
+      let fetchedQuestions: string[] = [];
+      
+      // Start the tags/questions API call immediately (for non-screenshots)
+      let tagsPromise: Promise<{ tags: string[]; suggestedQuestions: string[] }> | null = null;
+      if (!imageData || !imageData.startsWith('data:image/')) {
+        tagsPromise = fetchTagsAndQuestions(info.text);
+      }
+      
+      // Use streaming for main response
+      await startStream(finalQuery, action, imageData, async (streamedContent) => {
         // Convert markdown to HTML and save to outputHtml
         const md = new (await import('markdown-it')).default({
           html: true,
@@ -519,66 +402,47 @@ ${pageContext}`;
         const htmlContent = md.render(streamedContent);
         setOutputHtml(htmlContent);
         
-        // Step 2: Get structured data after streaming completes
-        try {
-          let fetchedTags: string[] = [];
-          let fetchedQuestions: string[] = [];
-          
-          // For screenshots, don't fetch tags/questions since we don't have page context
-          if (imageData && imageData.startsWith('data:image/')) {
-            setTags([]);
-            setSuggested([]);
-          } else {
-            const result = await fetchTagsAndQuestions(info.text);
+        // Wait for tags/questions to complete (if they were started)
+        if (tagsPromise) {
+          try {
+            const result = await tagsPromise;
             fetchedTags = result.tags;
             fetchedQuestions = result.suggestedQuestions;
             
             setTags(fetchedTags);
             setSuggested(fetchedQuestions);
+          } catch (error) {
+            console.error('Error getting structured data:', error);
+            // Continue without tags/questions if they fail
           }
-          
-          // Save to history with structured data
-          setTimeout(async () => {
-            await addHistory({
-              title: query.length > 50 ? query.substring(0, 50) + "..." : query,
-              type: 'question',
-              response: streamedContent,
-              tags: fetchedTags,
-              suggestedQuestions: fetchedQuestions,
-              pageInfo: {
-                title: info.title || "",
-                url: info.url || "",
-                favicon: info.favicon || "",
-              },
-            });
-          }, 1000); // Delay history saving by 1 second
-        } catch (error) {
-          console.error('Error getting structured data:', error);
-          // Still save the streamed content even if metadata fails
-          setTimeout(async () => {
-            await addHistory({
-              title: query.length > 50 ? query.substring(0, 50) + "..." : query,
-              type: 'question',
-              response: streamedContent,
-              tags: [],
-              suggestedQuestions: [],
-              pageInfo: {
-                title: info.title || "",
-                url: info.url || "",
-                favicon: info.favicon || "",
-              },
-            });
-          }, 1000); // Delay history saving by 1 second
+        } else {
+          // For screenshots, don't fetch tags/questions
+          setTags([]);
+          setSuggested([]);
         }
+        
+        // Save to history with structured data
+        setTimeout(async () => {
+          await addHistory({
+            title: query.length > 50 ? query.substring(0, 50) + "..." : query,
+            type: 'question',
+            response: streamedContent,
+            tags: fetchedTags,
+            suggestedQuestions: fetchedQuestions,
+            pageInfo: {
+              title: info.title || "",
+              url: info.url || "",
+              favicon: info.favicon || "",
+            },
+          });
+        }, 1000); // Delay history saving by 1 second
       }, () => {
         // Clear loading state when streaming starts
         setLoading(false);
       });
-      setTags([]);
-      setSuggested([]);
       
       // Save page info for header display if this is a context-based question
-      if (settings.usePageContext && !imageData) {
+      if (userSettings?.contextConfig?.usePageContext && !imageData) {
         setSavedPageInfo({
           title: info.title || "",
           url: info.url || "",

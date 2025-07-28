@@ -146,6 +146,17 @@
   color: #ffffff;
 }
 
+/* Inactive state - gray background */
+.context-toggle-button.inactive {
+  background-color: #6c757d;
+  color: #ffffff;
+}
+
+.context-toggle-button.inactive:hover {
+  background-color: #5a6268;
+  color: #ffffff;
+}
+
 /* Web Search Button */
 .web-search-button {
   background-color: #6c757d;

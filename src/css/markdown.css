@@ -2,7 +2,7 @@
 .markdown-content {
   line-height: 1.6;
   color: #e0e0e0;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .markdown-content h1,
@@ -182,43 +182,6 @@
   color: #ff6b6b;
   margin: 0;
   font-weight: 500;
-}
-
-/* Streaming Animation */
-.markdown-content.streaming {
-  position: relative;
-}
-
-.markdown-content.streaming::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 8px;
-  height: 16px;
-  background-color: #4a9eff;
-  animation: blink 1s infinite;
-  border-radius: 2px;
-}
-
-@keyframes blink {
-  0%, 50% { opacity: 1; }
-  51%, 100% { opacity: 0; }
-}
-
-/* Performance optimizations for streaming */
-.markdown-content.streaming {
-  contain: layout style paint;
-}
-
-.markdown-content.streaming * {
-  contain: layout style paint;
-}
-
-/* Smooth transitions for streaming content */
-.markdown-content.streaming p:last-child,
-.markdown-content.streaming div:last-child {
-  transition: all 0.1s ease-out;
 }
 
 /* Responsive Design */
