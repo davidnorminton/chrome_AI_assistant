@@ -108,16 +108,23 @@ export default function Prompt({ onSend, onSummarize, loading, useContext, setUs
     };
   }, [showMenu]);
 
-  // File type validation for Perplexity (images, PDFs, and text files supported)
+  // Enhanced file validation
   const isValidFileType = (file: File): boolean => {
-    const validTypes = [
+    const allowedTypes = [
       'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
-      'application/pdf',
-      'text/plain', 'text/csv', 'application/json',
-      'text/xml', 'text/html', 'application/javascript',
-      'text/markdown', 'text/yaml', 'text/x-yaml'
+      'application/pdf', 'text/plain', 'text/csv', 'application/json',
+      'text/markdown', 'text/xml'
     ];
-    return validTypes.includes(file.type);
+    
+    const allowedExtensions = [
+      'jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'txt', 'csv', 'json', 'md', 'xml'
+    ];
+    
+    const fileExtension = file.name.toLowerCase().split('.').pop();
+    
+    return allowedTypes.includes(file.type) && 
+           fileExtension !== undefined && 
+           allowedExtensions.includes(fileExtension);
   };
 
   // When a file is selected, validate and read it

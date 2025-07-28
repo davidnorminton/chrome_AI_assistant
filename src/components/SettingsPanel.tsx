@@ -46,52 +46,56 @@ export default function SettingsPanel() {
   });
 
   useEffect(() => {
-    chrome.storage.local.get([
-      "apiKey", 
-      "model", 
-      "aiContextConfig", 
-      "aiModelConfig"
-    ], (data: { 
-      apiKey?: string; 
-      model?: string;
-      aiContextConfig?: AIContextConfig;
-      aiModelConfig?: AIModelConfig;
-    }) => {
-      if (data.apiKey) setApiKey(data.apiKey);
-      if (data.model && modelOptions.some(opt => opt.value === data.model)) {
-        setModel(data.model);
-      }
-      if (data.aiContextConfig) {
-        setContextConfig(data.aiContextConfig);
-      }
-      if (data.aiModelConfig) {
-        setModelConfig(data.aiModelConfig);
-      }
-      setIsLoading(false);
-    });
+    loadSettings();
   }, []);
 
-  const saveSettings = () => {
+  const handleSaveSettings = async () => {
     if (!apiKey.trim()) {
-      setSaveMsg("API key is required!");
+      alert('Please enter your Perplexity API key');
       return;
     }
-    
-    setIsLoading(true);
-    
-    // Update the context manager with new settings
-    defaultAIContextManager.updateConfig(contextConfig);
-    
-    chrome.storage.local.set({ 
-      apiKey: apiKey.trim(), 
-      model,
-      aiContextConfig: contextConfig,
-      aiModelConfig: modelConfig,
-    }, () => {
-      setSaveMsg("Settings saved successfully!");
-      setIsLoading(false);
-      setTimeout(() => setSaveMsg(""), 3000);
-    });
+
+    try {
+      // Basic encoding for API key (not encryption, but better than plain text)
+      const encodedApiKey = btoa(apiKey.trim());
+      
+      await chrome.storage.local.set({
+        apiKey: encodedApiKey,
+        model: modelConfig.model,
+        aiModelConfig: modelConfig,
+        aiContextConfig: contextConfig,
+      });
+
+      alert('Settings saved successfully!');
+    } catch (error) {
+      alert('Error saving settings: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    }
+  };
+
+  const loadSettings = async () => {
+    try {
+      const data = await chrome.storage.local.get([
+        "apiKey",
+        "model",
+        "aiModelConfig",
+        "aiContextConfig"
+      ]);
+
+      if (data.apiKey) {
+        // Decode the API key
+        try {
+          setApiKey(atob(data.apiKey));
+        } catch {
+          // If decoding fails, use as-is (backward compatibility)
+          setApiKey(data.apiKey);
+        }
+      }
+      if (data.model) setModel(data.model);
+      if (data.aiModelConfig) setModelConfig(data.aiModelConfig);
+      if (data.aiContextConfig) setContextConfig(data.aiContextConfig);
+    } catch (error) {
+      console.error('Error loading settings:', error);
+    }
   };
 
   const handleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -431,7 +435,7 @@ export default function SettingsPanel() {
         {/* Save Button */}
         <div className="setting-actions">
           <button
-            onClick={saveSettings}
+            onClick={handleSaveSettings}
             disabled={isLoading || !contextValidation.isValid}
             className="setting-save-btn"
           >

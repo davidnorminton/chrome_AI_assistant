@@ -8,6 +8,12 @@ import { processImagesWithBase64 } from "../utils/imageUtils";
 import { HistoryNavigationContext, AppActionsContext } from "../App";
 import { getYouTubeVideoInfo, YouTubeVideoInfo } from "../utils/youtube";
 import { useStreaming } from '../context/StreamingContext';
+import DOMPurify from 'dompurify';
+
+// Add input sanitization function
+const sanitizeInput = (input: string): string => {
+  return DOMPurify.sanitize(input, { ALLOWED_TAGS: [] });
+};
 
 interface LinkItem {
   title: string;
@@ -412,7 +418,8 @@ ${pageContext}`;
 
       let finalQuery = query;
       if (settings.usePageContext && !imageData) {
-        finalQuery = `Based on this page:\n${info.text}\n\nUser question: ${query}`;
+        const sanitizedQuery = sanitizeInput(query);
+        finalQuery = `Based on this page:\n${info.text}\n\nUser question: ${sanitizedQuery}`;
       } else if (settings.useWebSearch) {
         // Disable page context when web search is active
         setUsePageContext(false);
@@ -465,8 +472,7 @@ ${pageContext}`;
         setLoading(false);
         return; // Exit early since we handled the web search separately
       } else if (imageData) {
-        // For screenshots and files, don't include page context
-        finalQuery = query;
+        finalQuery = sanitizeInput(query);
       }
 
       // Determine action based on whether we have a file and its type
