@@ -15,6 +15,13 @@ export function MarkdownRenderer({ content, className = '', isStreaming = false 
   const containerRef = useRef<HTMLDivElement>(null);
   const chunksRef = useRef<string>('');
 
+  // Check if content is pure HTML (starts with < and ends with >)
+  const isPureHtml = (content: string): boolean => {
+    const trimmed = content.trim();
+    return trimmed.startsWith('<') && trimmed.includes('>') && 
+           (trimmed.includes('<div') || trimmed.includes('<img') || trimmed.includes('<h3'));
+  };
+
   const md = useMemo(() => {
     const instance = new MarkdownIt({
       html: true,
@@ -52,6 +59,33 @@ export function MarkdownRenderer({ content, className = '', isStreaming = false 
     if (isStreaming) {
       chunksRef.current = content; // Use the current content directly
       const allChunks = chunksRef.current;
+      
+      // Check if this is pure HTML content
+      if (isPureHtml(allChunks)) {
+        // For pure HTML, sanitize and render directly
+        const safeHtml = DOMPurify.sanitize(allChunks, {
+          ALLOWED_TAGS: [
+            'p', 'br', 'strong', 'em', 'u', 's', 'mark', 'del', 'ins',
+            'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+            'ul', 'ol', 'li', 'dl', 'dt', 'dd',
+            'blockquote', 'pre', 'code', 'kbd', 'samp', 'var',
+            'table', 'thead', 'tbody', 'tfoot', 'tr', 'td', 'th',
+            'a', 'img', 'hr', 'div', 'span',
+            'abbr', 'acronym', 'cite', 'dfn', 'q', 'small', 'sub', 'sup',
+            'details', 'summary'
+          ],
+          ALLOWED_ATTR: [
+            'href', 'src', 'alt', 'title', 'class', 'id', 'target',
+            'rel', 'width', 'height', 'style'
+          ],
+          ALLOW_DATA_ATTR: false,
+          FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form', 'input', 'button'],
+          FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur']
+        });
+        
+        setHtml(safeHtml);
+        return;
+      }
       
       try {
         // Sanitize all chunks received so far (Chrome's recommendation)
@@ -114,6 +148,34 @@ export function MarkdownRenderer({ content, className = '', isStreaming = false 
     } else {
       // For non-streaming content, process normally
       try {
+        // Check if this is pure HTML content
+        if (isPureHtml(content)) {
+          // For pure HTML, sanitize and render directly
+          const safeHtml = DOMPurify.sanitize(content, {
+            ALLOWED_TAGS: [
+              'p', 'br', 'strong', 'em', 'u', 's', 'mark', 'del', 'ins',
+              'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+              'ul', 'ol', 'li', 'dl', 'dt', 'dd',
+              'blockquote', 'pre', 'code', 'kbd', 'samp', 'var',
+              'table', 'thead', 'tbody', 'tfoot', 'tr', 'td', 'th',
+              'a', 'img', 'hr', 'div', 'span',
+              'abbr', 'acronym', 'cite', 'dfn', 'q', 'small', 'sub', 'sup',
+              'details', 'summary'
+            ],
+            ALLOWED_ATTR: [
+              'href', 'src', 'alt', 'title', 'class', 'id', 'target',
+              'rel', 'width', 'height', 'style'
+            ],
+            ALLOW_DATA_ATTR: false,
+            FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form', 'input', 'button'],
+            FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur']
+          });
+          
+          setHtml(safeHtml);
+          setIsInsecure(false);
+          return;
+        }
+        
         const rawHtml = md.render(content);
         const safeHtml = DOMPurify.sanitize(rawHtml, {
           ALLOWED_TAGS: [

@@ -34,9 +34,10 @@ export const StreamingProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       // Get API key and model from storage
-      const result = await chrome.storage.local.get(['apiKey', 'model']);
+      const result = await chrome.storage.local.get(['apiKey', 'model', 'aiModelConfig']);
       const apiKey = result.apiKey;
       const model = result.model ?? 'sonar-small-online';
+      const modelConfig = result.aiModelConfig || {};
       
       if (!apiKey) {
         throw new Error('API key not found. Please set your Perplexity API key in settings.');
@@ -49,16 +50,38 @@ export const StreamingProvider = ({ children }: { children: ReactNode }) => {
           {
             role: 'system',
             content: 'You are a helpful AI assistant. Provide clear, concise, and accurate responses. Use markdown formatting for better readability. Respond with plain text only, no JSON formatting.'
-          },
-          {
-            role: 'user',
-            content: query
           }
         ],
         stream: true,
-        max_tokens: 4000,
-        temperature: 0.7
+        max_tokens: modelConfig.maxTokens || 4000,
+        temperature: modelConfig.temperature || 0.7
       };
+
+      // Add the user message with proper content format
+      if (file && file.startsWith('data:image/')) {
+        // For images, use the multimodal format
+        payload.messages.push({
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: query
+            },
+            {
+              type: 'image_url',
+              image_url: {
+                url: file
+              }
+            }
+          ]
+        });
+      } else {
+        // For text content
+        payload.messages.push({
+          role: 'user',
+          content: query
+        });
+      }
 
       const response = await fetch('https://api.perplexity.ai/chat/completions', {
         method: 'POST',

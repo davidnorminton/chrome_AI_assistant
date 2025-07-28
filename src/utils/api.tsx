@@ -50,11 +50,12 @@ export async function sendQueryToAI(options: SendQueryOptions): Promise<AIRespon
   }
 
   // Load model & API key
-  const { model, apiKey } = await new Promise<{ model: string; apiKey: string }>(resolve => {
-    chrome.storage.local.get(['model', 'apiKey'], data =>
+  const { model, apiKey, modelConfig: existingModelConfig } = await new Promise<{ model: string; apiKey: string; modelConfig: any }>(resolve => {
+    chrome.storage.local.get(['model', 'apiKey', 'aiModelConfig'], data =>
       resolve({
         model: data.model ?? 'sonar-small-online',
-        apiKey: data.apiKey
+        apiKey: data.apiKey,
+        modelConfig: data.aiModelConfig || {}
       })
     );
   });
@@ -88,25 +89,51 @@ export async function sendQueryToAI(options: SendQueryOptions): Promise<AIRespon
 
   // Build the request payload
   const payload: any = {
-    model: modelConfig?.model || model,
+    model: modelConfig?.model || existingModelConfig?.model || model,
     messages: [
       {
         role: 'system',
         content: systemPrompt
-      },
-      {
-        role: 'user',
-        content: contentToSend
       }
     ]
   };
 
+  // Add the user message with proper content format
+  if (file && file.startsWith('data:image/')) {
+    // For images, use the multimodal format
+    payload.messages.push({
+      role: 'user',
+      content: [
+        {
+          type: 'text',
+          text: query
+        },
+        {
+          type: 'image_url',
+          image_url: {
+            url: file
+          }
+        }
+      ]
+    });
+  } else {
+    // For text content
+    payload.messages.push({
+      role: 'user',
+      content: contentToSend
+    });
+  }
+
   // Add optional parameters if provided
   if (modelConfig?.temperature !== undefined) {
     payload.temperature = modelConfig.temperature;
+  } else if (existingModelConfig?.temperature !== undefined) {
+    payload.temperature = existingModelConfig.temperature;
   }
   if (modelConfig?.maxTokens !== undefined) {
     payload.max_tokens = modelConfig.maxTokens;
+  } else if (existingModelConfig?.maxTokens !== undefined) {
+    payload.max_tokens = existingModelConfig.maxTokens;
   }
 
   try {

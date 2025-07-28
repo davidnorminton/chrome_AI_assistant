@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef, useContext } from "react";
 import { useLocation } from "react-router-dom";
 import { getPageInfoFromTab, type PageInfo } from "../utils/tabs";
 import { sendQueryToAI } from "../utils/api";
-import type { AIResponse } from "../types";
+import type { AIResponse, AIContextConfig, AIModelConfig, AIAction } from "../types";
 import { addHistory } from "../utils/storage";
 import { processImagesWithBase64 } from "../utils/imageUtils";
 import { HistoryNavigationContext, AppActionsContext } from "../App";
@@ -46,6 +46,31 @@ export function useHomeLogic() {
     return config;
   };
 
+  // Load all user settings
+  const loadUserSettings = async () => {
+    const result = await chrome.storage.local.get(['aiContextConfig', 'aiModelConfig']);
+    const contextConfig = result.aiContextConfig || {
+      usePageContext: true,
+      useWebSearch: false,
+      contextLevel: 'standard',
+      includeMetadata: true,
+      includeLinks: true,
+      includeImages: false,
+      maxContextLength: 8000,
+      customInstructions: undefined,
+      showTags: true,
+      showSuggestedQuestions: true,
+    };
+    const modelConfig = result.aiModelConfig || {
+      model: result.model || 'sonar-small-online',
+      apiKey: '',
+      temperature: 0.7,
+      maxTokens: 4000,
+      systemPrompt: undefined,
+    };
+    return { contextConfig, modelConfig };
+  };
+
   // Parallel query for tags and suggested questions
   const fetchTagsAndQuestions = async (pageContext: string) => {
     try {
@@ -72,6 +97,8 @@ ${pageContext}`;
       const structuredResponse = await sendQueryToAI({
         query: analysisQuery,
         action: "direct_question",
+        contextConfig: userSettings?.contextConfig,
+        modelConfig: userSettings?.modelConfig,
       });
 
       console.log('Raw API response:', structuredResponse);
@@ -93,6 +120,10 @@ ${pageContext}`;
   };
   const [usePageContext, setUsePageContext] = useState(true);
   const [useWebSearch, setUseWebSearch] = useState(false);
+  const [userSettings, setUserSettings] = useState<{
+    contextConfig: AIContextConfig;
+    modelConfig: AIModelConfig;
+  } | null>(null);
 
   const [screenshotData, setScreenshotData] = useState<string | null>(null);
   const [currentHistoryItemType, setCurrentHistoryItemType] = useState<string | null>(null);
@@ -114,6 +145,14 @@ ${pageContext}`;
     (async () => {
       const info = await getPageInfoFromTab();
       setPageInfo(info);
+    })();
+  }, []);
+
+  // Load user settings on mount
+  useEffect(() => {
+    (async () => {
+      const settings = await loadUserSettings();
+      setUserSettings(settings);
     })();
   }, []);
 
@@ -448,10 +487,16 @@ ${pageContext}`;
       const info = await getPageInfoFromTab();
       setPageInfo(info);
 
+      // Use settings instead of local state
+      const settings = userSettings?.contextConfig || {
+        usePageContext: true,
+        useWebSearch: false,
+      };
+
       let finalQuery = query;
-      if (_useContext && !imageData) {
+      if (settings.usePageContext && !imageData) {
         finalQuery = `Based on this page:\n${info.text}\n\nUser question: ${query}`;
-      } else if (_useWebSearch) {
+      } else if (settings.useWebSearch) {
         // Disable page context when web search is active
         setUsePageContext(false);
         
@@ -503,18 +548,41 @@ ${pageContext}`;
         setLoading(false);
         return; // Exit early since we handled the web search separately
       } else if (imageData) {
+        // For screenshots and files, don't include page context
         finalQuery = query;
       }
 
-      // Determine action based on whether we have a file
-      const action = imageData ? "summarize_file" : "direct_question";
+      // Determine action based on whether we have a file and its type
+      let action: AIAction;
+      if (imageData) {
+        // Check if it's an image (screenshot) or a text file
+        if (imageData.startsWith('data:image/')) {
+          action = "direct_question"; // Screenshots should use direct question
+        } else {
+          action = "summarize_file"; // Text files use summarize_file
+        }
+      } else {
+        action = "direct_question";
+      }
       
       // If there's a file, combine the user's query with file analysis request
       let queryToSend = finalQuery;
-      if (imageData && query.trim()) {
-        queryToSend = `Analyze this file and answer: ${query.trim()}`;
-      } else if (imageData && !query.trim()) {
-        queryToSend = "Please analyze and summarize this file";
+      if (imageData) {
+        if (imageData.startsWith('data:image/')) {
+          // For screenshots, use the user's query directly or ask about the image
+          if (query.trim()) {
+            queryToSend = query.trim();
+          } else {
+            queryToSend = "Please analyze and describe this screenshot";
+          }
+        } else {
+          // For text files, combine the user's query with file analysis request
+          if (query.trim()) {
+            queryToSend = `Analyze this file and answer: ${query.trim()}`;
+          } else {
+            queryToSend = "Please analyze and summarize this file";
+          }
+        }
       }
       
       // Use streaming for all queries with two-step process
@@ -530,10 +598,22 @@ ${pageContext}`;
         
         // Step 2: Get structured data after streaming completes
         try {
-          const { tags: fetchedTags, suggestedQuestions: fetchedQuestions } = await fetchTagsAndQuestions(info.text);
+          let fetchedTags: string[] = [];
+          let fetchedQuestions: string[] = [];
           
-          setTags(fetchedTags);
-          setSuggested(fetchedQuestions);
+          // For screenshots, don't fetch tags/questions since we don't have page context
+          if (imageData && imageData.startsWith('data:image/')) {
+            setTags([]);
+            setSuggested([]);
+          } else {
+            const result = await fetchTagsAndQuestions(info.text);
+            fetchedTags = result.tags;
+            fetchedQuestions = result.suggestedQuestions;
+            
+            console.log('Setting tags and questions in state:', { fetchedTags, fetchedQuestions });
+            setTags(fetchedTags);
+            setSuggested(fetchedQuestions);
+          }
           
           // Save to history with structured data
           setTimeout(async () => {
@@ -576,7 +656,7 @@ ${pageContext}`;
       setSuggested([]);
       
       // Save page info for header display if this is a context-based question
-      if (_useContext && !imageData) {
+      if (settings.usePageContext && !imageData) {
         setSavedPageInfo({
           title: info.title || "",
           url: info.url || "",
@@ -938,42 +1018,35 @@ ${pageContext}`;
   };
 
   return {
-    // State
     outputHtml,
     tags,
     suggested,
     links,
-    loading,
     searchQuery,
     pageInfo,
     savedPageInfo,
-    usePageContext,
-    setUsePageContext,
-    useWebSearch,
-    setUseWebSearch,
-
-    screenshotData,
     restoredScreenshotData,
     currentHistoryItemType,
     currentHistoryItemFileName,
-    showWelcome,
-    
-    // Handlers
-    handleSummarize,
-    handleSend,
-    handleTagClick,
-    handleSuggestedClick,
-    handleScreenshotCapture,
-    handleClearContent,
-    
-    // Helpers
-    shouldShowPageHeader,
-    shouldShowLinkList,
-
-    sendNewsQuery,
+    loading,
     isStreaming,
     streamContent,
     stopStream,
-    resetStream
+    resetStream,
+    handleSend,
+    handleSummarize,
+    handleTagClick,
+    handleSuggestedClick,
+    handleScreenshotCapture,
+    screenshotData,
+    showWelcome,
+    handleClearContent,
+    shouldShowPageHeader: () => !loading && savedPageInfo && !isStreaming,
+    shouldShowLinkList: () => !loading && links.length > 0 && !isStreaming,
+    sendNewsQuery,
+    usePageContext: userSettings?.contextConfig?.usePageContext ?? true,
+    setUsePageContext: () => {}, // This will be handled by settings
+    useWebSearch: userSettings?.contextConfig?.useWebSearch ?? false,
+    setUseWebSearch: () => {}, // This will be handled by settings
   };
 } 

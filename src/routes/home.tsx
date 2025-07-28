@@ -69,8 +69,8 @@ export default function Home() {
   };
 
   // Calculate display states
-  const showPageHeader = Boolean(outputHtml) && shouldShowPageHeader() && !loading;
-  const showLinkList = shouldShowLinkList() && !loading;
+  const showPageHeader = Boolean(outputHtml) && Boolean(shouldShowPageHeader()) && !loading;
+  const showLinkList = Boolean(shouldShowLinkList()) && !loading;
 
 
   return (

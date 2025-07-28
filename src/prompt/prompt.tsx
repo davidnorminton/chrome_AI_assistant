@@ -309,11 +309,16 @@ export default function Prompt({ onSend, onSummarize, loading, useContext, setUs
                 id="toggleContextBtn"
                 className={`nice-button context-toggle-button tooltip ${useContext ? "active" : ""}`}
                 onClick={() => setUseContext(!useContext)}
-                disabled={loading}
+                disabled={loading || Boolean(fileData && fileData.startsWith('data:image/'))}
               >
                 <i className="fas fa-book-open" />
                 <span>Page Context</span>
-                <span className="tooltiptext">{useContext ? "Disable Page Context" : "Enable Page Context"}</span>
+                <span className="tooltiptext">
+                  {fileData && fileData.startsWith('data:image/') 
+                    ? "Page Context disabled for screenshots" 
+                    : (useContext ? "Disable Page Context" : "Enable Page Context")
+                  }
+                </span>
               </button>
 
               {/* Toggle web search */}
@@ -356,11 +361,16 @@ export default function Prompt({ onSend, onSummarize, loading, useContext, setUs
                 id="toggleContextBtn"
                 className={`nice-button context-toggle-button tooltip ${useContext ? "active" : ""}`}
                 onClick={() => setUseContext(!useContext)}
-                disabled={loading}
+                disabled={loading || Boolean(fileData && fileData.startsWith('data:image/'))}
               >
                 <i className="fas fa-book-open" />
                 <span>Page Context</span>
-                <span className="tooltiptext">{useContext ? "Disable Page Context" : "Enable Page Context"}</span>
+                <span className="tooltiptext">
+                  {fileData && fileData.startsWith('data:image/') 
+                    ? "Page Context disabled for screenshots" 
+                    : (useContext ? "Disable Page Context" : "Enable Page Context")
+                  }
+                </span>
               </button>
 
               {/* 3-dots menu for other options */}
