@@ -103,6 +103,16 @@ export default function ContentDisplay({
   
   // Debug screenshot data
   console.log('ContentDisplay - screenshotData:', screenshotData ? 'present' : 'not present');
+  console.log('ContentDisplay - tags:', tags, 'suggested:', suggested, 'isStreaming:', isStreaming);
+
+  // Clear loading state when streaming starts
+  useEffect(() => {
+    if (isStreaming && loading) {
+      // This will trigger the parent component to clear loading
+      // We can't directly set loading here, but we can signal it
+      console.log('Streaming started, should clear loading');
+    }
+  }, [isStreaming, loading]);
 
   // Determine if we should show the file name in the content area
   const fileNameToShow =
@@ -110,15 +120,15 @@ export default function ContentDisplay({
     (isProcessingFile && processingFileName) ||
     null;
 
-  // Determine content to display
-  const displayContent = isStreaming ? streamContent : outputHtml;
+  // Determine content to display - prioritize streaming content
+  const displayContent = isStreaming ? streamContent : (outputHtml || streamContent);
   const isStreamingOrLoading = isStreaming || loading;
 
   return (
     <div id="responseBox">
       <div id="output">
-        {/* Loading Animation - Show only when loading and not streaming */}
-        {loading && !showWelcome && !isStreaming && (
+        {/* Loading Animation - Show when loading OR streaming but hide when content starts */}
+        {loading && !showWelcome && (
           <div className="loading-container">
             <AILoadingAnimation />
           </div>
@@ -154,19 +164,19 @@ export default function ContentDisplay({
         {/* Welcome Component - Only show when not loading */}
         {!loading && showWelcome && children}
 
-        {/* Content Display - Only show when not loading */}
-        {!loading && !showWelcome && (displayContent || isStreaming) && (
+        {/* Content Display - Show when not welcome and has content or is streaming */}
+        {!showWelcome && (displayContent || isStreaming || streamContent) && (
           <div className="content-display">
             {isStreaming ? (
               <MarkdownRenderer content={displayContent} className="streaming" isStreaming={true} />
             ) : (
-              <SyntaxHighlightedContent html={displayContent} />
+              <MarkdownRenderer content={displayContent} className="" isStreaming={false} />
             )}
           </div>
         )}
 
-        {/* Tags - Only show when not loading */}
-        {!loading && !isStreamingOrLoading && tags.length > 0 && (
+        {/* Tags - Show when content is available and not actively streaming */}
+        {!isStreaming && tags.length > 0 && (
           <div className="tags-container">
             {tags.map((tag, index) => (
               <span
@@ -180,8 +190,8 @@ export default function ContentDisplay({
           </div>
         )}
 
-        {/* Suggested Questions - Only show when not loading */}
-        {!loading && !isStreamingOrLoading && suggested.length > 0 && (
+        {/* Suggested Questions - Show when content is available and not actively streaming */}
+        {!isStreaming && suggested.length > 0 && (
           <div className="suggested-questions-container">
             <ul>
               {suggested.map((question, index) => (

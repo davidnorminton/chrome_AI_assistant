@@ -26,6 +26,8 @@ export interface AIContextConfig {
   includeImages: boolean;
   maxContextLength: number;
   customInstructions?: string;
+  showTags: boolean;
+  showSuggestedQuestions: boolean;
 }
 
 // AI Model Configuration

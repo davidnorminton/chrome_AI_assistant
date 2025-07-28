@@ -164,6 +164,14 @@ function parseAIResponse(response: string, action: AIAction): AIResponse {
           links: parsed.slice(0, 15), // Limit to 15 links
         };
       }
+    } else if (action === 'direct_question' && parsed.tags && parsed.suggestedQuestions) {
+      // For direct questions that return tags and questions
+      return {
+        text: response, // Keep the original response for debugging
+        model: 'perplexity',
+        tags: parsed.tags,
+        suggestedQuestions: parsed.suggestedQuestions,
+      };
     } else {
       // For other actions, expect structured response
       if (parsed.summary && Array.isArray(parsed.tags) && Array.isArray(parsed.suggestedQuestions)) {

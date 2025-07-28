@@ -34,11 +34,67 @@ export function useHomeLogic() {
     favicon: "",
   });
   const [savedPageInfo, setSavedPageInfo] = useState<{ title: string; url: string; favicon: string } | null>(null);
+  const [restoredScreenshotData, setRestoredScreenshotData] = useState<string | null>(null);
+
+  // Get user settings for tags and suggested questions
+  const getUserSettings = async () => {
+    const result = await chrome.storage.local.get(['aiContextConfig']);
+    const config = result.aiContextConfig || {
+      showTags: true,
+      showSuggestedQuestions: true,
+    };
+    return config;
+  };
+
+  // Parallel query for tags and suggested questions
+  const fetchTagsAndQuestions = async (pageContext: string) => {
+    try {
+      const settings = await getUserSettings();
+      console.log('Fetching tags and questions with settings:', settings);
+      
+      // Only fetch if user has enabled these features
+      if (!settings.showTags && !settings.showSuggestedQuestions) {
+        console.log('Both tags and questions disabled, returning empty arrays');
+        return { tags: [], suggestedQuestions: [] };
+      }
+
+      // Build the analysis query using page context - separate call for JSON format
+      const analysisQuery = `Analyze this page content and return ONLY a JSON object with exactly 6 relevant tags and 3 suggested follow-up questions. The response must be valid JSON in this exact format:
+{
+  "tags": ["tag1", "tag2", "tag3", "tag4", "tag5", "tag6"],
+  "suggestedQuestions": ["question1", "question2", "question3"]
+}
+
+Page Content:
+${pageContext}`;
+
+      console.log('Making API call for tags and questions...');
+      const structuredResponse = await sendQueryToAI({
+        query: analysisQuery,
+        action: "direct_question",
+      });
+
+      console.log('Raw API response:', structuredResponse);
+      console.log('Response text:', structuredResponse.text);
+      console.log('Response tags:', structuredResponse.tags);
+      console.log('Response suggestedQuestions:', structuredResponse.suggestedQuestions);
+
+      const result = {
+        tags: settings.showTags ? (structuredResponse.tags ?? []) : [],
+        suggestedQuestions: settings.showSuggestedQuestions ? (structuredResponse.suggestedQuestions ?? []) : [],
+      };
+      
+      console.log('Tags and questions result:', result);
+      return result;
+    } catch (error) {
+      console.error('Error fetching tags and questions:', error);
+      return { tags: [], suggestedQuestions: [] };
+    }
+  };
   const [usePageContext, setUsePageContext] = useState(true);
   const [useWebSearch, setUseWebSearch] = useState(false);
 
   const [screenshotData, setScreenshotData] = useState<string | null>(null);
-  const [restoredScreenshotData, setRestoredScreenshotData] = useState<string | null>(null);
   const [currentHistoryItemType, setCurrentHistoryItemType] = useState<string | null>(null);
   const [currentHistoryItemFileName, setCurrentHistoryItemFileName] = useState<string | null>(null);
   const lastProcessedIndexRef = useRef<number | null>(null);
@@ -77,6 +133,12 @@ export function useHomeLogic() {
     // Don't restore history if we're currently loading or streaming
     if (loading || isStreaming) {
       console.log('Skipping - currently loading or streaming');
+      return;
+    }
+
+    // Don't restore history if we have active content being displayed
+    if (outputHtml && outputHtml.trim() !== '') {
+      console.log('Skipping - active content being displayed');
       return;
     }
 
@@ -285,38 +347,77 @@ export function useHomeLogic() {
         ? `Based on this page:\n${info.text}\n\nUser question: ${userPrompt}`
         : info.text;
 
-      const res: AIResponse = await sendQueryToAI({
-        query,
-        action: "summarize_page",
-      });
+      // Use streaming for summarization with two-step process
+      await startStream(query, "summarize_page", null, async (streamedContent) => {
+        // Convert markdown to HTML and save to outputHtml
+        const md = new (await import('markdown-it')).default({
+          html: true,
+          linkify: true,
+          typographer: true,
+        });
+        const htmlContent = md.render(streamedContent);
+        setOutputHtml(htmlContent);
+        
+        // Step 2: Get structured data after streaming completes
+        try {
+          const { tags: fetchedTags, suggestedQuestions: fetchedQuestions } = await fetchTagsAndQuestions(info.text);
+          
+          console.log('Setting tags and questions in state (summary):', { fetchedTags, fetchedQuestions });
+          setTags(fetchedTags);
+          setSuggested(fetchedQuestions);
+          
+          // Save page info for header display
+          setSavedPageInfo({
+            title: info.title || "",
+            url: info.url || "",
+            favicon: info.favicon || "",
+          });
 
-      setOutputHtml(res.text);
-      setTags(res.tags ?? []);
-      setSuggested(res.suggestedQuestions ?? []);
+          const historyTitle = userPrompt ? userPrompt : (info.title || "Page Summary");
+          const summaryTitle = info.title ? `${info.title}` : "Page Summary";
 
-      // Save page info for header display
-      setSavedPageInfo({
-        title: info.title || "",
-        url: info.url || "",
-        favicon: info.favicon || "",
-      });
+          await addHistory({
+            title: summaryTitle,
+            type: 'summary',
+            response: streamedContent,
+            tags: fetchedTags,
+            suggestedQuestions: fetchedQuestions,
+            pageInfo: {
+              title: info.title || "",
+              url: info.url || "",
+              favicon: info.favicon || "",
+            },
+          });
+        } catch (error) {
+          console.error('Error getting structured data:', error);
+          // Still save the streamed content even if metadata fails
+          setSavedPageInfo({
+            title: info.title || "",
+            url: info.url || "",
+            favicon: info.favicon || "",
+          });
 
-      const historyTitle = userPrompt ? userPrompt : (info.title || "Page Summary");
-      
-      // Create title with favicon + page title for summaries
-      const summaryTitle = info.title ? `${info.title}` : "Page Summary";
+          const historyTitle = userPrompt ? userPrompt : (info.title || "Page Summary");
+          const summaryTitle = info.title ? `${info.title}` : "Page Summary";
 
-      await addHistory({
-        title: summaryTitle,
-        type: 'summary',
-        response: res.text,
-        tags: res.tags ?? [],
-        suggestedQuestions: res.suggestedQuestions ?? [],
-        pageInfo: {
-          title: info.title || "",
-          url: info.url || "",
-          favicon: info.favicon || "",
-        },
+          setTimeout(async () => {
+            await addHistory({
+              title: summaryTitle,
+              type: 'summary',
+              response: streamedContent,
+              tags: [],
+              suggestedQuestions: [],
+              pageInfo: {
+                title: info.title || "",
+                url: info.url || "",
+                favicon: info.favicon || "",
+              },
+            });
+          }, 1000); // Delay history saving by 1 second
+        }
+      }, () => {
+        // Clear loading state when streaming starts
+        setLoading(false);
       });
     } catch (e: any) {
       setOutputHtml(`<p class="error">${e.message}</p>`);
@@ -339,6 +440,7 @@ export function useHomeLogic() {
     setLinks([]);
     setRestoredScreenshotData(null); // Clear restored screenshot data for new queries
     setSearchQuery("");
+    resetStream(); // Reset streaming content for new query
     
     const imageData = screenshotData || fileData;
     
@@ -415,37 +517,63 @@ export function useHomeLogic() {
         queryToSend = "Please analyze and summarize this file";
       }
       
-      // Use regular API call for general questions, streaming for specific actions
-      if (imageData) {
-        // For file analysis, use streaming
-        await startStream(queryToSend, action, imageData);
-        setTags([]);
-        setSuggested([]);
-      } else {
-        // For general questions, use regular API call
-        const res: AIResponse = await sendQueryToAI({
-          query: queryToSend,
-          action: action,
+      // Use streaming for all queries with two-step process
+      await startStream(queryToSend, action, imageData, async (streamedContent) => {
+        // Convert markdown to HTML and save to outputHtml
+        const md = new (await import('markdown-it')).default({
+          html: true,
+          linkify: true,
+          typographer: true,
         });
+        const htmlContent = md.render(streamedContent);
+        setOutputHtml(htmlContent);
         
-        setOutputHtml(res.text);
-        setTags(res.tags ?? []);
-        setSuggested(res.suggestedQuestions ?? []);
-        
-        // Save to history
-        await addHistory({
-          title: query.length > 50 ? query.substring(0, 50) + "..." : query,
-          type: 'question',
-          response: res.text,
-          tags: res.tags ?? [],
-          suggestedQuestions: res.suggestedQuestions ?? [],
-          pageInfo: {
-            title: info.title || "",
-            url: info.url || "",
-            favicon: info.favicon || "",
-          },
-        });
-      }
+        // Step 2: Get structured data after streaming completes
+        try {
+          const { tags: fetchedTags, suggestedQuestions: fetchedQuestions } = await fetchTagsAndQuestions(info.text);
+          
+          setTags(fetchedTags);
+          setSuggested(fetchedQuestions);
+          
+          // Save to history with structured data
+          setTimeout(async () => {
+            await addHistory({
+              title: query.length > 50 ? query.substring(0, 50) + "..." : query,
+              type: 'question',
+              response: streamedContent,
+              tags: fetchedTags,
+              suggestedQuestions: fetchedQuestions,
+              pageInfo: {
+                title: info.title || "",
+                url: info.url || "",
+                favicon: info.favicon || "",
+              },
+            });
+          }, 1000); // Delay history saving by 1 second
+        } catch (error) {
+          console.error('Error getting structured data:', error);
+          // Still save the streamed content even if metadata fails
+          setTimeout(async () => {
+            await addHistory({
+              title: query.length > 50 ? query.substring(0, 50) + "..." : query,
+              type: 'question',
+              response: streamedContent,
+              tags: [],
+              suggestedQuestions: [],
+              pageInfo: {
+                title: info.title || "",
+                url: info.url || "",
+                favicon: info.favicon || "",
+              },
+            });
+          }, 1000); // Delay history saving by 1 second
+        }
+      }, () => {
+        // Clear loading state when streaming starts
+        setLoading(false);
+      });
+      setTags([]);
+      setSuggested([]);
       
       // Save page info for header display if this is a context-based question
       if (_useContext && !imageData) {

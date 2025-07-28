@@ -10,6 +10,8 @@ export const DEFAULT_AI_CONTEXT_CONFIG: AIContextConfig = {
   includeImages: false,
   maxContextLength: 8000,
   customInstructions: undefined,
+  showTags: true,
+  showSuggestedQuestions: true,
 };
 
 // Context Level Configurations

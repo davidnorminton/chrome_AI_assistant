@@ -5,7 +5,7 @@ interface StreamingContextType {
   setIsStreaming: (streaming: boolean) => void;
   streamContent: string;
   setStreamContent: (content: string) => void;
-  startStream: (query: string, action: string, file?: string | null) => Promise<void>;
+  startStream: (query: string, action: string, file?: string | null, onComplete?: (content: string) => void, onStreamStart?: () => void) => Promise<void>;
   stopStream: () => void;
   resetStream: () => void;
 }
@@ -17,7 +17,7 @@ export const StreamingProvider = ({ children }: { children: ReactNode }) => {
   const [streamContent, setStreamContent] = useState('');
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const startStream = useCallback(async (query: string, action: string, file?: string | null) => {
+  const startStream = useCallback(async (query: string, action: string, file?: string | null, onComplete?: (content: string) => void, onStreamStart?: () => void) => {
     // Cancel any existing stream
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -28,6 +28,9 @@ export const StreamingProvider = ({ children }: { children: ReactNode }) => {
     
     setIsStreaming(true);
     setStreamContent('');
+    
+    // Call onStreamStart callback when streaming begins
+    onStreamStart?.();
 
     try {
       // Get API key and model from storage
@@ -39,13 +42,13 @@ export const StreamingProvider = ({ children }: { children: ReactNode }) => {
         throw new Error('API key not found. Please set your Perplexity API key in settings.');
       }
 
-      // Build the request payload
+      // Build the request payload - simplified for plain text streaming
       const payload: any = {
         model: model,
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful AI assistant. Provide clear, concise, and accurate responses. Use markdown formatting for better readability.'
+            content: 'You are a helpful AI assistant. Provide clear, concise, and accurate responses. Use markdown formatting for better readability. Respond with plain text only, no JSON formatting.'
           },
           {
             role: 'user',
@@ -101,6 +104,12 @@ export const StreamingProvider = ({ children }: { children: ReactNode }) => {
           
           if (data === '[DONE]') {
             setIsStreaming(false);
+            // Use a callback to get the most current streamContent
+            setStreamContent(prev => {
+              const finalContent = prev;
+              onComplete?.(finalContent); // Call the onComplete callback with final content
+              return prev; // Keep the content
+            });
             return;
           }
 
@@ -117,6 +126,12 @@ export const StreamingProvider = ({ children }: { children: ReactNode }) => {
       }
 
       setIsStreaming(false);
+      // Use a callback to get the most current streamContent
+      setStreamContent(prev => {
+        const finalContent = prev;
+        onComplete?.(finalContent); // Call the onComplete callback with final content
+        return prev; // Keep the content
+      });
     } catch (error) {
       console.error('Streaming error:', error);
       setIsStreaming(false);
@@ -124,7 +139,7 @@ export const StreamingProvider = ({ children }: { children: ReactNode }) => {
         setStreamContent(prev => prev + `\n\n**Error:** ${error.message}`);
       }
     }
-  }, []);
+  }, [streamContent]);
 
   const stopStream = useCallback(() => {
     if (abortControllerRef.current) {

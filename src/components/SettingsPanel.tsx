@@ -32,6 +32,8 @@ export default function SettingsPanel() {
     includeImages: false,
     maxContextLength: 8000,
     customInstructions: undefined,
+    showTags: true,
+    showSuggestedQuestions: true,
   });
 
   // AI Model Configuration
@@ -319,6 +321,44 @@ export default function SettingsPanel() {
             </div>
             <p className="setting-help">
               Include page links in context (when available)
+            </p>
+          </div>
+
+          <div className="setting-item">
+            <div className="setting-checkbox">
+              <input
+                id="showTags"
+                type="checkbox"
+                checked={contextConfig.showTags}
+                onChange={(e) => handleContextConfigChange('showTags', e.target.checked)}
+                className="setting-checkbox-input"
+              />
+              <label htmlFor="showTags">
+                <i className="fas fa-tags"></i>
+                Show Tags
+              </label>
+            </div>
+            <p className="setting-help">
+              Display relevant tags after AI responses
+            </p>
+          </div>
+
+          <div className="setting-item">
+            <div className="setting-checkbox">
+              <input
+                id="showSuggestedQuestions"
+                type="checkbox"
+                checked={contextConfig.showSuggestedQuestions}
+                onChange={(e) => handleContextConfigChange('showSuggestedQuestions', e.target.checked)}
+                className="setting-checkbox-input"
+              />
+              <label htmlFor="showSuggestedQuestions">
+                <i className="fas fa-question-circle"></i>
+                Show Suggested Questions
+              </label>
+            </div>
+            <p className="setting-help">
+              Display suggested follow-up questions after AI responses
             </p>
           </div>
         </div>

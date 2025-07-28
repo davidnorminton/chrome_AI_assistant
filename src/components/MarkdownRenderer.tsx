@@ -50,7 +50,7 @@ export function MarkdownRenderer({ content, className = '', isStreaming = false 
 
     // For streaming, we need to accumulate chunks and process them together
     if (isStreaming) {
-      chunksRef.current += content;
+      chunksRef.current = content; // Use the current content directly
       const allChunks = chunksRef.current;
       
       try {
