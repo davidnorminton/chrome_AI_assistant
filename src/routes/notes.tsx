@@ -5,7 +5,6 @@ interface Note {
   id: string;
   title: string;
   content: string;
-  backgroundColor: string;
   type: 'note' | 'todo';
   createdAt: string;
   updatedAt: string;
@@ -16,27 +15,17 @@ const Notes: React.FC = () => {
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [showNewNoteForm, setShowNewNoteForm] = useState(false);
+  const [showAIPromptForm, setShowAIPromptForm] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isGeneratingList, setIsGeneratingList] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiThinkingMessage, setAiThinkingMessage] = useState('');
+  const [aiSuccessMessage, setAiSuccessMessage] = useState('');
   const [newNote, setNewNote] = useState({
     title: '',
     content: '',
-    backgroundColor: '#ffffff',
     type: 'note' as 'note' | 'todo'
   });
-
-  const backgroundColors = [
-    { name: 'White', value: '#ffffff' },
-    { name: 'Red', value: '#f28b82' },
-    { name: 'Orange', value: '#fbbc04' },
-    { name: 'Yellow', value: '#fff475' },
-    { name: 'Green', value: '#ccff90' },
-    { name: 'Teal', value: '#a7ffeb' },
-    { name: 'Blue', value: '#aecbfa' },
-    { name: 'Purple', value: '#d7aefb' },
-    { name: 'Pink', value: '#fbb4ae' },
-    { name: 'Brown', value: '#e6c9a8' },
-    { name: 'Gray', value: '#e8eaed' }
-  ];
 
   // Load notes from storage
   useEffect(() => {
@@ -70,7 +59,6 @@ const Notes: React.FC = () => {
       id: Date.now().toString(),
       title: newNote.title || 'Untitled Note',
       content: newNote.content,
-      backgroundColor: newNote.backgroundColor,
       type: newNote.type,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -81,7 +69,7 @@ const Notes: React.FC = () => {
     setSelectedNote(note);
     setIsEditing(true);
     setShowNewNoteForm(false);
-    setNewNote({ title: '', content: '', backgroundColor: '#ffffff', type: 'note' });
+    setNewNote({ title: '', content: '', type: 'note' });
   };
 
   const updateNote = (updatedNote: Note) => {
@@ -120,12 +108,6 @@ const Notes: React.FC = () => {
     }
   };
 
-  const handleBackgroundColorChange = (backgroundColor: string) => {
-    if (selectedNote) {
-      updateNote({ ...selectedNote, backgroundColor });
-    }
-  };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
@@ -134,6 +116,139 @@ const Notes: React.FC = () => {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  // AI-powered list generation
+  const generateListWithAI = async (userPrompt: string) => {
+    if (!selectedNote || selectedNote.type !== 'todo') {
+      alert('Please select a todo list note first');
+      return;
+    }
+
+    setIsGeneratingList(true);
+    setShowAIPromptForm(false);
+    setAiThinkingMessage('🤖 AI is thinking...');
+    setAiSuccessMessage('');
+    
+    try {
+      // Get API key first
+      const apiKey = await getApiKey();
+      if (!apiKey) {
+        throw new Error('API key not found. Please set your Perplexity API key in settings.');
+      }
+
+      // Get model from storage
+      const modelResult = await chrome.storage.local.get(['model']);
+      const model = modelResult.model || 'sonar-small';
+
+      // Get current page info for context
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      const pageInfo = {
+        title: tab?.title || '',
+        url: tab?.url || '',
+        text: '' // We'll get this from the content script if needed
+      };
+
+      // Build the AI query
+      const aiQuery = `Generate a comprehensive checklist for: ${userPrompt}
+
+Please format the response as a markdown checklist with each item on a new line starting with "- [ ] ".
+
+Example format:
+- [ ] Item 1
+- [ ] Item 2
+- [ ] Item 3
+
+Make the list practical and actionable.`;
+
+      console.log('Sending AI request:', { userPrompt, apiKeyLength: apiKey.length, model });
+
+      // Send to AI service
+      const response = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a helpful AI assistant that creates practical and actionable checklists. Always format your responses as markdown checklists with each item starting with "- [ ] ".'
+            },
+            {
+              role: 'user',
+              content: aiQuery
+            }
+          ],
+          max_tokens: 1000,
+          temperature: 0.7
+        })
+      });
+
+      console.log('AI response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('AI API error:', errorText);
+        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('AI response data:', data);
+
+      const generatedList = data.choices[0]?.message?.content || '';
+
+      // Convert markdown checklist to our format
+      const checklistItems = generatedList
+        .split('\n')
+        .filter((line: string) => line.trim().startsWith('- [ ]'))
+        .map((line: string) => line.replace('- [ ]', '[ ]').trim());
+
+      console.log('Generated checklist items:', checklistItems);
+
+      if (checklistItems.length > 0) {
+        const newContent = checklistItems.join('\n');
+        const updatedNote = { ...selectedNote, content: newContent };
+        updateNote(updatedNote);
+        setAiSuccessMessage(`✅ Generated ${checklistItems.length} checklist items!`);
+        
+        // Clear success message after 3 seconds
+        setTimeout(() => {
+          setAiSuccessMessage('');
+        }, 3000);
+      } else {
+        alert('No checklist items were generated. Please try a different prompt.');
+      }
+    } catch (error) {
+      console.error('Error generating list:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      alert(`Failed to generate list: ${errorMessage}`);
+    } finally {
+      setIsGeneratingList(false);
+      setAiThinkingMessage('');
+      setAiPrompt('');
+    }
+  };
+
+  const getApiKey = async (): Promise<string> => {
+    const result = await chrome.storage.local.get(['apiKey']);
+    if (result.apiKey) {
+      try {
+        return atob(result.apiKey); // Decode the API key
+      } catch {
+        return result.apiKey; // Use as-is if decoding fails
+      }
+    }
+    throw new Error('API key not found. Please set your Perplexity API key in settings.');
+  };
+
+  const handleAISubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (aiPrompt.trim()) {
+      generateListWithAI(aiPrompt.trim());
+    }
   };
 
   return (
@@ -158,7 +273,6 @@ const Notes: React.FC = () => {
                 key={note.id}
                 className={`note-item ${selectedNote?.id === note.id ? 'selected' : ''}`}
                 onClick={() => handleNoteSelect(note)}
-                style={{ backgroundColor: note.backgroundColor }}
               >
                 <div className="note-item-header">
                   <div className="note-title-section">
@@ -236,22 +350,16 @@ const Notes: React.FC = () => {
                     >
                       <i className={`fas fa-${isEditing ? 'eye' : 'edit'}`}></i>
                     </button>
-                    <div className="color-picker">
-                      <button className="color-picker-btn" title="Change background color">
-                        <i className="fas fa-palette"></i>
+                    {selectedNote.type === 'todo' && (
+                      <button
+                        className="ai-generate-btn"
+                        onClick={() => setShowAIPromptForm(true)}
+                        disabled={isGeneratingList}
+                        title="Generate checklist with AI"
+                      >
+                        <i className={`fas fa-${isGeneratingList ? 'spinner fa-spin' : 'magic'}`}></i>
                       </button>
-                      <div className="color-options">
-                        {backgroundColors.map(color => (
-                          <button
-                            key={color.value}
-                            className="color-option"
-                            style={{ backgroundColor: color.value }}
-                            onClick={() => handleBackgroundColorChange(color.value)}
-                            title={color.name}
-                          ></button>
-                        ))}
-                      </div>
-                    </div>
+                    )}
                   </div>
                 </div>
                 <div className="note-meta-info">
@@ -260,15 +368,14 @@ const Notes: React.FC = () => {
                 </div>
               </div>
 
-              <div 
-                className="note-content-area"
-                style={{ backgroundColor: selectedNote.backgroundColor }}
-              >
+              <div className="note-content-area">
                 {isEditing ? (
                   selectedNote.type === 'todo' ? (
                     <InteractiveCheckboxEditor
                       content={selectedNote.content}
                       onChange={handleContentChange}
+                      aiThinkingMessage={aiThinkingMessage}
+                      aiSuccessMessage={aiSuccessMessage}
                     />
                   ) : (
                     <SimpleTextEditor
@@ -352,20 +459,6 @@ const Notes: React.FC = () => {
                   </button>
                 </div>
               </div>
-              <div className="form-group">
-                <label>Background Color</label>
-                <div className="color-grid">
-                  {backgroundColors.map(color => (
-                    <button
-                      key={color.value}
-                      className={`color-option ${newNote.backgroundColor === color.value ? 'selected' : ''}`}
-                      style={{ backgroundColor: color.value }}
-                      onClick={() => setNewNote({ ...newNote, backgroundColor: color.value })}
-                      title={color.name}
-                    ></button>
-                  ))}
-                </div>
-              </div>
             </div>
             <div className="modal-footer">
               <button 
@@ -384,6 +477,67 @@ const Notes: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* AI Prompt Modal */}
+      {showAIPromptForm && (
+        <div className="modal-overlay">
+          <div className="modal-content ai-prompt-modal">
+            <div className="modal-header">
+              <h2>Generate AI Checklist</h2>
+              <button 
+                className="close-modal-btn"
+                onClick={() => {
+                  setShowAIPromptForm(false);
+                  setAiPrompt('');
+                }}
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="form-group">
+                <label>What would you like to create a checklist for?</label>
+                <input
+                  type="text"
+                  value={aiPrompt}
+                  onChange={(e) => setAiPrompt(e.target.value)}
+                  placeholder="e.g., ingredients to make a chocolate cake, packing list for vacation..."
+                  autoFocus
+                />
+                <div className="prompt-examples">
+                  <p>Examples:</p>
+                  <ul>
+                    <li>ingredients to make a chocolate cake</li>
+                    <li>packing list for vacation</li>
+                    <li>steps to start a business</li>
+                    <li>daily morning routine</li>
+                    <li>grocery shopping list</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button 
+                className="cancel-btn"
+                onClick={() => {
+                  setShowAIPromptForm(false);
+                  setAiPrompt('');
+                }}
+              >
+                Cancel
+              </button>
+              <button 
+                className="create-btn"
+                onClick={handleAISubmit}
+                disabled={!aiPrompt.trim()}
+              >
+                <i className="fas fa-magic"></i>
+                Generate Checklist
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -392,9 +546,16 @@ const Notes: React.FC = () => {
 interface InteractiveCheckboxEditorProps {
   content: string;
   onChange: (content: string) => void;
+  aiThinkingMessage?: string;
+  aiSuccessMessage?: string;
 }
 
-const InteractiveCheckboxEditor: React.FC<InteractiveCheckboxEditorProps> = ({ content, onChange }) => {
+const InteractiveCheckboxEditor: React.FC<InteractiveCheckboxEditorProps> = ({ 
+  content, 
+  onChange, 
+  aiThinkingMessage, 
+  aiSuccessMessage 
+}) => {
   const editorRef = useRef<HTMLDivElement>(null);
 
   const handleCheckboxChange = (index: number, isChecked: boolean) => {
@@ -493,14 +654,20 @@ const InteractiveCheckboxEditor: React.FC<InteractiveCheckboxEditorProps> = ({ c
             onChange={() => handleCheckboxChange(index, isChecked)}
             className="checkbox-input"
           />
-          <input
-            type="text"
+          <textarea
             value={taskText}
             onChange={(e) => handleTextChange(index, e.target.value)}
             onKeyDown={(e) => handleKeyDown(e, index)}
             className="checkbox-text-input"
             data-line={index}
             placeholder="Task description..."
+            rows={1}
+            onInput={(e) => {
+              // Auto-resize textarea
+              const target = e.target as HTMLTextAreaElement;
+              target.style.height = 'auto';
+              target.style.height = Math.min(target.scrollHeight, 120) + 'px';
+            }}
           />
           <button
             className="delete-line-btn"
@@ -531,6 +698,26 @@ const InteractiveCheckboxEditor: React.FC<InteractiveCheckboxEditorProps> = ({ c
           Add Item
         </button>
       </div>
+      
+      {/* AI Thinking Indicator */}
+      {aiThinkingMessage && (
+        <div className="ai-thinking">
+          <div className="ai-thinking-spinner"></div>
+          <div className="ai-thinking-text">
+            {aiThinkingMessage}
+            <span className="ai-thinking-dots"></span>
+          </div>
+        </div>
+      )}
+      
+      {/* AI Success Indicator */}
+      {aiSuccessMessage && (
+        <div className="ai-success">
+          <i className="fas fa-check-circle"></i>
+          <span>{aiSuccessMessage}</span>
+        </div>
+      )}
+      
       <div ref={editorRef} className="editor-content">
         {content.split('\n').map((line, index) => renderLine(line, index))}
       </div>
