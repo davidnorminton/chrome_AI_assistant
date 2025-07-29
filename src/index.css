@@ -35,6 +35,15 @@ h1 {
   line-height: 1.1;
 }
 
+.question-title {
+  font-size: 1.5em;
+  font-weight: 600;
+  color: #646cff;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #646cff;
+}
+
 button {
   border-radius: 8px;
   border: 1px solid transparent;

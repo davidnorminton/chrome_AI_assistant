@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import '../css/notes.css';
+import { saveNote, getNotes, updateNote, deleteNote } from '../services/storage';
 
 interface Note {
   id: string;
@@ -35,8 +36,7 @@ const Notes: React.FC = () => {
   const loadNotes = async () => {
     try {
       setIsLoading(true);
-      const result = await chrome.storage.local.get(['notes']);
-      const savedNotes = result.notes || [];
+      const savedNotes = await getNotes();
       setNotes(savedNotes);
     } catch (error) {
       console.error('Error loading notes:', error);
@@ -47,7 +47,10 @@ const Notes: React.FC = () => {
 
   const saveNotes = async (updatedNotes: Note[]) => {
     try {
-      await chrome.storage.local.set({ notes: updatedNotes });
+      // Save each note individually to ensure Firebase sync
+      for (const note of updatedNotes) {
+        await saveNote(note);
+      }
       setNotes(updatedNotes);
     } catch (error) {
       console.error('Error saving notes:', error);

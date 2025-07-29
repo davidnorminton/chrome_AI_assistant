@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import type { AIContextConfig, AIModelConfig } from "../types";
 import { defaultAIContextManager } from "../utils/aiContextManager";
+import { useNavigate } from "react-router-dom";
 
 // Define both the values _and_ user-friendly labels
 const modelOptions = [
@@ -16,6 +17,7 @@ const contextLevelOptions = [
 ];
 
 export default function SettingsPanel() {
+  const navigate = useNavigate();
   const [apiKey, setApiKey] = useState("");
   const [model, setModel] = useState("sonar");
   const [saveMsg, setSaveMsg] = useState("");
@@ -25,6 +27,13 @@ export default function SettingsPanel() {
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [signInError, setSignInError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
+  // Firebase status state
+  const [firebaseStatus, setFirebaseStatus] = useState<'configured' | 'not-configured'>('not-configured');
+  
+  // Sync data state
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
   
   // AI Context Configuration
   const [contextConfig, setContextConfig] = useState<AIContextConfig>({
@@ -94,6 +103,52 @@ export default function SettingsPanel() {
     checkAuthStatus();
   }, []);
 
+  // Check Firebase configuration status
+  useEffect(() => {
+    const checkFirebaseConfig = async () => {
+      try {
+        const result = await chrome.storage.local.get(['firebaseConfig']);
+        if (result.firebaseConfig && result.firebaseConfig.apiKey) {
+          setFirebaseStatus('configured');
+        } else {
+          setFirebaseStatus('not-configured');
+        }
+      } catch (error) {
+        console.error('Error checking Firebase config:', error);
+        setFirebaseStatus('not-configured');
+      }
+    };
+
+    checkFirebaseConfig();
+  }, []);
+
+  // Listen for Firebase config changes
+  useEffect(() => {
+    const handleStorageChange = (changes: { [key: string]: chrome.storage.StorageChange }) => {
+      if (changes.firebaseConfig) {
+        const checkFirebaseConfig = async () => {
+          try {
+            const result = await chrome.storage.local.get(['firebaseConfig']);
+            if (result.firebaseConfig && result.firebaseConfig.apiKey) {
+              setFirebaseStatus('configured');
+            } else {
+              setFirebaseStatus('not-configured');
+            }
+          } catch (error) {
+            console.error('Error checking Firebase config:', error);
+            setFirebaseStatus('not-configured');
+          }
+        };
+        checkFirebaseConfig();
+      }
+    };
+
+    chrome.storage.onChanged.addListener(handleStorageChange);
+    return () => {
+      chrome.storage.onChanged.removeListener(handleStorageChange);
+    };
+  }, []);
+
   const handleSaveSettings = async () => {
     if (!apiKey.trim()) {
       alert('Please enter your Perplexity API key');
@@ -160,66 +215,69 @@ export default function SettingsPanel() {
   };
 
   const handleGoogleSignIn = async () => {
+    setIsSigningIn(true);
+    setSignInError(null);
+    
     try {
-      setIsSigningIn(true);
-      setSignInError(null);
-      
-      // Check if Chrome APIs are available
-      if (typeof chrome === 'undefined') {
-        console.error('Chrome API not available');
-        setSignInError('Chrome API not available. This extension must run in Chrome.');
-        setIsSigningIn(false);
-        return;
-      }
-      
-      if (!chrome.identity) {
-        console.error('Chrome identity API not available');
-        console.log('Available Chrome APIs:', Object.keys(chrome));
-        setSignInError('Chrome identity API not available. Please reload the extension and ensure it has the identity permission.');
-        setIsSigningIn(false);
-        return;
-      }
-      
       console.log('Chrome identity API is available, attempting sign-in...');
+      const { signInWithGoogle } = await import('../services/firebase');
+      const user = await signInWithGoogle();
+      console.log('Received token from Chrome identity:', user);
       
-      // Use Chrome identity API for Google sign-in
-      chrome.identity.getAuthToken({ interactive: true }, (token) => {
-        if (chrome.runtime.lastError) {
-          console.error('Chrome identity error:', chrome.runtime.lastError);
-          setSignInError(`Chrome identity error: ${chrome.runtime.lastError.message}`);
-          setIsSigningIn(false);
-          return;
-        }
-        
-        if (!token) {
-          console.error('No token received from Chrome identity');
-          setSignInError('No authentication token received. Please try again.');
-          setIsSigningIn(false);
-          return;
-        }
-        
-        console.log('Received token from Chrome identity:', (token as string).substring(0, 20) + '...');
-        
-        // Store the token and mark as authenticated
-        chrome.storage.local.set({
-          googleAuthToken: token,
-          userAuthenticated: true,
-          authTimestamp: Date.now()
-        }).then(() => {
-          console.log('Authentication state saved successfully');
-          setIsAuthenticated(true);
-          setIsSigningIn(false);
-          setSignInError(null);
-        }).catch((error) => {
-          console.error('Failed to save authentication state:', error);
-          setSignInError('Failed to save authentication state.');
-          setIsSigningIn(false);
-        });
+      // Store authentication state
+      await chrome.storage.local.set({
+        userAuthenticated: true,
+        authTimestamp: Date.now()
       });
+      
+      console.log('Authentication state saved successfully');
+      setIsAuthenticated(true);
     } catch (error) {
       console.error('Google sign-in error:', error);
-      setSignInError(`Sign-in error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setSignInError(error instanceof Error ? error.message : 'Sign-in failed');
+      setIsAuthenticated(false);
+    } finally {
       setIsSigningIn(false);
+    }
+  };
+
+  const handleSyncData = async () => {
+    setIsSyncing(true);
+    setSyncMessage('Syncing data to Firebase...');
+    
+    try {
+      // Check if Firebase is configured
+      const { isFirebaseConfigured } = await import('../services/storage');
+      const firebaseConfigured = await isFirebaseConfigured();
+      
+      if (!firebaseConfigured) {
+        setSyncMessage('❌ Firebase is not configured. Please set up Firebase first.');
+        return;
+      }
+      
+      // Check if user is authenticated
+      const { isUserAuthenticated } = await import('../services/storage');
+      const userAuthenticated = await isUserAuthenticated();
+      
+      if (!userAuthenticated) {
+        setSyncMessage('❌ Please sign in with Google first before syncing data.');
+        return;
+      }
+      
+      // Perform the migration
+      const { migrateToFirebase } = await import('../services/storage');
+      const result = await migrateToFirebase();
+      
+      if (result) {
+        setSyncMessage('✅ Data synced successfully to Firebase!');
+      } else {
+        setSyncMessage('❌ Failed to sync data. Please check your Firebase configuration.');
+      }
+    } catch (error) {
+      console.error('Sync error:', error);
+      setSyncMessage(`❌ Sync failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -390,6 +448,75 @@ export default function SettingsPanel() {
               <p><strong>Status:</strong> Configured</p>
             </div>
           </div>
+        </div>
+
+        {/* Firebase Database Setup Wizard */}
+        <div className="setting-group">
+          <h3 className="setting-group-title">
+            <i className="fas fa-database"></i> Firebase Database Setup
+          </h3>
+          
+          <div className="setting-item">
+            <div className="setting-label">
+              <label>
+                <i className="fas fa-info-circle"></i>
+                Database Status
+              </label>
+            </div>
+            <div className="firebase-status">
+              <span className={`firebase-status-indicator ${firebaseStatus === 'configured' ? 'configured' : ''}`}>
+                <i className="fas fa-circle"></i>
+                {firebaseStatus === 'configured' ? 'Configured' : 'Not Configured'}
+              </span>
+            </div>
+            <p className="setting-help">
+              {firebaseStatus === 'configured' 
+                ? 'Firebase Firestore database is configured and ready for cloud storage'
+                : 'Set up Firebase Firestore database for cloud storage and data sync'
+              }
+            </p>
+          </div>
+
+          <div className="setting-item">
+            <button
+              onClick={() => navigate('/firebase-setup')}
+              className="firebase-setup-btn"
+            >
+              <i className="fas fa-cog"></i>
+              <span>
+                {firebaseStatus === 'configured' ? 'Reconfigure Firebase' : 'Setup Firebase Database'}
+              </span>
+            </button>
+            <p className="setting-help">
+              {firebaseStatus === 'configured' 
+                ? 'Click to reconfigure your Firebase database settings'
+                : 'Follow the step-by-step wizard to configure Firebase Firestore'
+              }
+            </p>
+          </div>
+
+          {firebaseStatus === 'configured' && (
+            <div className="setting-item">
+              <button
+                onClick={handleSyncData}
+                disabled={isSyncing}
+                className="sync-data-btn"
+              >
+                <i className="fas fa-sync-alt"></i>
+                <span>
+                  {isSyncing ? 'Syncing...' : 'Sync Data to Firebase'}
+                </span>
+              </button>
+              <p className="setting-help">
+                Push your local notes and history to Firebase cloud storage
+              </p>
+              {syncMessage && (
+                <div className={`sync-message ${syncMessage.includes('✅') ? 'success' : 'error'}`}>
+                  {syncMessage}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* AI Context Configuration */}

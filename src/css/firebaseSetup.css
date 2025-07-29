@@ -1,0 +1,118 @@
+/* Firebase Setup Page */
+.firebase-setup-page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  min-height: 100vh;
+}
+
+.firebase-setup-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 32px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.back-button {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #6c757d;
+  transition: all 0.2s ease;
+}
+
+.back-button:hover {
+  background: #e9ecef;
+  color: #495057;
+}
+
+.firebase-setup-header h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.firebase-setup-header h1 i {
+  color: #4285f4;
+  font-size: 28px;
+}
+
+.firebase-setup-content {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.firebase-setup-success {
+  text-align: center;
+  padding: 60px 20px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.success-icon {
+  margin-bottom: 24px;
+}
+
+.success-icon i {
+  font-size: 64px;
+  color: #28a745;
+}
+
+.firebase-setup-success h2 {
+  margin: 0 0 16px 0;
+  font-size: 28px;
+  font-weight: 600;
+  color: #333;
+}
+
+.firebase-setup-success p {
+  margin: 8px 0;
+  font-size: 16px;
+  color: #666;
+  line-height: 1.5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .firebase-setup-page {
+    padding: 16px;
+  }
+  
+  .firebase-setup-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .firebase-setup-header h1 {
+    font-size: 20px;
+  }
+  
+  .firebase-setup-success {
+    padding: 40px 16px;
+  }
+  
+  .success-icon i {
+    font-size: 48px;
+  }
+  
+  .firebase-setup-success h2 {
+    font-size: 24px;
+  }
+} 

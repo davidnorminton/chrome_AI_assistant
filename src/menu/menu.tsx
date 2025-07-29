@@ -344,11 +344,23 @@ export default function Menu() {
                 <i className="fas fa-comments"></i>
                 <span className="tooltiptext">Chat</span>
             </Link>
-            <button id="historyBackBtn" className="menu-item tooltip" onClick={nav?.goBack} disabled={!nav?.canGoBack}>
+            <button id="historyBackBtn" className="menu-item tooltip" onClick={async () => {
+              try {
+                await nav?.goBack?.();
+              } catch (error) {
+                console.error('Error navigating back:', error);
+              }
+            }} disabled={!nav?.canGoBack}>
                 <i className="fas fa-arrow-left"></i>
                 <span className="tooltiptext">Previous</span>
             </button>
-            <button id="historyForwardBtn" className="menu-item tooltip" onClick={nav?.goForward} disabled={!nav?.canGoForward}>
+            <button id="historyForwardBtn" className="menu-item tooltip" onClick={async () => {
+              try {
+                await nav?.goForward?.();
+              } catch (error) {
+                console.error('Error navigating forward:', error);
+              }
+            }} disabled={!nav?.canGoForward}>
                 <i className="fas fa-arrow-right"></i>
                 <span className="tooltiptext">Next</span>
             </button>

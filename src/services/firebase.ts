@@ -25,28 +25,55 @@ let app: any = null;
 let auth: any = null;
 let db: any = null;
 
-const initializeFirebase = async () => {
-  if (app) return { app, auth, db };
+// Reset Firebase initialization (useful when config changes)
+export const resetFirebase = () => {
+  app = null;
+  auth = null;
+  db = null;
+};
+
+export const initializeFirebase = async () => {
+  if (app) {
+    console.log('Using existing Firebase app');
+    return { app, auth, db };
+  }
   
   try {
+    console.log('Initializing Firebase...');
     const result = await chrome.storage.local.get(['firebaseConfig']);
     const firebaseConfig = result.firebaseConfig;
+    
+    console.log('Firebase config from storage:', firebaseConfig);
     
     // More comprehensive check for valid Firebase config
     if (!firebaseConfig || 
         !firebaseConfig.apiKey || 
         firebaseConfig.apiKey === "YOUR_API_KEY" ||
-        firebaseConfig.apiKey === "AIzaSyBPPzRXVBhXNE_lobgqSuDe2AfivaZ2_UE" || // This appears to be invalid
         !firebaseConfig.projectId ||
         firebaseConfig.projectId === "YOUR_PROJECT_ID") {
       console.log('Firebase not configured or invalid config - using local storage only');
       return { app: null, auth: null, db: null };
     }
     
-    app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    db = getFirestore(app);
+    console.log('Creating Firebase app with config:', {
+      apiKey: firebaseConfig.apiKey ? '***' : 'missing',
+      projectId: firebaseConfig.projectId,
+      authDomain: firebaseConfig.authDomain,
+      storageBucket: firebaseConfig.storageBucket,
+      messagingSenderId: firebaseConfig.messagingSenderId,
+      appId: firebaseConfig.appId
+    });
     
+    app = initializeApp(firebaseConfig);
+    console.log('Firebase app created successfully');
+    
+    auth = getAuth(app);
+    console.log('Firebase auth initialized');
+    
+    db = getFirestore(app);
+    console.log('Firebase Firestore initialized');
+    
+    console.log('Firebase initialized successfully');
     return { app, auth, db };
   } catch (error) {
     console.error('Error initializing Firebase:', error);
@@ -56,6 +83,34 @@ const initializeFirebase = async () => {
 
 // Google Auth Provider
 const googleProvider = new GoogleAuthProvider();
+
+// Function to fetch Google user profile information
+const fetchGoogleUserProfile = async (accessToken: string) => {
+  try {
+    const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch user profile: ${response.status}`);
+    }
+    
+    const userInfo = await response.json();
+    console.log('Fetched Google user profile:', userInfo);
+    
+    return {
+      uid: userInfo.id,
+      email: userInfo.email,
+      displayName: userInfo.name,
+      photoURL: userInfo.picture
+    };
+  } catch (error) {
+    console.error('Error fetching Google user profile:', error);
+    throw error;
+  }
+};
 
 // Chrome Extension Google Sign-In
 export const signInWithGoogle = async () => {
@@ -86,23 +141,19 @@ export const signInWithGoogle = async () => {
           console.log('Firebase not configured, proceeding with Chrome identity only');
         }
         
-        // Fallback to Chrome identity authentication
+        // Fallback to Chrome identity authentication with real user profile
         try {
+          // Fetch the user's actual Google profile
+          const userProfile = await fetchGoogleUserProfile(token as string);
+          
           await chrome.storage.local.set({ 
             googleAuthToken: token,
             userAuthenticated: true,
-            authTimestamp: Date.now()
+            authTimestamp: Date.now(),
+            userProfile: userProfile
           });
           
-          // Create a mock user object for consistency
-          const mockUser = {
-            uid: 'chrome-user',
-            email: 'user@example.com', // We don't have email without Firebase
-            displayName: 'Chrome User',
-            photoURL: null
-          };
-          
-          resolve(mockUser as any);
+          resolve(userProfile as any);
         } catch (storageError) {
           reject(new Error('Failed to store authentication token'));
         }
@@ -135,26 +186,33 @@ export const getCurrentUser = async (): Promise<User | null> => {
     }
     
     // If Firebase is not configured, check for Chrome identity authentication
-    const result = await chrome.storage.local.get(['userAuthenticated', 'googleAuthToken', 'authTimestamp']);
+    const result = await chrome.storage.local.get(['userAuthenticated', 'googleAuthToken', 'authTimestamp', 'userProfile']);
     if (result.userAuthenticated && result.googleAuthToken) {
       // Check if token is still valid (24 hours)
       const tokenAge = Date.now() - (result.authTimestamp || 0);
       if (tokenAge < 24 * 60 * 60 * 1000) {
-        const mockUser = {
-          uid: 'chrome-user',
-          email: 'user@example.com',
-          displayName: 'Chrome User',
-          photoURL: null
-        };
-        return mockUser as any;
+        // Use stored user profile if available, otherwise create a fallback
+        if (result.userProfile) {
+          return result.userProfile as any;
+        } else {
+          // Fallback to mock user if no profile is stored
+          const mockUser = {
+            uid: 'chrome-user',
+            email: 'user@example.com',
+            displayName: 'Chrome User',
+            photoURL: null
+          };
+          return mockUser as any;
+        }
       } else {
         // Token expired, clear it
-        await chrome.storage.local.remove(['userAuthenticated', 'googleAuthToken', 'authTimestamp']);
+        await chrome.storage.local.remove(['userAuthenticated', 'googleAuthToken', 'authTimestamp', 'userProfile']);
       }
     }
     
     return null;
   } catch (error) {
+    console.error('Error getting current user:', error);
     return null;
   }
 };
@@ -245,13 +303,23 @@ export const deleteNoteFromFirebase = async (userId: string, noteId: string) => 
 // Firestore functions for settings
 export const saveSettingsToFirebase = async (userId: string, settings: any) => {
   try {
+    console.log('Attempting to save settings to Firebase for user:', userId);
     const { db } = await initializeFirebase();
+    
+    if (!db) {
+      throw new Error('Firebase Firestore database is not initialized');
+    }
+    
+    console.log('Firebase db instance:', db);
     const settingsRef = doc(db, 'users', userId, 'settings', 'userSettings');
+    console.log('Settings document reference created');
+    
     await setDoc(settingsRef, {
       ...settings,
       userId,
       updatedAt: new Date().toISOString()
     });
+    console.log('Settings saved to Firebase successfully');
   } catch (error) {
     console.error('Error saving settings to Firebase:', error);
     throw error;
@@ -282,7 +350,7 @@ export const saveHistoryToFirebase = async (userId: string, historyItem: any) =>
     await setDoc(historyRef, {
       ...historyItem,
       userId,
-      createdAt: new Date().toISOString()
+      timestamp: historyItem.timestamp || new Date().toISOString()
     });
   } catch (error) {
     console.error('Error saving history to Firebase:', error);
@@ -301,7 +369,7 @@ export const getHistoryFromFirebase = async (userId: string) => {
       history.push({ id: doc.id, ...doc.data() });
     });
     
-    return history.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return history.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   } catch (error) {
     console.error('Error getting history from Firebase:', error);
     throw error;

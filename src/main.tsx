@@ -11,6 +11,7 @@ import Settings from "./routes/settings";
 import History from "./routes/history";
 import Help from "./routes/help";
 import Notes from "./routes/notes";
+import FirebaseSetup from "./routes/firebase-setup";
 
 const router = createBrowserRouter([
   {
@@ -22,6 +23,7 @@ const router = createBrowserRouter([
       { path: "history", element: <History /> },
       { path: "help", element: <Help /> },
       { path: "notes", element: <Notes /> },
+      { path: "firebase-setup", element: <FirebaseSetup /> },
     ],
   },
 ],

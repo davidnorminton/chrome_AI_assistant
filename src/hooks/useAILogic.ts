@@ -61,16 +61,12 @@ export function useAILogic(): UseAILogicReturn {
 
       // Save to history
       await addHistory({
-        title: query.length > 50 ? query.substring(0, 50) + "..." : query,
+        title: query,
         type: 'question',
         response: response.text,
         tags: response.tags ?? [],
         suggestedQuestions: response.suggestedQuestions ?? [],
-        pageInfo: {
-          title: pageInfo.title || "",
-          url: pageInfo.url || "",
-          favicon: pageInfo.favicon || "",
-        },
+        pageInfo: undefined, // Don't store page info for general questions
       });
 
     } catch (error: any) {

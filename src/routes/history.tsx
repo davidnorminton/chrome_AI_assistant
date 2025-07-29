@@ -99,9 +99,12 @@ export default function History() {
     e.stopPropagation();
     try {
       await removeHistory(id);
-      // The navigation context will automatically update when storage changes
+      // Refresh history after deletion to ensure we have the latest data
+      if (nav?.refreshHistory) {
+        await nav.refreshHistory();
+      }
     } catch (error) {
-      console.error("Failed to delete history item:", error);
+      console.error('Error deleting history item:', error);
     }
   };
 

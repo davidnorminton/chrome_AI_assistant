@@ -1,32 +1,25 @@
 import type { HistoryItem } from "../types";
+import { saveHistoryItem, getHistory as getHistoryFromService, deleteHistoryItem } from "../services/storage";
 
 const STORAGE_KEY = "extensionHistory";
 
 export async function getHistory(): Promise<HistoryItem[]> {
-  return new Promise((resolve) => {
-    chrome.storage.local.get([STORAGE_KEY], (data) => {
-      resolve(data[STORAGE_KEY] ?? []);
-    });
-  });
+  return await getHistoryFromService();
 }
 
 export async function addHistory(entry: Omit<HistoryItem, "id" | "timestamp">): Promise<void> {
-  const existing = await getHistory();
+  console.log('addHistory called with entry:', entry);
+  
   const newItem: HistoryItem = {
     id: crypto.randomUUID(),
     timestamp: new Date().toISOString(),
     ...entry,
   };
-  const updated = [newItem, ...existing];
-  return new Promise((resolve) => {
-    chrome.storage.local.set({ [STORAGE_KEY]: updated }, () => resolve());
-  });
+  
+  console.log('Created history item:', newItem);
+  await saveHistoryItem(newItem);
 }
 
 export async function removeHistory(id: string): Promise<void> {
-  const existing = await getHistory();
-  const updated = existing.filter((item) => item.id !== id);
-  return new Promise((resolve) => {
-    chrome.storage.local.set({ [STORAGE_KEY]: updated }, () => resolve());
-  });
+  await deleteHistoryItem(id);
 }

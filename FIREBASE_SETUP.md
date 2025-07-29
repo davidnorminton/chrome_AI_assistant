@@ -52,7 +52,41 @@ service cloud.firestore {
 
 3. Click "Publish"
 
-## Step 5: Get Your Firebase Configuration
+## Step 5: Database Structure
+
+Your data will be organized in the following structure:
+
+```
+users/
+├── {userId}/
+│   ├── notes/
+│   │   ├── {noteId}/
+│   │   │   ├── id: string
+│   │   │   ├── title: string
+│   │   │   ├── content: string
+│   │   │   ├── type: "text" | "todo"
+│   │   │   ├── items: array (for todo lists)
+│   │   │   ├── userId: string
+│   │   │   └── updatedAt: timestamp
+│   ├── settings/
+│   │   └── userSettings/
+│   │       ├── apiKey: string
+│   │       ├── model: string
+│   │       ├── aiContextConfig: object
+│   │       ├── aiModelConfig: object
+│   │       ├── userId: string
+│   │       └── updatedAt: timestamp
+│   └── history/
+│       ├── {historyId}/
+│       │   ├── id: string
+│       │   ├── query: string
+│       │   ├── response: string
+│       │   ├── timestamp: timestamp
+│       │   ├── userId: string
+│       │   └── updatedAt: timestamp
+```
+
+## Step 6: Get Your Firebase Configuration
 
 1. In your Firebase project, click the gear icon (⚙️) next to "Project Overview"
 2. Select "Project settings"
@@ -72,7 +106,7 @@ const firebaseConfig = {
 };
 ```
 
-## Step 6: Update the Extension Configuration
+## Step 7: Update the Extension Configuration
 
 1. Open `src/config/firebase.config.ts` in your project
 2. Replace the placeholder values with your actual Firebase configuration:
@@ -88,7 +122,7 @@ export const firebaseConfig = {
 };
 ```
 
-## Step 7: Build and Test
+## Step 8: Build and Test
 
 1. Run `npm run build` to build the extension
 2. Load the extension in Chrome:
@@ -98,79 +132,57 @@ export const firebaseConfig = {
    - Select the `dist` folder
 3. Test the authentication by clicking the extension icon and signing in with Google
 
-## Features Enabled
+## Data Structure Details
 
-With Firebase integration, the extension now supports:
+### Notes Collection
+- **Path**: `users/{userId}/notes/{noteId}`
+- **Fields**:
+  - `id`: Unique note identifier
+  - `title`: Note title
+  - `content`: Note content (text or todo items)
+  - `type`: "text" or "todo"
+  - `items`: Array of todo items (for todo lists)
+  - `userId`: User identifier
+  - `updatedAt`: Last update timestamp
 
-- **Google Authentication**: Users can sign in with their Google account
-- **Cloud Data Storage**: Notes, settings, and history are stored in Firestore
-- **Cross-Device Sync**: Data syncs across all devices where the user is signed in
-- **User Profiles**: Display user information and sign-out functionality
-- **Secure Data Access**: Users can only access their own data
+### Settings Collection
+- **Path**: `users/{userId}/settings/userSettings`
+- **Fields**:
+  - `apiKey`: Perplexity API key
+  - `model`: AI model selection
+  - `aiContextConfig`: Context configuration
+  - `aiModelConfig`: Model parameters
+  - `userId`: User identifier
+  - `updatedAt`: Last update timestamp
 
-## Data Structure
+### History Collection
+- **Path**: `users/{userId}/history/{historyId}`
+- **Fields**:
+  - `id`: Unique history identifier
+  - `query`: User's original query
+  - `response`: AI response
+  - `timestamp`: When the interaction occurred
+  - `userId`: User identifier
+  - `updatedAt`: Last update timestamp
 
-The Firestore database will be organized as follows:
+## Security Rules Explanation
 
-```
-users/
-  {userId}/
-    notes/
-      {noteId}/
-        - id: string
-        - title: string
-        - content: string
-        - type: 'note' | 'todo'
-        - userId: string
-        - updatedAt: timestamp
-    settings/
-      userSettings/
-        - apiKey: string
-        - model: string
-        - contextConfig: object
-        - userId: string
-        - updatedAt: timestamp
-    history/
-      {historyId}/
-        - id: string
-        - query: string
-        - response: string
-        - type: string
-        - userId: string
-        - createdAt: timestamp
-```
+The security rules ensure that:
+- Users can only access their own data
+- Authentication is required for all operations
+- Data is organized by user ID for proper isolation
+- No unauthorized access to other users' data
 
 ## Troubleshooting
 
-### Common Issues
+### Common Issues:
+1. **Authentication Errors**: Ensure Google sign-in is enabled in Firebase
+2. **Permission Denied**: Check that security rules are published
+3. **Database Not Found**: Verify Firestore is created in the correct location
+4. **Configuration Errors**: Double-check your Firebase config values
 
-1. **Authentication not working**: Make sure you've enabled Google sign-in in Firebase Console
-2. **Database access denied**: Check that your Firestore security rules are correct
-3. **Configuration errors**: Verify that your Firebase config values are correct
-4. **CORS errors**: Ensure your authorized domains include `chrome-extension://`
-
-### Security Considerations
-
-- Never commit your Firebase API keys to version control
-- Use environment variables for production deployments
-- Regularly review and update your Firestore security rules
-- Monitor your Firebase usage to stay within free tier limits
-
-## Next Steps
-
-Once Firebase is set up, you can:
-
-1. Implement data migration from local storage to Firebase
-2. Add offline support with Firebase offline persistence
-3. Implement real-time data synchronization
-4. Add user preferences and settings sync
-5. Implement data backup and restore functionality
-
-## Support
-
-If you encounter any issues:
-
-1. Check the Firebase Console for error logs
-2. Verify your configuration values
-3. Test with a simple Firebase app first
-4. Consult the [Firebase Documentation](https://firebase.google.com/docs) 
+### Testing Your Setup:
+1. Sign in with Google in the extension
+2. Create a test note
+3. Check your Firebase console to see the data
+4. Verify the data structure matches the expected format 

@@ -243,8 +243,9 @@ ${pageContext}`;
       let fetchedTags: string[] = [];
       let fetchedQuestions: string[] = [];
       
-      // Start the tags/questions API call immediately
-      const tagsPromise = fetchTagsAndQuestions(info.text);
+      // Start the tags/questions API call immediately (for page summaries)
+      let tagsPromise: Promise<{ tags: string[]; suggestedQuestions: string[] }> | null = null;
+      tagsPromise = fetchTagsAndQuestions(info.text);
       
       // Use streaming for summarization
       await startStream(query, "summarize_page", null, async (streamedContent) => {
@@ -260,8 +261,10 @@ ${pageContext}`;
         // Wait for tags/questions to complete
         try {
           const result = await tagsPromise;
-          fetchedTags = result.tags;
-          fetchedQuestions = result.suggestedQuestions;
+          if (result) {
+            fetchedTags = result.tags;
+            fetchedQuestions = result.suggestedQuestions;
+          }
           
           setTags(fetchedTags);
           setSuggested(fetchedQuestions);
@@ -377,7 +380,17 @@ ${pageContext}`;
           return; // Exit early since we handled the web search separately
         } else if (imageData) {
           finalQuery = sanitizeInput(query);
+        } else {
+          // General question - use the query directly
+          finalQuery = sanitizeInput(query);
         }
+      }
+      
+      // Display title for general questions before streaming starts
+      const isPageSpecific = userSettings?.contextConfig?.usePageContext && !imageData && !userSettings?.contextConfig?.useWebSearch;
+      if (!isPageSpecific && !imageData) {
+        // For general questions, show the question as title immediately
+        setOutputHtml(`<h2 class="question-title">${query}</h2>`);
       }
       
       // Start both API calls simultaneously
@@ -387,7 +400,17 @@ ${pageContext}`;
       // Start the tags/questions API call immediately (for non-screenshots)
       let tagsPromise: Promise<{ tags: string[]; suggestedQuestions: string[] }> | null = null;
       if (!imageData || !imageData.startsWith('data:image/')) {
-        tagsPromise = fetchTagsAndQuestions(info.text);
+        // Only fetch tags/questions for page-specific queries
+        const isPageSpecific = userSettings?.contextConfig?.usePageContext && !imageData && !userSettings?.contextConfig?.useWebSearch;
+        if (isPageSpecific) {
+          // Use page content for page-specific queries
+          console.log('Generating tags/questions from page content');
+          tagsPromise = fetchTagsAndQuestions(info.text);
+        } else {
+          // Use the question itself for general queries
+          console.log('Generating tags/questions from user question:', query);
+          tagsPromise = fetchTagsAndQuestions(query);
+        }
       }
       
       // Use streaming for main response
@@ -399,7 +422,13 @@ ${pageContext}`;
           typographer: true,
         });
         const htmlContent = md.render(streamedContent);
-        setOutputHtml(htmlContent);
+        
+        // For general questions, append to the existing title
+        if (!isPageSpecific && !imageData) {
+          setOutputHtml(`<h2 class="question-title">${query}</h2>${htmlContent}`);
+        } else {
+          setOutputHtml(htmlContent);
+        }
         
         // Wait for tags/questions to complete (if they were started)
         if (tagsPromise) {
@@ -422,18 +451,30 @@ ${pageContext}`;
         
         // Save to history with structured data
         setTimeout(async () => {
-          await addHistory({
-            title: query.length > 50 ? query.substring(0, 50) + "..." : query,
+          console.log('About to save to history with query:', query);
+          // Only include page info if this is a page-specific query
+          const isPageSpecific = userSettings?.contextConfig?.usePageContext && !imageData && !userSettings?.contextConfig?.useWebSearch;
+          console.log('Is page specific:', isPageSpecific);
+          
+          const historyItem: any = {
+            title: query,
             type: 'question',
             response: streamedContent,
             tags: fetchedTags,
             suggestedQuestions: fetchedQuestions,
-            pageInfo: {
+          };
+          
+          // Only add pageInfo if it's a page-specific query
+          if (isPageSpecific) {
+            historyItem.pageInfo = {
               title: info.title || "",
               url: info.url || "",
               favicon: info.favicon || "",
-            },
-          });
+            };
+          }
+          
+          await addHistory(historyItem);
+          console.log('History saved successfully');
         }, 1000); // Delay history saving by 1 second
       }, () => {
         // Clear loading state when streaming starts
@@ -447,6 +488,9 @@ ${pageContext}`;
           url: info.url || "",
           favicon: info.favicon || "",
         });
+      } else {
+        // Clear page info for general questions
+        setSavedPageInfo(null);
       }
 
       setScreenshotData(null);
