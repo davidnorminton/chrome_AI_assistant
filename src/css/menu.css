@@ -169,7 +169,7 @@ html body #rightMenu button,
 /* Clear Button Container - Bottom with large gap */
 .clear-button-container {
   position: absolute;
-  bottom: 16px;
+  bottom: 50px;
   left: 50%;
   transform: translateX(-50%);
 }
@@ -188,7 +188,7 @@ html body #rightMenu button,
 /* Help Button Container - Above settings button */
 .help-button-container {
   position: absolute;
-  bottom: 104px;
+  bottom: 140px;
   left: 50%;
   transform: translateX(-50%);
 }
@@ -219,9 +219,10 @@ html body #rightMenu button,
 /* Settings Button Container - Below help button */
 .settings-button-container {
   position: absolute;
-  bottom: 60px;
+  bottom: 120px;
   left: 50%;
   transform: translateX(-50%);
+  margin-top: 25px;
 }
 
 .settings-button {
@@ -233,4 +234,71 @@ html body #rightMenu button,
   background-color: #555555 !important;
   border-color: #777777 !important;
   color: #4a9eff !important;
+} 
+
+/* User Profile Section */
+.user-profile-container {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.user-profile {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #4a9eff;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  position: relative;
+}
+
+.user-profile:hover {
+  background-color: #3367d6;
+}
+
+.user-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.user-icon {
+  font-size: 20px;
+  color: white;
+}
+
+/* Tooltip for user profile */
+.user-profile .tooltiptext {
+  visibility: hidden;
+  width: auto;
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 8px 12px;
+  position: absolute;
+  z-index: 1002;
+  right: 45px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity 0.3s;
+  white-space: nowrap;
+  font-size: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.user-profile:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
 } 

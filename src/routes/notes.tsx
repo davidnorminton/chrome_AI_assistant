@@ -139,7 +139,7 @@ const Notes: React.FC = () => {
 
       // Get model from storage
       const modelResult = await chrome.storage.local.get(['model']);
-      const model = modelResult.model || 'sonar-small';
+      const model = modelResult.model || 'sonar';
 
       // Get current page info for context
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });

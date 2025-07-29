@@ -31,7 +31,7 @@ export function useSettings() {
       showSuggestedQuestions: true,
     };
     const modelConfig = result.aiModelConfig || {
-      model: result.model || 'sonar-small',
+      model: result.model || 'sonar',
       apiKey: '',
       temperature: 0.7,
       maxTokens: 4000,

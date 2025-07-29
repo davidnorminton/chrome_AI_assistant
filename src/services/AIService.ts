@@ -37,7 +37,7 @@ export class AIService {
     return new Promise((resolve) => {
       chrome.storage.local.get(['model', 'apiKey', 'aiModelConfig'], data =>
         resolve({
-          model: data.model ?? 'sonar-small',
+          model: data.model ?? 'sonar',
           apiKey: data.apiKey,
           modelConfig: data.aiModelConfig || {}
         })

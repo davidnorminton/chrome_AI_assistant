@@ -8,7 +8,7 @@ export class PerplexityProvider implements AIProvider {
   version = '1.0.0';
 
   // Valid Perplexity models
-  private validModels = ['sonar-small', 'sonar', 'sonar-pro'];
+  private validModels = ['sonar', 'sonar-pro'];
 
   async isAvailable(): Promise<boolean> {
     try {
@@ -39,7 +39,7 @@ export class PerplexityProvider implements AIProvider {
     return new Promise((resolve) => {
       chrome.storage.local.get(['model', 'apiKey', 'aiModelConfig'], data =>
         resolve({
-          model: data.model ?? 'sonar-small',
+          model: data.model ?? 'sonar',
           apiKey: data.apiKey,
           modelConfig: data.aiModelConfig || {}
         })

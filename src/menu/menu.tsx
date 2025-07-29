@@ -6,7 +6,114 @@ export default function Menu() {
     const nav = useContext(HistoryNavigationContext);
     const actions = useContext(AppActionsContext);
     const [showNewsDropdown, setShowNewsDropdown] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [userPhoto, setUserPhoto] = useState<string | null>(null);
+    const [userName, setUserName] = useState<string | null>(null);
     const newsDropdownRef = useRef<HTMLDivElement>(null);
+    
+    // Check authentication status on component mount
+    useEffect(() => {
+        const checkAuthStatus = async () => {
+            try {
+                const result = await chrome.storage.local.get(['userAuthenticated', 'googleAuthToken', 'authTimestamp', 'userPhoto', 'userName']);
+                if (result.userAuthenticated && result.googleAuthToken) {
+                    // Check if token is still valid (24 hours)
+                    const tokenAge = Date.now() - (result.authTimestamp || 0);
+                    if (tokenAge < 24 * 60 * 60 * 1000) {
+                        setIsAuthenticated(true);
+                        setUserName(result.userName || 'User');
+                        setUserPhoto(result.userPhoto || null);
+                        
+                        // Try to get user info from Google if we don't have it
+                        if (!result.userPhoto && chrome.identity) {
+                            try {
+                                chrome.identity.getAuthToken({ interactive: false }, async (token) => {
+                                    if (token) {
+                                        // Get user info from Google People API
+                                        const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+                                            headers: {
+                                                'Authorization': `Bearer ${token}`
+                                            }
+                                        });
+                                        
+                                        if (response.ok) {
+                                            const userInfo = await response.json();
+                                            const photoUrl = userInfo.picture;
+                                            const name = userInfo.name || userInfo.email;
+                                            
+                                            // Store user info
+                                            await chrome.storage.local.set({
+                                                userPhoto: photoUrl,
+                                                userName: name
+                                            });
+                                            
+                                            setUserPhoto(photoUrl);
+                                            setUserName(name);
+                                        }
+                                    }
+                                });
+                            } catch (error) {
+                                console.log('Could not fetch user photo:', error);
+                            }
+                        }
+                    } else {
+                        // Token expired, clear it
+                        await chrome.storage.local.remove(['userAuthenticated', 'googleAuthToken', 'authTimestamp', 'userPhoto', 'userName']);
+                        setIsAuthenticated(false);
+                        setUserName(null);
+                        setUserPhoto(null);
+                    }
+                } else {
+                    setIsAuthenticated(false);
+                    setUserName(null);
+                    setUserPhoto(null);
+                }
+            } catch (error) {
+                setIsAuthenticated(false);
+                setUserName(null);
+                setUserPhoto(null);
+            }
+        };
+
+        checkAuthStatus();
+        
+        // Listen for storage changes to update auth status
+        const handleStorageChange = (changes: { [key: string]: chrome.storage.StorageChange }) => {
+            if (changes.userAuthenticated || changes.googleAuthToken || changes.userPhoto || changes.userName) {
+                checkAuthStatus();
+            }
+        };
+
+        chrome.storage.onChanged.addListener(handleStorageChange);
+        
+        return () => {
+            chrome.storage.onChanged.removeListener(handleStorageChange);
+        };
+    }, []);
+
+    // Handle sign out
+    const handleSignOut = async () => {
+        try {
+            // Clear authentication data
+            await chrome.storage.local.remove(['userAuthenticated', 'googleAuthToken', 'authTimestamp', 'userPhoto', 'userName']);
+            setIsAuthenticated(false);
+            setUserName(null);
+            setUserPhoto(null);
+            
+            // Revoke the token if possible
+            if (chrome.identity) {
+                chrome.identity.getAuthToken({ interactive: false }, (token) => {
+                    if (token) {
+                        chrome.identity.removeCachedAuthToken({ token: token as string }, () => {
+                            console.log('Token revoked');
+                        });
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error signing out:', error);
+        }
+    };
     
     // Handle clicking outside the news dropdown to close it
     useEffect(() => {
@@ -320,6 +427,24 @@ export default function Menu() {
                     <span className="tooltiptext">Settings</span>
                 </Link>
             </div>
+            
+            {/* User Profile Section - Bottom of menu */}
+            {isAuthenticated && (
+                <div className="user-profile-container">
+                    <div className="user-profile tooltip" onClick={handleSignOut}>
+                        {userPhoto ? (
+                            <img 
+                                src={userPhoto} 
+                                alt="User profile" 
+                                className="user-avatar"
+                            />
+                        ) : (
+                            <i className="fas fa-user-circle user-icon"></i>
+                        )}
+                        <span className="tooltiptext">{userName || 'User'} (Click to sign out)</span>
+                    </div>
+                </div>
+            )}
         </nav>
     </div>
     )

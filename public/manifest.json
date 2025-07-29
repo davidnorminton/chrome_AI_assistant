@@ -3,12 +3,22 @@
   "name": "Orla",
   "version": "2.0",
   "description": "Orla is an AI sidebar assistant for web pages.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyyR/RIclU/xyKL2qnWVwKUyyqFj4LrdmjlgJOHtI3YxTvdXj7YMc4/YjOrIONu8w9S7Ve8szuLORNY1aNL8qm9zfqZ+rmyRnkZbRrL/B2o1Z32WMNRgJEOlzUjVTXL+asTfu2L1oTCSnBudgSvg94RWrMj9qYKQQBMVSIkxIXytai19wcrYnCyxEFa1/I/xp7oAgtWMhZ8/nT59ddiEdOksBLDqDixgSmN/3ctPyHmuhCKTO5PSPPmVjOZWhOFre3UVAQHam4fregDS5HNU0sd/bOoop8FCeqP1HRU0v30zrq+nvVDAM/7ha/OD+Mdu7qcfiCHenwKHEF2965cUpwwIDAQAB",
+  "oauth2": {
+    "client_id": "110625604157-dd7t9aa7bh0m4dietf5kn10k1qnrq62j.apps.googleusercontent.com",
+    "scopes": [
+      "profile",
+      "email",
+      "openid"
+    ]
+  },
   "permissions": [
     "activeTab",
     "scripting",
     "storage",
     "tabs",
-    "sidePanel"
+    "sidePanel",
+    "identity"
   ],
   "host_permissions": [
     "<all_urls>"

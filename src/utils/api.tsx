@@ -51,18 +51,27 @@ export async function sendQueryToAI(options: SendQueryOptions): Promise<AIRespon
 
   // Load model & API key
   const { model, apiKey, modelConfig: existingModelConfig } = await new Promise<{ model: string; apiKey: string; modelConfig: any }>(resolve => {
-    chrome.storage.local.get(['model', 'apiKey', 'aiModelConfig'], data =>
+    chrome.storage.local.get(['model', 'apiKey', 'aiModelConfig'], data => {
+      console.log('API Key Debug:', {
+        hasApiKey: !!data.apiKey,
+        apiKeyLength: data.apiKey?.length,
+        apiKeyStart: data.apiKey?.substring(0, 10) + '...',
+        model: data.model
+      });
+      
       resolve({
-        model: data.model ?? 'sonar-small',
+        model: data.model ?? 'sonar',
         apiKey: data.apiKey,
         modelConfig: data.aiModelConfig || {}
-      })
-    );
+      });
+    });
   });
   
   if (!apiKey) {
     throw new Error('API key not set in Settings');
   }
+
+  console.log('Using API key:', apiKey.substring(0, 10) + '...');
 
   // Build system prompt using context manager
   const systemPrompt = defaultAIContextManager.createSystemPrompt(action);

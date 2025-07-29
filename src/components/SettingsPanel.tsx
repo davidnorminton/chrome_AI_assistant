@@ -5,9 +5,8 @@ import { defaultAIContextManager } from "../utils/aiContextManager";
 
 // Define both the values _and_ user-friendly labels
 const modelOptions = [
-  { value: "sonar-small", label: "Sonar Small", description: "Fast and efficient for most tasks" },
-  { value: "sonar-pro",   label: "Sonar Pro",   description: "Advanced capabilities for complex tasks" },
   { value: "sonar",       label: "Sonar",       description: "Balanced performance and features" },
+  { value: "sonar-pro",   label: "Sonar Pro",   description: "Advanced capabilities for complex tasks" },
 ];
 
 const contextLevelOptions = [
@@ -18,9 +17,14 @@ const contextLevelOptions = [
 
 export default function SettingsPanel() {
   const [apiKey, setApiKey] = useState("");
-  const [model, setModel] = useState(modelOptions[0].value);
+  const [model, setModel] = useState("sonar");
   const [saveMsg, setSaveMsg] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Google Sign-in state
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [signInError, setSignInError] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   
   // AI Context Configuration
   const [contextConfig, setContextConfig] = useState<AIContextConfig>({
@@ -38,15 +42,56 @@ export default function SettingsPanel() {
 
   // AI Model Configuration
   const [modelConfig, setModelConfig] = useState<AIModelConfig>({
-    model: modelOptions[0].value,
+    model: "sonar",
     apiKey: "",
     temperature: 0.7,
     maxTokens: 4000,
     systemPrompt: undefined,
   });
 
+  // Check extension permissions and provide debugging info
+  const checkExtensionPermissions = () => {
+    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest) {
+      try {
+        const manifest = chrome.runtime.getManifest();
+        console.log('Extension manifest:', manifest);
+        console.log('Extension permissions:', manifest.permissions);
+        console.log('Extension ID:', chrome.runtime.id);
+      } catch (error) {
+        console.error('Error getting manifest:', error);
+      }
+    }
+  };
+
   useEffect(() => {
     loadSettings();
+    checkExtensionPermissions();
+  }, []);
+
+  // Check authentication status
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      try {
+        const result = await chrome.storage.local.get(['userAuthenticated', 'googleAuthToken', 'authTimestamp']);
+        if (result.userAuthenticated && result.googleAuthToken) {
+          // Check if token is still valid (24 hours)
+          const tokenAge = Date.now() - (result.authTimestamp || 0);
+          if (tokenAge < 24 * 60 * 60 * 1000) {
+            setIsAuthenticated(true);
+          } else {
+            // Token expired, clear it
+            await chrome.storage.local.remove(['userAuthenticated', 'googleAuthToken', 'authTimestamp']);
+            setIsAuthenticated(false);
+          }
+        } else {
+          setIsAuthenticated(false);
+        }
+      } catch (error) {
+        setIsAuthenticated(false);
+      }
+    };
+
+    checkAuthStatus();
   }, []);
 
   const handleSaveSettings = async () => {
@@ -56,18 +101,18 @@ export default function SettingsPanel() {
     }
 
     try {
-      // Basic encoding for API key (not encryption, but better than plain text)
-      const encodedApiKey = btoa(apiKey.trim());
+      // Store API key as plain text (no encoding)
+      const plainApiKey = apiKey.trim();
       
       // Update modelConfig with current state
       const updatedModelConfig = {
         ...modelConfig,
-        apiKey: encodedApiKey,
+        apiKey: plainApiKey,
         model: model
       };
       
       await chrome.storage.local.set({
-        apiKey: encodedApiKey,
+        apiKey: plainApiKey,
         model: model,
         aiModelConfig: updatedModelConfig,
         aiContextConfig: contextConfig,
@@ -90,27 +135,17 @@ export default function SettingsPanel() {
 
       // Handle API key
       if (data.apiKey) {
-        try {
-          setApiKey(atob(data.apiKey));
-        } catch {
-          // If decoding fails, use as-is (backward compatibility)
-          setApiKey(data.apiKey);
-        }
+        setApiKey(data.apiKey);
       }
 
       // Handle model
       if (data.model) {
         setModel(data.model);
-        setModelConfig(prev => ({ ...prev, model: data.model }));
       }
 
       // Handle AI model config
       if (data.aiModelConfig) {
         setModelConfig(data.aiModelConfig);
-        // Also update the model state if it's in the config
-        if (data.aiModelConfig.model) {
-          setModel(data.aiModelConfig.model);
-        }
       }
 
       // Handle AI context config
@@ -121,6 +156,70 @@ export default function SettingsPanel() {
       console.error('Error loading settings:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsSigningIn(true);
+      setSignInError(null);
+      
+      // Check if Chrome APIs are available
+      if (typeof chrome === 'undefined') {
+        console.error('Chrome API not available');
+        setSignInError('Chrome API not available. This extension must run in Chrome.');
+        setIsSigningIn(false);
+        return;
+      }
+      
+      if (!chrome.identity) {
+        console.error('Chrome identity API not available');
+        console.log('Available Chrome APIs:', Object.keys(chrome));
+        setSignInError('Chrome identity API not available. Please reload the extension and ensure it has the identity permission.');
+        setIsSigningIn(false);
+        return;
+      }
+      
+      console.log('Chrome identity API is available, attempting sign-in...');
+      
+      // Use Chrome identity API for Google sign-in
+      chrome.identity.getAuthToken({ interactive: true }, (token) => {
+        if (chrome.runtime.lastError) {
+          console.error('Chrome identity error:', chrome.runtime.lastError);
+          setSignInError(`Chrome identity error: ${chrome.runtime.lastError.message}`);
+          setIsSigningIn(false);
+          return;
+        }
+        
+        if (!token) {
+          console.error('No token received from Chrome identity');
+          setSignInError('No authentication token received. Please try again.');
+          setIsSigningIn(false);
+          return;
+        }
+        
+        console.log('Received token from Chrome identity:', (token as string).substring(0, 20) + '...');
+        
+        // Store the token and mark as authenticated
+        chrome.storage.local.set({
+          googleAuthToken: token,
+          userAuthenticated: true,
+          authTimestamp: Date.now()
+        }).then(() => {
+          console.log('Authentication state saved successfully');
+          setIsAuthenticated(true);
+          setIsSigningIn(false);
+          setSignInError(null);
+        }).catch((error) => {
+          console.error('Failed to save authentication state:', error);
+          setSignInError('Failed to save authentication state.');
+          setIsSigningIn(false);
+        });
+      });
+    } catch (error) {
+      console.error('Google sign-in error:', error);
+      setSignInError(`Sign-in error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setIsSigningIn(false);
     }
   };
 
@@ -225,6 +324,71 @@ export default function SettingsPanel() {
                 </option>
               ))}
             </select>
+          </div>
+        </div>
+
+        {/* Google Authentication Section */}
+        <div className="setting-group">
+          <h3 className="setting-group-title">
+            <i className="fab fa-google"></i> Google Authentication
+          </h3>
+          
+          <div className="setting-item">
+            <div className="setting-label">
+              <label>
+                <i className="fas fa-user"></i>
+                Authentication Status
+              </label>
+            </div>
+            <div className="auth-status">
+              <span className="auth-status-indicator">
+                <i className="fas fa-circle"></i>
+                {isAuthenticated ? 'Signed In' : 'Not Signed In'}
+              </span>
+            </div>
+            <p className="setting-help">
+              Sign in with Google to enable cloud storage and sync across devices
+            </p>
+          </div>
+
+          <div className="setting-item">
+            <button
+              onClick={handleGoogleSignIn}
+              disabled={isSigningIn}
+              className="google-signin-btn"
+            >
+              {isSigningIn ? (
+                <>
+                  <div className="btn-spinner"></div>
+                  <span>Signing in...</span>
+                </>
+              ) : (
+                <>
+                  <i className="fab fa-google"></i>
+                  <span>Sign in with Google</span>
+                </>
+              )}
+            </button>
+            {signInError && (
+              <div className="setting-error">
+                <i className="fas fa-exclamation-triangle"></i>
+                <span>{signInError}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="setting-item">
+            <div className="setting-label">
+              <label>
+                <i className="fas fa-info-circle"></i>
+                OAuth Configuration
+              </label>
+            </div>
+            <div className="oauth-info">
+              <p><strong>Client ID:</strong> 110625604157-dd7t9aa7bh0m4dietf5kn10k1qnrq62j.apps.googleusercontent.com</p>
+              <p><strong>Project ID:</strong> orla-extension</p>
+              <p><strong>Status:</strong> Configured</p>
+            </div>
           </div>
         </div>
 
