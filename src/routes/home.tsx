@@ -48,20 +48,16 @@ export default function Home() {
     // Helpers
     shouldShowLinkList,
 
-    sendNewsQuery,
     citations,
     references,
   } = useHomeLogic();
 
   // Set the context functions
   useEffect(() => {
-    if (actions?.setSendNewsQuery) {
-      actions.setSendNewsQuery(sendNewsQuery);
-    }
     if (actions?.setClearContent) {
       actions.setClearContent(handleClearContent);
     }
-  }, [actions, sendNewsQuery, handleClearContent]);
+  }, [actions, handleClearContent]);
 
   // Handle file processing state changes
   const handleFileProcessingChange = (isProcessing: boolean, fileName: string | null, fileType: string | null) => {

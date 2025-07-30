@@ -88,6 +88,81 @@ const sanitizeInput = (input: string): string => {
   return DOMPurify.sanitize(input, { ALLOWED_TAGS: [] });
 };
 
+// Process slash commands
+const processSlashCommand = (query: string): { isCommand: boolean; command: string; query: string } => {
+  const trimmedQuery = query.trim();
+  
+  // Check if query starts with forward slash
+  if (!trimmedQuery.startsWith('/')) {
+    return { isCommand: false, command: '', query };
+  }
+  
+  // Parse the command
+  const parts = trimmedQuery.split(' ');
+  const command = parts[0].toLowerCase();
+  const args = parts.slice(1).join(' ').trim();
+  
+  // Handle /news command
+  if (command === '/news') {
+    if (args) {
+      // /news <location> - Get news for specific location
+      return {
+        isCommand: true,
+        command: 'news',
+        query: `Get the latest local news for ${args} and surrounding areas within 100 miles. Include breaking news, community events, and local developments.`
+      };
+    } else {
+      // /news - Get world news headlines
+      return {
+        isCommand: true,
+        command: 'news',
+        query: `Get the latest world news and top international headlines. Include major global events, international politics, economic developments, and significant world news.`
+      };
+    }
+  }
+  
+  // Handle /weather command
+  if (command === '/weather') {
+    if (args) {
+      // /weather <location> - Get weather for specific location
+      return {
+        isCommand: true,
+        command: 'weather',
+        query: `Get the current weather report and forecast for ${args}. Include current temperature, conditions, humidity, wind speed, and a 5-day forecast.`
+      };
+    } else {
+      // /weather - Get weather for current location (fallback)
+      return {
+        isCommand: true,
+        command: 'weather',
+        query: `Get the current weather report and forecast. Include current temperature, conditions, humidity, wind speed, and a 5-day forecast.`
+      };
+    }
+  }
+  
+  // Handle /events command
+  if (command === '/events') {
+    if (args) {
+      // /events <location> - Get events for specific location
+      return {
+        isCommand: true,
+        command: 'events',
+        query: `Get upcoming events, concerts, festivals, and activities happening in ${args}. Include dates, venues, and event details.`
+      };
+    } else {
+      // /events - Get world events
+      return {
+        isCommand: true,
+        command: 'events',
+        query: `Get the latest and upcoming major events, festivals, concerts, and activities from around the world. Include international events, cultural festivals, and significant global happenings.`
+      };
+    }
+  }
+  
+  // Not a recognized command
+  return { isCommand: false, command: '', query };
+};
+
 interface LinkItem {
   title: string;
   url: string;
@@ -102,7 +177,7 @@ export function useHomeLogic() {
 
   // Centralized title management function
   const generateHistoryTitle = useCallback((
-    type: 'summary' | 'search' | 'question' | 'file_analysis' | 'definition',
+    type: 'summary' | 'search' | 'question' | 'file_analysis' | 'definition' | 'news' | 'weather' | 'events',
     query: string,
     pageTitle?: string,
     fileName?: string,
@@ -119,6 +194,12 @@ export function useHomeLogic() {
         return capitalizeWords(`File analysis: ${fileName || 'Unknown File'}`);
       case 'definition':
         return capitalizeWords(tag || query); // Use tag text directly
+      case 'news':
+        return capitalizeWords(`News: ${query}`);
+      case 'weather':
+        return capitalizeWords(`Weather: ${query}`);
+      case 'events':
+        return capitalizeWords(`Events: ${query}`);
       default:
         return capitalizeWords(query);
     }
@@ -476,6 +557,19 @@ ${pageContext}`;
       let finalQuery = query;
       let action: AIAction = "direct_question";
       let imageData: string | null = null;
+      let isNewsCommand = false; // Track if this is a news command
+      let isWeatherCommand = false; // Track if this is a weather command
+      let isEventsCommand = false; // Track if this is an events command
+
+      // Check for slash commands
+      const commandResult = processSlashCommand(query);
+      if (commandResult.isCommand) {
+        finalQuery = commandResult.query;
+        isNewsCommand = commandResult.command === 'news';
+        isWeatherCommand = commandResult.command === 'weather';
+        isEventsCommand = commandResult.command === 'events';
+        console.log('Detected slash command:', commandResult.command, 'with query:', finalQuery);
+      }
 
       // Handle file uploads
       if (fileData) {
@@ -639,7 +733,7 @@ ${pageContext}`;
           console.log('Is page specific:', isPageSpecific);
           
           // Determine type and title based on content type
-          let type: 'summary' | 'search' | 'question' | 'file_analysis' | 'definition' = 'question';
+          let type: 'summary' | 'search' | 'question' | 'file_analysis' | 'definition' | 'news' | 'weather' | 'events' = 'question';
           let title = '';
           
           if (imageData) {
@@ -648,6 +742,15 @@ ${pageContext}`;
           } else if (fileName) {
             type = 'file_analysis';
             title = generateHistoryTitle('file_analysis', query, undefined, fileName);
+          } else if (isNewsCommand) {
+            type = 'news';
+            title = generateHistoryTitle('news', query);
+          } else if (isWeatherCommand) {
+            type = 'weather';
+            title = generateHistoryTitle('weather', query);
+          } else if (isEventsCommand) {
+            type = 'events';
+            title = generateHistoryTitle('events', query);
           } else if (userSettings?.contextConfig?.useWebSearch) {
             type = 'search';
             title = generateHistoryTitle('search', query);
@@ -829,235 +932,6 @@ ${pageContext}`;
 
 
 
-  // Send news query function
-  const sendNewsQuery = useCallback(async (query: string) => {
-    setLoading(true);
-    setTags([]);
-    setSuggested([]);
-    setLinks([]);
-    setRestoredScreenshotData(null);
-    setSearchQuery("");
-    
-    try {
-      // Check if this is a location form
-      if (query.startsWith('LOCATION_FORM:')) {
-        const parts = query.split(':');
-        const option = parts[1];
-        const formHTML = parts.slice(2).join(':');
-        
-        // Show the location form
-        setOutputHtml(formHTML);
-        setTags([]);
-        setSuggested([]);
-        setLinks([]);
-        setRestoredScreenshotData(null); // Clear screenshot data
-        setSearchQuery("");
-        setLoading(false);
-        
-        // Add event listeners after a short delay to ensure DOM is ready
-        setTimeout(() => {
-          addLocationFormListeners(option);
-        }, 100);
-        
-        return;
-      }
-      
-      // Check if this is a loading message with query
-      if (query.startsWith('LOADING:')) {
-        const parts = query.split(':');
-        const loadingMessage = parts[1];
-        const actualQuery = parts.slice(2).join(':');
-        
-        setTags([]);
-        setSuggested([]);
-        setLinks([]);
-        setRestoredScreenshotData(null); // Clear screenshot data
-        setSearchQuery("");
-        setLoading(true);
-        
-        // Send the actual query to AI
-        setTimeout(() => {
-          handleSend(actualQuery, null, false, false);
-        }, 100);
-        
-        return;
-      }
-      
-      // Regular query (for world news)
-      setTags([]);
-      setSuggested([]);
-      setLinks([]);
-      setRestoredScreenshotData(null); // Clear screenshot data
-      setSearchQuery("");
-      setLoading(true);
-      
-      // Send the query to AI
-      handleSend(query, null, false, false);
-    } catch (e: any) {
-      setOutputHtml(`<p class="error">${e.message}</p>`);
-      setTags([]);
-      setSuggested([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [handleSend]);
-
-  // Add event listeners for location form
-  const addLocationFormListeners = (option: string) => {
-    // Handle saved location buttons
-    const locationButtons = document.querySelectorAll('.location-btn[data-city]');
-    locationButtons.forEach(button => {
-      button.addEventListener('click', (e) => {
-        const target = e.target as HTMLElement;
-        const city = target.getAttribute('data-city');
-        const country = target.getAttribute('data-country');
-        
-        if (city && country) {
-          // Save location and build query
-          saveLocation(city, country);
-          buildAndSendQuery(option, city, country);
-        }
-      });
-    });
-    
-    // Handle use current location button
-    const useCurrentBtn = document.getElementById('useCurrentLocation');
-    if (useCurrentBtn) {
-      useCurrentBtn.addEventListener('click', async () => {
-        try {
-          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, {
-              enableHighAccuracy: true,
-              timeout: 10000,
-              maximumAge: 60000
-            });
-          });
-          
-          const { latitude, longitude } = position.coords;
-          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10`);
-          const data = await response.json();
-          const addressParts = data.display_name.split(', ');
-          const city = addressParts[0];
-          const country = addressParts[addressParts.length - 1];
-          
-          saveLocation(city, country);
-          buildAndSendQuery(option, city, country);
-        } catch (error) {
-          console.log('Could not get current location');
-        }
-      });
-    }
-    
-    // Handle submit button
-    const submitBtn = document.getElementById('submitLocation');
-    if (submitBtn) {
-      submitBtn.addEventListener('click', () => {
-        const cityInput = document.getElementById('cityInput') as HTMLInputElement;
-        const countryInput = document.getElementById('countryInput') as HTMLInputElement;
-        
-        const city = cityInput?.value?.trim();
-        const country = countryInput?.value?.trim();
-        
-        if (city && country) {
-          saveLocation(city, country);
-          buildAndSendQuery(option, city, country);
-        } else {
-          alert('Please enter both city and country');
-        }
-      });
-    }
-  };
-
-  // Helper functions for location management
-  const saveLocation = (city: string, country: string) => {
-    const savedLocations = JSON.parse(localStorage.getItem('savedLocations') || '[]');
-    const newLocation = { city, country, timestamp: Date.now() };
-    
-    // Check if location already exists
-    const exists = savedLocations.find((loc: any) => 
-      loc.city.toLowerCase() === city.toLowerCase() && 
-      loc.country.toLowerCase() === country.toLowerCase()
-    );
-    
-    if (!exists) {
-      savedLocations.push(newLocation);
-      // Keep only last 10 locations
-      if (savedLocations.length > 10) {
-        savedLocations.shift();
-      }
-      localStorage.setItem('savedLocations', JSON.stringify(savedLocations));
-    }
-  };
-
-  const buildAndSendQuery = (option: string, location: string, country: string) => {
-    let query = '';
-    let loadingMessage = '';
-    
-    // Build query based on option and location
-    switch (option) {
-      case 'local':
-        if (location && country) {
-          query = `Get the latest local news for ${location}, ${country} and surrounding areas within 100 miles. Include breaking news, community events, and local developments.`;
-          loadingMessage = `Getting local news for ${location}, ${country}...`;
-        } else if (location) {
-          query = `Get the latest local news for ${location} and surrounding areas within 100 miles. Include breaking news, community events, and local developments.`;
-          loadingMessage = `Getting local news for ${location}...`;
-        } else {
-          query = `Get the latest local news for my current area and surrounding regions within 100 miles. Include breaking news, community events, and local developments.`;
-          loadingMessage = 'Getting local news for your area...';
-        }
-        break;
-      case 'national':
-        if (country) {
-          query = `Get the latest national news from ${country}. Include top headlines, major political developments, economic news, and significant national events.`;
-          loadingMessage = `Getting national news from ${country}...`;
-        } else {
-          query = `Get the latest national news from across the country. Include top headlines, major political developments, economic news, and significant national events.`;
-          loadingMessage = 'Getting national news...';
-        }
-        break;
-      case 'world':
-        query = `Get the latest world news and top international headlines. Include major global events, international politics, economic developments, and significant world news.`;
-        loadingMessage = 'Getting world news...';
-        break;
-      case 'events':
-        if (location && country) {
-          query = `Get upcoming events, concerts, festivals, and activities happening in ${location}, ${country} and within 100 miles. Include dates, venues, and event details.`;
-          loadingMessage = `Getting events near ${location}, ${country}...`;
-        } else if (location) {
-          query = `Get upcoming events, concerts, festivals, and activities happening in ${location} and within 100 miles. Include dates, venues, and event details.`;
-          loadingMessage = `Getting events near ${location}...`;
-        } else {
-          query = `Get upcoming events, concerts, festivals, and activities happening in my area within 100 miles. Include dates, venues, and event details.`;
-          loadingMessage = 'Getting events in your area...';
-        }
-        break;
-      case 'weather':
-        if (location && country) {
-          query = `Get the current weather forecast for ${location}, ${country}. Include current conditions, temperature, humidity, wind speed, and a 5-day forecast. Also provide weather alerts if any.`;
-          loadingMessage = `Getting weather for ${location}, ${country}...`;
-        } else if (location) {
-          query = `Get the current weather forecast for ${location}. Include current conditions, temperature, humidity, wind speed, and a 5-day forecast. Also provide weather alerts if any.`;
-          loadingMessage = `Getting weather for ${location}...`;
-        } else {
-          query = `Get the current weather forecast for my current location. Include current conditions, temperature, humidity, wind speed, and a 5-day forecast. Also provide weather alerts if any.`;
-          loadingMessage = 'Getting weather for your location...';
-        }
-        break;
-    }
-    
-    // Send the query to AI
-    if (query) {
-      console.log('Sending query:', query);
-      setTags([]);
-      setSuggested([]);
-      setLinks([]);
-      setSearchQuery("");
-      setLoading(true);
-      handleSend(query, null, false, false);
-    }
-  };
-
   // Setter functions for context and web search
   const setUsePageContext = useCallback(async (value: boolean) => {
     try {
@@ -1162,7 +1036,6 @@ ${pageContext}`;
       return !loading && savedPageInfo && !isStreaming && isRelevantType;
     },
     shouldShowLinkList: () => !loading && links.length > 0 && !isStreaming,
-    sendNewsQuery,
     usePageContext: userSettings?.contextConfig?.usePageContext ?? true,
     setUsePageContext,
     useWebSearch: userSettings?.contextConfig?.useWebSearch ?? false,

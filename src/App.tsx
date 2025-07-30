@@ -24,8 +24,6 @@ export interface HistoryNavContextType {
 }
 
 export interface AppActionsContextType {
-  sendNewsQuery: ((query: string) => void) | null;
-  setSendNewsQuery: (fn: (query: string) => void) => void;
   clearContent: (() => void) | null;
   setClearContent: (fn: () => void) => void;
 }
@@ -37,13 +35,7 @@ export default function App() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0); // Always start at 0, never null
   const [initialized, setInitialized] = useState<boolean>(false); // Track if app has been initialized
-  const [sendNewsQuery, setSendNewsQuery] = useState<((query: string) => void) | null>(null);
   const [clearContent, setClearContent] = useState<(() => void) | null>(null);
-
-  // Debug when setSendNewsQuery is called
-  const setSendNewsQueryWithDebug = useCallback((fn: (query: string) => void) => {
-    setSendNewsQuery(() => fn);
-  }, []);
 
   // Debug when setClearContent is called
   const setClearContentWithDebug = useCallback((fn: () => void) => {
@@ -219,8 +211,6 @@ export default function App() {
       refreshHistory
     }}>
       <AppActionsContext.Provider value={{
-        sendNewsQuery,
-        setSendNewsQuery: setSendNewsQueryWithDebug,
         clearContent,
         setClearContent: setClearContentWithDebug
       }}>

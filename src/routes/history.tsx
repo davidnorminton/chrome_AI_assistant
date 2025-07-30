@@ -47,6 +47,16 @@ export default function History() {
           return item.type === 'search';
         } else if (selectedFilter === "questions") {
           return item.type === 'question';
+        } else if (selectedFilter === "news") {
+          return item.type === 'news';
+        } else if (selectedFilter === "weather") {
+          return item.type === 'weather';
+        } else if (selectedFilter === "events") {
+          return item.type === 'events';
+        } else if (selectedFilter === "files") {
+          return item.type === 'file_analysis';
+        } else if (selectedFilter === "definitions") {
+          return item.type === 'definition';
         }
         return true;
       });
@@ -135,6 +145,11 @@ export default function History() {
       case "search": return "fas fa-search";
       case "question": return "fas fa-question-circle";
       case "summary": return "fas fa-file-alt";
+      case "news": return "fas fa-newspaper";
+      case "weather": return "fas fa-cloud-sun";
+      case "events": return "fas fa-calendar-alt";
+      case "file_analysis": return "fas fa-file-text";
+      case "definition": return "fas fa-tag";
       default: return "fas fa-file-alt";
     }
   };
@@ -213,6 +228,11 @@ export default function History() {
             <option value="summaries">Summaries</option>
             <option value="searches">Searches</option>
             <option value="questions">Questions</option>
+            <option value="news">News</option>
+            <option value="weather">Weather</option>
+            <option value="events">Events</option>
+            <option value="files">Files</option>
+            <option value="definitions">Definitions</option>
           </select>
           
           <select

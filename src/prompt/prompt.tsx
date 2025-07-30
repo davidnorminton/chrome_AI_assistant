@@ -254,6 +254,18 @@ export default function Prompt({ onSend, onSummarize, loading, useContext, setUs
           placeholder={useContext ? "Ask a question about this page" : "Ask anything"}
           rows={1}
           onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              if (e.shiftKey) {
+                // Shift+Enter: Allow new line
+                return;
+              } else {
+                // Enter: Submit the prompt
+                e.preventDefault();
+                handleSendClick();
+              }
+            }
+          }}
           disabled={loading}
         />
 

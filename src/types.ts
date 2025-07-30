@@ -2,7 +2,7 @@ export interface HistoryItem {
   id: string;
   timestamp: string;
   title: string;              // history entry title (summary title or AI-suggested title)
-  type: 'summary' | 'search' | 'question' | 'file_analysis' | 'definition'; // type of response
+  type: 'summary' | 'search' | 'question' | 'file_analysis' | 'definition' | 'news' | 'weather' | 'events'; // type of response
   response: string;           // HTML string of the AI response
   tags?: string[];            // saved tags for summary or direct question (optional for backward compatibility)
   suggestedQuestions?: string[]; // saved suggested follow-up questions (optional for backward compatibility)

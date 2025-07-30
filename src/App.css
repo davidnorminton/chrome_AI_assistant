@@ -458,6 +458,7 @@ html body #rightMenu button,
   display: flex;
   align-items: center;
   width: 100%;
+  margin-bottom: 10px;
 }
 
 .search-icon {
