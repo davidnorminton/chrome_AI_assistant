@@ -24,6 +24,7 @@ interface ContentDisplayProps {
   pageInfo?: { title: string; url: string }; // Added pageInfo prop
   links?: string[]; // Added links prop
   fileData?: string; // Added fileData prop
+  userSettings?: { contextConfig: { showTags: boolean; showSuggestedQuestions: boolean } } | null; // Add user settings
 }
 
 // Component to render syntax highlighted code blocks
@@ -105,7 +106,8 @@ export default function ContentDisplay({
   loading,
   pageInfo,
   links,
-  fileData
+  fileData,
+  userSettings
 }: ContentDisplayProps) {
   const { isStreaming, streamContent } = useStreaming();
   
@@ -118,11 +120,11 @@ export default function ContentDisplay({
   };
 
   const shouldShowTags = () => {
-    return Boolean(tags && tags.length > 0 && !isStreaming);
+    return Boolean(tags && tags.length > 0 && !isStreaming && userSettings?.contextConfig?.showTags);
   };
 
   const shouldShowSuggested = () => {
-    return Boolean(suggested && suggested.length > 0 && !isStreaming);
+    return Boolean(suggested && suggested.length > 0 && !isStreaming && userSettings?.contextConfig?.showSuggestedQuestions);
   };
 
   const shouldShowScreenshotDisplay = () => {
@@ -214,7 +216,7 @@ export default function ContentDisplay({
         )}
 
         {/* Tags - Show when content is available and not actively streaming */}
-        {!isStreaming && tags.length > 0 && (
+        {!isStreaming && shouldShowTags() && (
           <div className="tags-container">
             {tags.map((tag, index) => (
               <span
@@ -229,7 +231,7 @@ export default function ContentDisplay({
         )}
 
         {/* Suggested Questions - Show when content is available and not actively streaming */}
-        {!isStreaming && suggested.length > 0 && (
+        {!isStreaming && shouldShowSuggested() && (
           <div className="suggested-questions-container">
             <ul>
               {suggested.map((question, index) => (

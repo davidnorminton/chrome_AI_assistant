@@ -2,7 +2,7 @@
 .markdown-content {
   line-height: 1.6;
   color: #e0e0e0;
-  font-size: 15px;
+  font-size: 16px;
 }
 
 .markdown-content h1,
@@ -93,9 +93,8 @@
 
 .markdown-content th,
 .markdown-content td {
-  border: 1px solid #3a3a3a;
-  padding: 8px 12px;
-  text-align: left;
+  padding: 8px;
+  border: 1px solid #555555;
 }
 
 .markdown-content th {
@@ -182,25 +181,4 @@
   color: #ff6b6b;
   margin: 0;
   font-weight: 500;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .markdown-content {
-    font-size: 13px;
-  }
-  
-  .markdown-content pre {
-    padding: 12px;
-    font-size: 12px;
-  }
-  
-  .markdown-content table {
-    font-size: 12px;
-  }
-  
-  .markdown-content th,
-  .markdown-content td {
-    padding: 6px 8px;
-  }
 } 

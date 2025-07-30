@@ -40,6 +40,7 @@
   padding: 20px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   margin-bottom: 16px;
+  gap: 10px;
 }
 
 /* Setting Groups */
@@ -334,26 +335,6 @@
   background: #ff6b6b20;
   color: #ff6b6b;
   border: 1px solid #ff6b6b;
-}
-
-/* Responsive Design */
-@media (max-width: 480px) {
-  .settings-panel {
-    padding: 12px;
-  }
-  
-  .settings-content {
-    padding: 16px;
-  }
-  
-  .setting-group-title {
-    font-size: 15px;
-  }
-  
-  .setting-save-btn {
-    width: 100%;
-    justify-content: center;
-  }
 }
 
 /* Scrollbar Styling */

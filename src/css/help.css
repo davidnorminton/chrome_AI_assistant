@@ -31,7 +31,7 @@
 .help-content {
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: 10px;
 }
 
 .help-section {
@@ -222,44 +222,6 @@
 
 .troubleshooting-item strong {
   color: #4a9eff;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .help-container {
-    padding: 15px;
-  }
-  
-  .help-header h1 {
-    font-size: 2rem;
-  }
-  
-  .help-section {
-    padding: 20px;
-  }
-  
-  .help-card {
-    padding: 15px;
-  }
-  
-  .config-options,
-  .history-types {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 480px) {
-  .help-header h1 {
-    font-size: 1.8rem;
-  }
-  
-  .help-section h2 {
-    font-size: 1.5rem;
-  }
-  
-  .help-card h3 {
-    font-size: 1.2rem;
-  }
 }
 
 /* Scrollbar Styling */

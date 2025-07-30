@@ -1040,5 +1040,6 @@ ${pageContext}`;
     setUsePageContext,
     useWebSearch: userSettings?.contextConfig?.useWebSearch ?? false,
     setUseWebSearch,
+    userSettings, // Add user settings to return object
   };
 } 

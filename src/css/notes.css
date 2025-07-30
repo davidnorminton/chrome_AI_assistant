@@ -359,49 +359,6 @@
   box-shadow: 0 4px 15px rgba(74, 158, 255, 0.4);
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .notes-grid {
-    grid-template-columns: 1fr;
-    padding: 16px;
-  }
-  
-  .note-editor-header {
-    padding: 12px 16px;
-  }
-  
-  .note-editor-content {
-    padding: 16px;
-  }
-  
-  .note-type-selector {
-    gap: 4px;
-  }
-  
-  .type-btn {
-    padding: 6px 12px;
-    font-size: 12px;
-  }
-}
-
-@media (max-width: 480px) {
-  .floating-add-btn {
-    bottom: 16px;
-    right: 16px;
-    width: 48px;
-    height: 48px;
-    font-size: 18px;
-  }
-  
-  .note-card {
-    padding: 16px;
-  }
-  
-  .note-title-section h3 {
-    font-size: 14px;
-  }
-}
-
 /* Keep existing styles for editor components */
 .interactive-checkbox-editor {
   height: 100%;

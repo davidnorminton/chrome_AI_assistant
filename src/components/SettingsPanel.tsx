@@ -601,63 +601,6 @@ export default function SettingsPanel() {
           <div className="setting-item">
             <div className="setting-checkbox">
               <input
-                id="usePageContext"
-                type="checkbox"
-                checked={contextConfig.usePageContext}
-                onChange={(e) => handleContextConfigChange('usePageContext', e.target.checked)}
-                className="setting-checkbox-input"
-              />
-              <label htmlFor="usePageContext">
-                <i className="fas fa-file-alt"></i>
-                Include Page Context
-              </label>
-            </div>
-            <p className="setting-help">
-              Include current page content when asking questions
-            </p>
-          </div>
-
-          <div className="setting-item">
-            <div className="setting-checkbox">
-              <input
-                id="includeMetadata"
-                type="checkbox"
-                checked={contextConfig.includeMetadata}
-                onChange={(e) => handleContextConfigChange('includeMetadata', e.target.checked)}
-                className="setting-checkbox-input"
-              />
-              <label htmlFor="includeMetadata">
-                <i className="fas fa-info-circle"></i>
-                Include Page Metadata
-              </label>
-            </div>
-            <p className="setting-help">
-              Include page title and URL in context
-            </p>
-          </div>
-
-          <div className="setting-item">
-            <div className="setting-checkbox">
-              <input
-                id="includeLinks"
-                type="checkbox"
-                checked={contextConfig.includeLinks}
-                onChange={(e) => handleContextConfigChange('includeLinks', e.target.checked)}
-                className="setting-checkbox-input"
-              />
-              <label htmlFor="includeLinks">
-                <i className="fas fa-link"></i>
-                Include Page Links
-              </label>
-            </div>
-            <p className="setting-help">
-              Include page links in context (when available)
-            </p>
-          </div>
-
-          <div className="setting-item">
-            <div className="setting-checkbox">
-              <input
                 id="showTags"
                 type="checkbox"
                 checked={contextConfig.showTags}

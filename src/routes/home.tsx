@@ -36,6 +36,7 @@ export default function Home() {
     currentHistoryItemFileName,
     currentHistoryItemTitle,
     showWelcome,
+    userSettings, // Add user settings
     
     // Handlers
     handleSummarize,
@@ -96,6 +97,7 @@ export default function Home() {
           currentHistoryItemType={currentHistoryItemType}
           currentHistoryItemFileName={currentHistoryItemFileName}
           loading={loading}
+          userSettings={userSettings}
         >
           <Welcome 
             onSummarize={() => handleSummarize()} 

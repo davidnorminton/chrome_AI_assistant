@@ -325,67 +325,6 @@
   100% { transform: rotate(360deg); }
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .firebase-setup-wizard {
-    margin: 10px;
-    padding: 20px;
-  }
-  
-  .wizard-header h2 {
-    font-size: 1.5rem;
-  }
-  
-  .config-form {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-  
-  .wizard-actions {
-    flex-direction: column;
-    gap: 16px;
-  }
-  
-  .wizard-nav {
-    width: 100%;
-    justify-content: space-between;
-  }
-  
-  .btn-primary,
-  .btn-secondary {
-    padding: 10px 20px;
-    font-size: 13px;
-  }
-}
-
-@media (max-width: 480px) {
-  .firebase-setup-wizard {
-    padding: 15px;
-  }
-  
-  .wizard-progress {
-    padding: 15px;
-  }
-  
-  .step-instructions {
-    padding: 15px;
-  }
-  
-  .step-instructions ol {
-    padding-left: 15px;
-  }
-  
-  .config-summary {
-    padding: 15px;
-  }
-  
-  .summary-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-  }
-} 
-
 /* Database Structure Visualization */
 .database-structure {
   margin-top: 20px;
