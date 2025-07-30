@@ -1,5 +1,7 @@
 import React from 'react';
 import '../css/help.css';
+import '../css/collapsible.css';
+import CollapsibleSection from '../components/CollapsibleSection';
 
 const Help: React.FC = () => {
   return (
@@ -11,8 +13,7 @@ const Help: React.FC = () => {
 
       <div className="help-content">
         {/* Getting Started Section */}
-        <section className="help-section">
-          <h2>🚀 Getting Started</h2>
+        <CollapsibleSection title="🚀 Getting Started" defaultExpanded={true}>
           <div className="help-card">
             <h3>Quick Start Guide</h3>
             <ol>
@@ -22,11 +23,10 @@ const Help: React.FC = () => {
               <li><strong>Explore Features:</strong> Try the Summarize, Web Search, and File Upload buttons</li>
             </ol>
           </div>
-        </section>
+        </CollapsibleSection>
 
         {/* AI Features Section */}
-        <section className="help-section">
-          <h2>🤖 AI Features</h2>
+        <CollapsibleSection title="🤖 AI Features">
           
           <div className="help-card">
             <h3>📝 Direct Questions</h3>
@@ -92,11 +92,10 @@ const Help: React.FC = () => {
               <li><strong>Metadata:</strong> Includes video title and description</li>
             </ul>
           </div>
-        </section>
+        </CollapsibleSection>
 
         {/* AI Configuration Section */}
-        <section className="help-section">
-          <h2>⚙️ AI Configuration</h2>
+        <CollapsibleSection title="⚙️ AI Configuration">
           
           <div className="help-card">
             <h3>🎛️ Context Levels</h3>
@@ -163,11 +162,10 @@ const Help: React.FC = () => {
               <strong>Tip:</strong> Higher limits provide more context but may increase response time and token usage.
             </div>
           </div>
-        </section>
+        </CollapsibleSection>
 
         {/* History & Storage Section */}
-        <section className="help-section">
-          <h2>📚 History & Storage</h2>
+        <CollapsibleSection title="📚 History & Storage">
           
           <div className="help-card">
             <h3>💾 How History Works</h3>
@@ -222,11 +220,10 @@ const Help: React.FC = () => {
               <li><strong>Privacy First:</strong> Data never leaves your device</li>
             </ul>
           </div>
-        </section>
+        </CollapsibleSection>
 
         {/* Notes & Organization Section */}
-        <section className="help-section">
-          <h2>📝 Notes & Organization</h2>
+        <CollapsibleSection title="📝 Notes & Organization">
           
           <div className="help-card">
             <h3>📋 Creating Notes</h3>
@@ -272,11 +269,10 @@ const Help: React.FC = () => {
               <li><strong>Search & Filter:</strong> Find notes quickly with search functionality</li>
             </ul>
           </div>
-        </section>
+        </CollapsibleSection>
 
         {/* Interface Features Section */}
-        <section className="help-section">
-          <h2>🖥️ Interface Features</h2>
+        <CollapsibleSection title="🖥️ Interface Features">
           
           <div className="help-card">
             <h3>🎨 Loading Animations</h3>
@@ -318,12 +314,10 @@ const Help: React.FC = () => {
               <li><strong>Fresh Start:</strong> Ready for new questions or analysis</li>
             </ul>
           </div>
-        </section>
+        </CollapsibleSection>
 
         {/* Tips & Best Practices Section */}
-        <section className="help-section">
-          <h2>💡 Tips & Best Practices</h2>
-          
+        <CollapsibleSection title="💡 Tips & Best Practices">
           <div className="help-card">
             <h3>🎯 Getting Better Results</h3>
             <ul>
@@ -333,7 +327,6 @@ const Help: React.FC = () => {
               <li><strong>Check History:</strong> Review previous conversations for insights</li>
             </ul>
           </div>
-
           <div className="help-card">
             <h3>🔧 Configuration Tips</h3>
             <ul>
@@ -343,7 +336,6 @@ const Help: React.FC = () => {
               <li><strong>Monitor Token Usage:</strong> Higher limits may increase API costs</li>
             </ul>
           </div>
-
           <div className="help-card">
             <h3>🚀 Advanced Features</h3>
             <ul>
@@ -353,12 +345,10 @@ const Help: React.FC = () => {
               <li><strong>Screenshot Analysis:</strong> Ideal for visual content and layouts</li>
             </ul>
           </div>
-        </section>
+        </CollapsibleSection>
 
         {/* Troubleshooting Section */}
-        <section className="help-section">
-          <h2>🔧 Troubleshooting</h2>
-          
+        <CollapsibleSection title="🔧 Troubleshooting">
           <div className="help-card">
             <h3>❓ Common Issues</h3>
             <div className="troubleshooting-item">
@@ -378,7 +368,6 @@ const Help: React.FC = () => {
               <p><strong>Solution:</strong> Check browser storage permissions and try refreshing</p>
             </div>
           </div>
-
           <div className="help-card">
             <h3>📞 Getting Help</h3>
             <p>If you're still experiencing issues:</p>
@@ -389,7 +378,7 @@ const Help: React.FC = () => {
               <li>Contact support with specific error details</li>
             </ul>
           </div>
-        </section>
+        </CollapsibleSection>
       </div>
     </div>
   );

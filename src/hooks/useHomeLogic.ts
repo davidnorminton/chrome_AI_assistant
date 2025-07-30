@@ -164,14 +164,11 @@ ${pageContext}`;
       return;
     }
 
-    // Don't restore history if we have active content being displayed
-    if (outputHtml && outputHtml.trim() !== '') {
-      return;
-    }
-
     // Check if we have valid history and a valid index
     if (nav && nav.history && nav.history.length > 0 && nav.currentIndex >= 0 && nav.currentIndex < nav.history.length && nav.history[nav.currentIndex]) {
       const item = nav.history[nav.currentIndex];
+      
+      console.log('Restoring history item:', item.title, 'at index:', nav.currentIndex);
       
       setTags(item.tags ?? []);
       setSuggested(item.suggestedQuestions ?? []);
@@ -222,7 +219,7 @@ ${pageContext}`;
       setSavedPageInfo(null);
       setSearchQuery("");
     }
-  }, [nav, loading, isStreaming, outputHtml]);
+  }, [nav, loading, isStreaming]);
 
   // Summarize page handler
   const handleSummarize = useCallback(async (userPrompt?: string) => {

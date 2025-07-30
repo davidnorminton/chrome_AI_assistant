@@ -179,30 +179,18 @@ export const signOutUser = async () => {
 
 export const getCurrentUser = async (): Promise<User | null> => {
   try {
-    // First try Firebase authentication
-    const { auth } = await initializeFirebase();
-    if (auth && auth.currentUser) {
-      return auth.currentUser;
-    }
-    
-    // If Firebase is not configured, check for Chrome identity authentication
     const result = await chrome.storage.local.get(['userAuthenticated', 'googleAuthToken', 'authTimestamp', 'userProfile']);
+    
     if (result.userAuthenticated && result.googleAuthToken) {
       // Check if token is still valid (24 hours)
       const tokenAge = Date.now() - (result.authTimestamp || 0);
       if (tokenAge < 24 * 60 * 60 * 1000) {
-        // Use stored user profile if available, otherwise create a fallback
+        // Use stored user profile if available
         if (result.userProfile) {
           return result.userProfile as any;
         } else {
-          // Fallback to mock user if no profile is stored
-          const mockUser = {
-            uid: 'chrome-user',
-            email: 'user@example.com',
-            displayName: 'Chrome User',
-            photoURL: null
-          };
-          return mockUser as any;
+          // No user profile available
+          return null;
         }
       } else {
         // Token expired, clear it

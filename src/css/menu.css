@@ -11,7 +11,7 @@ html body #rightMenu,
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
-  padding-top: 10px !important;
+  padding-top: 16px !important;
   z-index: 1000 !important;
   border-left: 1px solid #555555 !important; /* Dark border */
   box-shadow: -2px 0 10px rgba(0, 0, 0, 0.3) !important;
@@ -29,7 +29,7 @@ html body #rightMenu button,
 #rightMenu button {
   background: none !important;
   border: none !important;
-  margin: 5px 0 !important;
+  margin: 8px 0 !important;
   cursor: pointer !important;
   color: #fff !important;
   width: 32px !important;
@@ -219,7 +219,7 @@ html body #rightMenu button,
 /* Settings Button Container - Below help button */
 .settings-button-container {
   position: absolute;
-  bottom: 120px;
+  bottom: 100px;
   left: 50%;
   transform: translateX(-50%);
   margin-top: 25px;

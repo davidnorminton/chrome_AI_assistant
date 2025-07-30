@@ -451,6 +451,7 @@
 }
 
 .auth-status-indicator i {
+  margin-right: 6px;
   font-size: 10px;
 }
 
@@ -459,7 +460,11 @@
 }
 
 .auth-status-indicator.authenticated i {
-  color: #51cf66;
+  color: #4a9eff;
+}
+
+.status-online {
+  color: #4caf50 !important;
 }
 
 .setting-error {

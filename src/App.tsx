@@ -112,8 +112,9 @@ export default function App() {
       
       // After refreshing, navigate back if possible
       if (historyItems.length > 0 && currentIndex > 0) {
-        console.log('goBack: setting to index', currentIndex - 1);
-        setCurrentIndex(currentIndex - 1);
+        const newIndex = currentIndex - 1;
+        console.log('goBack: setting to index', newIndex);
+        setCurrentIndex(newIndex);
       } else {
         console.log('goBack: already at oldest entry, doing nothing');
       }
@@ -121,8 +122,9 @@ export default function App() {
       console.error('Error refreshing history for goBack:', error);
       // Fallback to existing logic if refresh fails
       if (currentIndex > 0) {
-        console.log('goBack: fallback - setting to index', currentIndex - 1);
-        setCurrentIndex(currentIndex - 1);
+        const newIndex = currentIndex - 1;
+        console.log('goBack: fallback - setting to index', newIndex);
+        setCurrentIndex(newIndex);
       }
     }
   }, [currentIndex, history.length]);
@@ -143,8 +145,9 @@ export default function App() {
       
       // After refreshing, navigate forward if possible
       if (historyItems.length > 0 && currentIndex < historyItems.length - 1) {
-        console.log('goForward: setting to index', currentIndex + 1);
-        setCurrentIndex(currentIndex + 1);
+        const newIndex = currentIndex + 1;
+        console.log('goForward: setting to index', newIndex);
+        setCurrentIndex(newIndex);
       } else {
         console.log('goForward: already at newest entry, doing nothing');
       }
@@ -152,14 +155,16 @@ export default function App() {
       console.error('Error refreshing history for goForward:', error);
       // Fallback to existing logic if refresh fails
       if (currentIndex < history.length - 1) {
-        console.log('goForward: fallback - setting to index', currentIndex + 1);
-        setCurrentIndex(currentIndex + 1);
+        const newIndex = currentIndex + 1;
+        console.log('goForward: fallback - setting to index', newIndex);
+        setCurrentIndex(newIndex);
       }
     }
   }, [currentIndex, history.length]);
 
-  const canGoBack = history.length > 0 && currentIndex < history.length - 1;
-  const canGoForward = history.length > 0 && currentIndex > 0;
+  // Fix the canGoBack and canGoForward logic
+  const canGoBack = history.length > 0 && currentIndex > 0;
+  const canGoForward = history.length > 0 && currentIndex < history.length - 1;
 
   // Debug navigation state
   useEffect(() => {
@@ -167,9 +172,10 @@ export default function App() {
       historyLength: history.length,
       currentIndex,
       canGoBack,
-      canGoForward
+      canGoForward,
+      currentHistoryItem: history[currentIndex] || 'none'
     });
-  }, [history.length, currentIndex, canGoBack, canGoForward]);
+  }, [history.length, currentIndex, canGoBack, canGoForward, history]);
 
   const setIndex = (idx: number | null) => {
     console.log('setIndex called with', idx, 'history.length', history.length);

@@ -261,6 +261,7 @@
 .wizard-nav {
   display: flex;
   gap: 12px;
+  margin-left: auto; /* Push navigation to the right */
 }
 
 .btn-primary,

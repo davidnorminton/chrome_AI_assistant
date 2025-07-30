@@ -111,14 +111,14 @@ const FirebaseSetupWizard: React.FC<FirebaseSetupWizardProps> = ({ onComplete, o
               <h3>Step 1: Create Firebase Project</h3>
               <ol>
                 <li>Go to <a href="https://console.firebase.google.com" target="_blank" rel="noopener noreferrer">Firebase Console</a></li>
-                <li>Click "Create a project" or "Add project"</li>
+                <li>Click "Create a project"</li>
                 <li>Enter a project name (e.g., "Orla Extension")</li>
-                <li>Choose whether to enable Google Analytics (optional)</li>
+                <li>Disable Google Analytics (not needed)</li>
                 <li>Click "Create project"</li>
               </ol>
               <div className="step-note">
                 <i className="fas fa-info-circle"></i>
-                <span>You'll need a Google account to create a Firebase project.</span>
+                <span>You'll need a Google account. This is free and secure.</span>
               </div>
             </div>
           </div>
@@ -130,42 +130,15 @@ const FirebaseSetupWizard: React.FC<FirebaseSetupWizardProps> = ({ onComplete, o
             <div className="step-instructions">
               <h3>Step 2: Create Firestore Database</h3>
               <ol>
-                <li>In your Firebase project, go to "Firestore Database" in the left sidebar</li>
+                <li>In your Firebase project, click "Firestore Database" in the left menu</li>
                 <li>Click "Create database"</li>
-                <li>Choose "Start in test mode" for now</li>
-                <li>Select a location (choose the closest to your users)</li>
+                <li>Choose "Start in test mode" (you can secure it later)</li>
+                <li>Select a location (choose closest to you)</li>
                 <li>Click "Done"</li>
               </ol>
               <div className="step-note">
                 <i className="fas fa-info-circle"></i>
-                <span>Test mode allows read/write access. You can secure it later.</span>
-              </div>
-              
-              <div className="database-structure">
-                <h4>Database Structure</h4>
-                <p>Your data will be organized as follows:</p>
-                <div className="structure-tree">
-                  <div className="tree-item">
-                    <i className="fas fa-users"></i>
-                    <span>users/</span>
-                  </div>
-                  <div className="tree-item indent">
-                    <i className="fas fa-user"></i>
-                    <span>your-user-id/</span>
-                  </div>
-                  <div className="tree-item indent-2">
-                    <i className="fas fa-sticky-note"></i>
-                    <span>notes/</span>
-                  </div>
-                  <div className="tree-item indent-2">
-                    <i className="fas fa-cog"></i>
-                    <span>settings/</span>
-                  </div>
-                  <div className="tree-item indent-2">
-                    <i className="fas fa-history"></i>
-                    <span>history/</span>
-                  </div>
-                </div>
+                <span>Test mode is fine for now. Your data will be organized automatically.</span>
               </div>
             </div>
           </div>
@@ -178,13 +151,17 @@ const FirebaseSetupWizard: React.FC<FirebaseSetupWizardProps> = ({ onComplete, o
               <h3>Step 3: Get Configuration Values</h3>
               <ol>
                 <li>In your Firebase project, click the gear icon ⚙️ next to "Project Overview"</li>
-                <li>Select "Project settings"</li>
+                <li>Click "Project settings"</li>
                 <li>Scroll down to "Your apps" section</li>
                 <li>Click the web icon (&lt;/&gt;) to add a web app</li>
-                <li>Enter a nickname (e.g., "Orla Extension")</li>
+                <li>Enter app nickname: "Orla Extension"</li>
                 <li>Click "Register app"</li>
                 <li>Copy the configuration values below</li>
               </ol>
+              <div className="step-note">
+                <i className="fas fa-info-circle"></i>
+                <span>These values are safe to use in browser extensions. They're not secret.</span>
+              </div>
             </div>
             
             <div className="config-form">
@@ -201,7 +178,7 @@ const FirebaseSetupWizard: React.FC<FirebaseSetupWizardProps> = ({ onComplete, o
                 {errors.apiKey && <span className="error-message">{errors.apiKey}</span>}
                 <div className="field-help">
                   <i className="fas fa-info-circle"></i>
-                  <span>Find this in your Firebase project settings under "General" tab → "Your apps" → Web app configuration</span>
+                  <span>Starts with "AIzaSy". Found in Project Settings → General → Your apps → Web app</span>
                 </div>
               </div>
 
@@ -216,6 +193,10 @@ const FirebaseSetupWizard: React.FC<FirebaseSetupWizardProps> = ({ onComplete, o
                   className={errors.authDomain ? 'error' : ''}
                 />
                 {errors.authDomain && <span className="error-message">{errors.authDomain}</span>}
+                <div className="field-help">
+                  <i className="fas fa-info-circle"></i>
+                  <span>Usually "your-project-id.firebaseapp.com"</span>
+                </div>
               </div>
 
               <div className="form-group">
@@ -229,6 +210,10 @@ const FirebaseSetupWizard: React.FC<FirebaseSetupWizardProps> = ({ onComplete, o
                   className={errors.projectId ? 'error' : ''}
                 />
                 {errors.projectId && <span className="error-message">{errors.projectId}</span>}
+                <div className="field-help">
+                  <i className="fas fa-info-circle"></i>
+                  <span>Your Firebase project ID (no spaces, lowercase)</span>
+                </div>
               </div>
 
               <div className="form-group">
@@ -242,6 +227,10 @@ const FirebaseSetupWizard: React.FC<FirebaseSetupWizardProps> = ({ onComplete, o
                   className={errors.storageBucket ? 'error' : ''}
                 />
                 {errors.storageBucket && <span className="error-message">{errors.storageBucket}</span>}
+                <div className="field-help">
+                  <i className="fas fa-info-circle"></i>
+                  <span>Usually "your-project-id.appspot.com"</span>
+                </div>
               </div>
 
               <div className="form-group">
@@ -255,6 +244,10 @@ const FirebaseSetupWizard: React.FC<FirebaseSetupWizardProps> = ({ onComplete, o
                   className={errors.messagingSenderId ? 'error' : ''}
                 />
                 {errors.messagingSenderId && <span className="error-message">{errors.messagingSenderId}</span>}
+                <div className="field-help">
+                  <i className="fas fa-info-circle"></i>
+                  <span>Numeric ID (e.g., 123456789)</span>
+                </div>
               </div>
 
               <div className="form-group">
@@ -268,6 +261,10 @@ const FirebaseSetupWizard: React.FC<FirebaseSetupWizardProps> = ({ onComplete, o
                   className={errors.appId ? 'error' : ''}
                 />
                 {errors.appId && <span className="error-message">{errors.appId}</span>}
+                <div className="field-help">
+                  <i className="fas fa-info-circle"></i>
+                  <span>Format: "1:123456789:web:abc123def456"</span>
+                </div>
               </div>
             </div>
           </div>

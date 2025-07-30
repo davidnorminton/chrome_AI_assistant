@@ -1,8 +1,8 @@
-/// <reference types="chrome" />
 import { useEffect, useState } from "react";
 import type { AIContextConfig, AIModelConfig } from "../types";
 import { defaultAIContextManager } from "../utils/aiContextManager";
 import { useNavigate } from "react-router-dom";
+import CollapsibleSection from "./CollapsibleSection";
 
 // Define both the values _and_ user-friendly labels
 const modelOptions = [
@@ -27,6 +27,7 @@ export default function SettingsPanel() {
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [signInError, setSignInError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userName, setUserName] = useState<string>('');
   
   // Firebase status state
   const [firebaseStatus, setFirebaseStatus] = useState<'configured' | 'not-configured'>('not-configured');
@@ -81,26 +82,47 @@ export default function SettingsPanel() {
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
-        const result = await chrome.storage.local.get(['userAuthenticated', 'googleAuthToken', 'authTimestamp']);
+        const result = await chrome.storage.local.get(['userAuthenticated', 'googleAuthToken', 'authTimestamp', 'userProfile']);
         if (result.userAuthenticated && result.googleAuthToken) {
           // Check if token is still valid (24 hours)
           const tokenAge = Date.now() - (result.authTimestamp || 0);
           if (tokenAge < 24 * 60 * 60 * 1000) {
             setIsAuthenticated(true);
+            // Get user name from profile
+            if (result.userProfile) {
+              setUserName(result.userProfile.displayName || result.userProfile.email || 'Guest');
+            } else {
+              setUserName('Guest');
+            }
           } else {
             // Token expired, clear it
-            await chrome.storage.local.remove(['userAuthenticated', 'googleAuthToken', 'authTimestamp']);
+            await chrome.storage.local.remove(['userAuthenticated', 'googleAuthToken', 'authTimestamp', 'userProfile']);
             setIsAuthenticated(false);
+            setUserName('');
           }
         } else {
           setIsAuthenticated(false);
+          setUserName('');
         }
       } catch (error) {
         setIsAuthenticated(false);
       }
     };
-
+    
     checkAuthStatus();
+    
+    // Listen for authentication changes
+    const handleStorageChange = (changes: { [key: string]: chrome.storage.StorageChange }) => {
+      if (changes.userAuthenticated || changes.userProfile) {
+        checkAuthStatus();
+      }
+    };
+    
+    chrome.storage.onChanged.addListener(handleStorageChange);
+    
+    return () => {
+      chrome.storage.onChanged.removeListener(handleStorageChange);
+    };
   }, []);
 
   // Check Firebase configuration status
@@ -328,10 +350,7 @@ export default function SettingsPanel() {
 
       <div className="settings-content">
         {/* API Configuration */}
-        <div className="setting-group">
-          <h3 className="setting-group-title">
-            <i className="fas fa-key"></i> API Configuration
-          </h3>
+        <CollapsibleSection title="API Configuration" icon="fas fa-key" defaultExpanded={true}>
           
           <div className="setting-item">
             <div className="setting-label">
@@ -383,13 +402,10 @@ export default function SettingsPanel() {
               ))}
             </select>
           </div>
-        </div>
+        </CollapsibleSection>
 
         {/* Google Authentication Section */}
-        <div className="setting-group">
-          <h3 className="setting-group-title">
-            <i className="fab fa-google"></i> Google Authentication
-          </h3>
+        <CollapsibleSection title="Google Authentication" icon="fab fa-google">
           
           <div className="setting-item">
             <div className="setting-label">
@@ -400,8 +416,8 @@ export default function SettingsPanel() {
             </div>
             <div className="auth-status">
               <span className="auth-status-indicator">
-                <i className="fas fa-circle"></i>
-                {isAuthenticated ? 'Signed In' : 'Not Signed In'}
+                <i className={`fas fa-circle ${isAuthenticated ? 'status-online' : ''}`}></i>
+                {isAuthenticated ? `Signed in as ${userName}` : 'Not Signed In'}
               </span>
             </div>
             <p className="setting-help">
@@ -448,13 +464,10 @@ export default function SettingsPanel() {
               <p><strong>Status:</strong> Configured</p>
             </div>
           </div>
-        </div>
+        </CollapsibleSection>
 
         {/* Firebase Database Setup Wizard */}
-        <div className="setting-group">
-          <h3 className="setting-group-title">
-            <i className="fas fa-database"></i> Firebase Database Setup
-          </h3>
+        <CollapsibleSection title="Firebase Database Setup" icon="fas fa-database">
           
           <div className="setting-item">
             <div className="setting-label">
@@ -517,13 +530,10 @@ export default function SettingsPanel() {
               )}
             </div>
           )}
-        </div>
+        </CollapsibleSection>
 
         {/* AI Context Configuration */}
-        <div className="setting-group">
-          <h3 className="setting-group-title">
-            <i className="fas fa-cogs"></i> AI Context Configuration
-          </h3>
+        <CollapsibleSection title="AI Context Configuration" icon="fas fa-cogs">
           
           <div className="setting-item">
             <div className="setting-label">
@@ -682,13 +692,10 @@ export default function SettingsPanel() {
               Display suggested follow-up questions after AI responses
             </p>
           </div>
-        </div>
+        </CollapsibleSection>
 
         {/* AI Model Configuration */}
-        <div className="setting-group">
-          <h3 className="setting-group-title">
-            <i className="fas fa-sliders-h"></i> Model Parameters
-          </h3>
+        <CollapsibleSection title="Model Parameters" icon="fas fa-sliders-h">
           
           <div className="setting-item">
             <div className="setting-label">
@@ -735,7 +742,7 @@ export default function SettingsPanel() {
               Maximum tokens in AI response (1000-8000)
             </p>
           </div>
-        </div>
+        </CollapsibleSection>
 
         {/* Validation Messages */}
         {!contextValidation.isValid && (

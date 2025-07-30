@@ -1,0 +1,105 @@
+/* Collapsible Section Styles */
+.collapsible-section {
+  margin-bottom: 16px;
+  border: 1px solid #3a3a3a;
+  border-radius: 8px;
+  background: #2a2a2a;
+  overflow: hidden;
+}
+
+.collapsible-header {
+  width: 100%;
+  padding: 16px 20px;
+  background: #1e1e1e;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.collapsible-header:hover {
+  background: #252525;
+}
+
+.collapsible-header:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #4a9eff;
+}
+
+.collapsible-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.collapsible-title i {
+  color: #4a9eff;
+  font-size: 14px;
+  width: 16px;
+}
+
+.collapsible-icon {
+  color: #888;
+  font-size: 12px;
+  transition: transform 0.3s ease;
+}
+
+.collapsible-header[aria-expanded="true"] .collapsible-icon {
+  transform: rotate(180deg);
+}
+
+.collapsible-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease, padding 0.3s ease;
+  padding: 0 20px;
+}
+
+.collapsible-content.expanded {
+  max-height: 2000px;
+  padding: 20px;
+}
+
+/* Animation for content appearance */
+.collapsible-content.expanded > * {
+  animation: fadeInUp 0.3s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .collapsible-header {
+    padding: 14px 16px;
+    font-size: 15px;
+  }
+  
+  .collapsible-content.expanded {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .collapsible-header {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+  
+  .collapsible-content.expanded {
+    padding: 14px;
+  }
+} 
