@@ -9,6 +9,79 @@ import { HistoryNavigationContext, AppActionsContext } from "../App";
 import { getYouTubeVideoInfo, YouTubeVideoInfo } from "../utils/youtube";
 import { useStreaming } from '../context/StreamingContext';
 import DOMPurify from 'dompurify';
+import { uploadScreenshotToFirebase, getCurrentUser } from '../services/firebase';
+
+// Import citation extraction functions
+const extractCitations = (text: string): string[] => {
+  const citationRegex = /\[(\d+)\]/g;
+  const matches = text.match(citationRegex);
+  if (matches) {
+    return [...new Set(matches)]; // Remove duplicates
+  }
+  return [];
+};
+
+const extractReferences = (text: string): { id: string; title: string; url: string; description?: string }[] => {
+  const references: { id: string; title: string; url: string; description?: string }[] = [];
+  
+  // Multiple patterns to catch different reference formats
+  const patterns = [
+    // Pattern 1: "References:" or "Sources:" section
+    /(?:references?|sources?):\s*\n([\s\S]*?)(?=\n\n|$)/i,
+    // Pattern 2: Lines starting with [number] followed by content
+    /\[(\d+)\]\s*([^\n]+?)(?:\s*-\s*(https?:\/\/[^\s]+))?/g,
+    // Pattern 3: Lines with URLs that might be references
+    /\[(\d+)\]\s*([^\n]+?)(?:\s*\(([^)]+)\))?/g,
+    // Pattern 4: Simple numbered list with URLs
+    /(\d+)\.\s*([^\n]+?)(?:\s*-\s*(https?:\/\/[^\s]+))?/g
+  ];
+  
+  // Try each pattern
+  for (const pattern of patterns) {
+    if (pattern.global) {
+      // For global patterns, find all matches
+      let match;
+      while ((match = pattern.exec(text)) !== null) {
+        const id = match[1];
+        const title = match[2]?.trim() || '';
+        const url = match[3] || '';
+        
+        if (title && !references.some(ref => ref.id === id)) {
+          references.push({
+            id,
+            title,
+            url,
+          });
+        }
+      }
+    } else {
+      // For non-global patterns, try to match the section
+      const match = text.match(pattern);
+      if (match) {
+        const referenceText = match[1];
+        const referenceLines = referenceText.split('\n').filter(line => line.trim());
+        
+        referenceLines.forEach((line, index) => {
+          const id = (index + 1).toString();
+          const urlMatch = line.match(/https?:\/\/[^\s]+/);
+          const url = urlMatch ? urlMatch[0] : '';
+          const title = line.replace(/\[?\d+\]?\s*/, '').replace(url, '').trim();
+          
+          if (title && !references.some(ref => ref.id === id)) {
+            references.push({
+              id,
+              title,
+              url,
+            });
+          }
+        });
+      }
+    }
+  }
+  
+  // Sort by ID to ensure proper order
+  return references.sort((a, b) => parseInt(a.id) - parseInt(b.id));
+};
 
 // Add input sanitization function
 const sanitizeInput = (input: string): string => {
@@ -22,6 +95,36 @@ interface LinkItem {
 }
 
 export function useHomeLogic() {
+  // Helper function to capitalize first letter of each word
+  const capitalizeWords = (str: string): string => {
+    return str.replace(/\b\w/g, (char) => char.toUpperCase());
+  };
+
+  // Centralized title management function
+  const generateHistoryTitle = useCallback((
+    type: 'summary' | 'search' | 'question' | 'file_analysis' | 'definition',
+    query: string,
+    pageTitle?: string,
+    fileName?: string,
+    tag?: string
+  ): string => {
+    switch (type) {
+      case 'summary':
+        return capitalizeWords(pageTitle || 'Page Summary');
+      case 'search':
+        return capitalizeWords(`Searching for ${query}`);
+      case 'question':
+        return capitalizeWords(query); // Use the question as title
+      case 'file_analysis':
+        return capitalizeWords(`File analysis: ${fileName || 'Unknown File'}`);
+      case 'definition':
+        return capitalizeWords(tag || query); // Use tag text directly
+      default:
+        return capitalizeWords(query);
+    }
+  }, []);
+
+  // State management
   const location = useLocation();
   const nav = useContext(HistoryNavigationContext);
   const actions = useContext(AppActionsContext);
@@ -30,6 +133,8 @@ export function useHomeLogic() {
   const [tags, setTags] = useState<string[]>([]);
   const [suggested, setSuggested] = useState<string[]>([]);
   const [links, setLinks] = useState<LinkItem[]>([]);
+  const [citations, setCitations] = useState<string[]>([]);
+  const [references, setReferences] = useState<{ id: string; title: string; url: string; description?: string }[]>([]);
 
   const [loading, setLoading] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -41,6 +146,7 @@ export function useHomeLogic() {
   });
   const [savedPageInfo, setSavedPageInfo] = useState<{ title: string; url: string; favicon: string } | null>(null);
   const [restoredScreenshotData, setRestoredScreenshotData] = useState<string | null>(null);
+  const [firebaseScreenshotURL, setFirebaseScreenshotURL] = useState<string | null>(null);
 
   // Get user settings for tags and suggested questions
   const getUserSettings = async () => {
@@ -124,6 +230,7 @@ ${pageContext}`;
   const [screenshotData, setScreenshotData] = useState<string | null>(null);
   const [currentHistoryItemType, setCurrentHistoryItemType] = useState<string | null>(null);
   const [currentHistoryItemFileName, setCurrentHistoryItemFileName] = useState<string | null>(null);
+  const [currentHistoryItemTitle, setCurrentHistoryItemTitle] = useState<string | null>(null);
   const lastProcessedIndexRef = useRef<number | null>(null);
 
   const { startStream, stopStream, isStreaming, streamContent, resetStream } = useStreaming();
@@ -168,19 +275,36 @@ ${pageContext}`;
     if (nav && nav.history && nav.history.length > 0 && nav.currentIndex >= 0 && nav.currentIndex < nav.history.length && nav.history[nav.currentIndex]) {
       const item = nav.history[nav.currentIndex];
       
-      console.log('Restoring history item:', item.title, 'at index:', nav.currentIndex);
-      
       setTags(item.tags ?? []);
       setSuggested(item.suggestedQuestions ?? []);
       setLinks(item.links ?? []);
       setRestoredScreenshotData(item.screenshotData || null);
       setCurrentHistoryItemType(item.type);
       setCurrentHistoryItemFileName(item.fileName || null);
+      setCurrentHistoryItemTitle(item.title || null); // Set the new state
+      
+      // Extract citations and references from the response
+      if (item.response) {
+        const extractedCitations = extractCitations(item.response);
+        const extractedReferences = extractReferences(item.response);
+        console.log('History restore - extracted citations:', extractedCitations);
+        console.log('History restore - extracted references:', extractedReferences);
+        setCitations(extractedCitations);
+        setReferences(extractedReferences);
+      } else {
+        setCitations([]);
+        setReferences([]);
+      }
+      
+      console.log('[History Restore]', { type: item.type, title: item.title });
       
       // Set search query for search results
       if (item.type === 'search' && item.title.startsWith("Search results for")) {
         const match = item.title.match(/Search results for "([^"]+)"/);
         setSearchQuery(match ? match[1] : "");
+      } else if (item.type === 'definition') {
+        // For definition type, use the title directly as search query
+        setSearchQuery(item.title || "");
       } else {
         setSearchQuery("");
       }
@@ -190,32 +314,53 @@ ${pageContext}`;
       if (item.links && item.links.length > 0 && item.type === 'search') {
         setOutputHtml("");
       } else if (item.response) {
-        setOutputHtml(item.response);
+        // Show title above content for all content types
+        const titleHtml = `<h2 class="history-title">${item.title}</h2>`;
+        setOutputHtml(titleHtml + item.response);
       }
       
       lastProcessedIndexRef.current = nav.currentIndex;
     } else if (nav && nav.history && nav.history.length > 0 && nav.currentIndex === 0) {
-      // Handle location state response
+      // Handle location state response - handle all content types, not just summary
       const item = nav.history[0];
-      if (item.type === 'summary') {
-        setTags(item.tags ?? []);
-        setSuggested(item.suggestedQuestions ?? []);
-        setLinks(item.links ?? []);
-        setOutputHtml(item.response || "");
-        setCurrentHistoryItemType(item.type);
-        setCurrentHistoryItemFileName(item.fileName || null);
-        setSavedPageInfo(item.pageInfo ?? null);
-        lastProcessedIndexRef.current = nav?.currentIndex;
+      setTags(item.tags ?? []);
+      setSuggested(item.suggestedQuestions ?? []);
+      setLinks(item.links ?? []);
+      // Show title above content for all content types
+      const titleHtml = `<h2 class="history-title">${item.title}</h2>`;
+      setOutputHtml(titleHtml + (item.response || ""));
+      setCurrentHistoryItemType(item.type);
+      setCurrentHistoryItemFileName(item.fileName || null);
+      setCurrentHistoryItemTitle(item.title || null); // Set the new state
+      
+      // Extract citations and references from the response
+      if (item.response) {
+        const extractedCitations = extractCitations(item.response);
+        const extractedReferences = extractReferences(item.response);
+        console.log('History restore - extracted citations:', extractedCitations);
+        console.log('History restore - extracted references:', extractedReferences);
+        setCitations(extractedCitations);
+        setReferences(extractedReferences);
+      } else {
+        setCitations([]);
+        setReferences([]);
       }
+      
+      console.log('[History Restore]', { type: item.type, title: item.title });
+      setSavedPageInfo(item.pageInfo ?? null);
+      lastProcessedIndexRef.current = nav?.currentIndex;
     } else {
       // Clear state if no valid history
       setTags([]);
       setSuggested([]);
       setLinks([]);
+      setCitations([]);
+      setReferences([]);
       setOutputHtml("");
       setRestoredScreenshotData(null);
       setCurrentHistoryItemType(null);
       setCurrentHistoryItemFileName(null);
+      setCurrentHistoryItemTitle(null); // Clear the new state
       setSavedPageInfo(null);
       setSearchQuery("");
     }
@@ -277,8 +422,7 @@ ${pageContext}`;
           favicon: info.favicon || "",
         });
 
-        const historyTitle = userPrompt ? userPrompt : (info.title || "Page Summary");
-        const summaryTitle = info.title ? `${info.title}` : "Page Summary";
+        const summaryTitle = generateHistoryTitle('summary', query, info.title);
 
         await addHistory({
           title: summaryTitle,
@@ -320,6 +464,8 @@ ${pageContext}`;
     setTags([]);
     setSuggested([]);
     setLinks([]);
+    setCitations([]);
+    setReferences([]);
     resetStream(); // Reset streaming content for new query
     
     try {
@@ -335,6 +481,21 @@ ${pageContext}`;
       if (fileData) {
         imageData = fileData;
         action = fileData.startsWith('data:image/') ? "direct_question" : "summarize_file";
+        
+        // Upload screenshot to Firebase if it's an image
+        if (fileData.startsWith('data:image/')) {
+          try {
+            const currentUser = await getCurrentUser();
+            if (currentUser) {
+              const downloadURL = await uploadScreenshotToFirebase(currentUser.uid, fileData, query);
+              setFirebaseScreenshotURL(downloadURL);
+              console.log('Screenshot uploaded to Firebase:', downloadURL);
+            }
+          } catch (error) {
+            console.error('Failed to upload screenshot to Firebase:', error);
+            // Continue with local screenshot if Firebase upload fails
+          }
+        }
         
         let queryToSend = "";
         if (fileData.startsWith('data:image/')) {
@@ -360,21 +521,33 @@ ${pageContext}`;
           finalQuery = `Search the web for: ${sanitizedQuery}`;
           action = "get_links";
           
-          // Handle web search separately
-          try {
-            const res: AIResponse = await sendQueryToAI({
-              query: sanitizedQuery,
-              action: "get_links",
+          // Use streaming for web search
+          await startStream(finalQuery, action, imageData, async (streamedContent) => {
+            // Convert markdown to HTML
+            const md = new (await import('markdown-it')).default({
+              html: true,
+              linkify: true,
+              typographer: true,
             });
-            const linksArr = res.links?.slice(0, 15) ?? [];
-            setLinks(linksArr);
-            setOutputHtml(`<div class="search-results"><h3>Web Search Results for: "${sanitizedQuery}"</h3><p>Found ${linksArr.length} results. You can now ask follow-up questions about these results.</p></div>`);
-          } catch (error) {
-            setOutputHtml(`<p class="error">Web search failed: ${error instanceof Error ? error.message : 'Unknown error'}</p>`);
-          }
+            const htmlContent = md.render(streamedContent);
+            
+            setOutputHtml(htmlContent);
+            
+            // Save to history
+            await addHistory({
+              title: generateHistoryTitle('search', sanitizedQuery),
+              type: 'search',
+              response: streamedContent,
+              tags: [],
+              suggestedQuestions: [],
+              links: [],
+            });
+          }, () => {
+            setLoading(false);
+          });
           
           setLoading(false);
-          return; // Exit early since we handled the web search separately
+          return; // Exit early since we handled the web search with streaming
         } else if (imageData) {
           finalQuery = sanitizeInput(query);
         } else {
@@ -420,9 +593,9 @@ ${pageContext}`;
         });
         const htmlContent = md.render(streamedContent);
         
-        // For general questions, append to the existing title
+        // For general questions, show title above content
         if (!isPageSpecific && !imageData) {
-          setOutputHtml(`<h2 class="question-title">${query}</h2>${htmlContent}`);
+          setOutputHtml(`<h2 class="question-title">${query}</h2><div class="question-content">${htmlContent}</div>`);
         } else {
           setOutputHtml(htmlContent);
         }
@@ -446,6 +619,18 @@ ${pageContext}`;
           setSuggested([]);
         }
         
+        // Get citations and references from the streamed content
+        try {
+          const extractedCitations = extractCitations(streamedContent);
+          const extractedReferences = extractReferences(streamedContent);
+          console.log('Extracted citations:', extractedCitations);
+          console.log('Extracted references:', extractedReferences);
+          setCitations(extractedCitations);
+          setReferences(extractedReferences);
+        } catch (error) {
+          console.error('Error extracting citations and references:', error);
+        }
+        
         // Save to history with structured data
         setTimeout(async () => {
           console.log('About to save to history with query:', query);
@@ -453,9 +638,27 @@ ${pageContext}`;
           const isPageSpecific = userSettings?.contextConfig?.usePageContext && !imageData && !userSettings?.contextConfig?.useWebSearch;
           console.log('Is page specific:', isPageSpecific);
           
+          // Determine type and title based on content type
+          let type: 'summary' | 'search' | 'question' | 'file_analysis' | 'definition' = 'question';
+          let title = '';
+          
+          if (imageData) {
+            type = 'question';
+            title = generateHistoryTitle('question', query, info.title);
+          } else if (fileName) {
+            type = 'file_analysis';
+            title = generateHistoryTitle('file_analysis', query, undefined, fileName);
+          } else if (userSettings?.contextConfig?.useWebSearch) {
+            type = 'search';
+            title = generateHistoryTitle('search', query);
+          } else {
+            type = 'question';
+            title = generateHistoryTitle('question', query, isPageSpecific ? info.title : undefined);
+          }
+          
           const historyItem: any = {
-            title: query,
-            type: 'question',
+            title: title,
+            type: type,
             response: streamedContent,
             tags: fetchedTags,
             suggestedQuestions: fetchedQuestions,
@@ -510,34 +713,35 @@ ${pageContext}`;
     setSearchQuery(tag);
     
     try {
-      const res: AIResponse = await sendQueryToAI({
-        query: tag,
-        action: "get_links",
-      });
-      const linksArr = res.links?.slice(0, 10) ?? [];
-      setLinks(linksArr);
-      
-      // Don't set output HTML when we have links - let LinkList handle the display
-      if (linksArr.length === 0) {
-        setOutputHtml(`<p>No results found for "${tag}".</p>`);
-      } else {
-        setOutputHtml(''); // Clear output HTML since LinkList will show the results
-      }
-
-      await addHistory({
-        title: `Search results for "${tag}"`,
-        type: 'search',
-        response: linksArr.length > 0 ? `Found ${linksArr.length} results for "${tag}":` : `No results found for "${tag}".`,
-        tags: [],
-        suggestedQuestions: [],
-        links: linksArr,
+      // Use streaming for tag search results
+      await startStream(tag, "get_links", null, async (streamedContent) => {
+        // Convert markdown to HTML
+        const md = new (await import('markdown-it')).default({
+          html: true,
+          linkify: true,
+          typographer: true,
+        });
+        const htmlContent = md.render(streamedContent);
+        
+        setOutputHtml(htmlContent);
+        
+        // Save to history
+        await addHistory({
+          title: generateHistoryTitle('definition', tag, undefined, undefined, tag),
+          type: 'definition',
+          response: streamedContent,
+          tags: [],
+          suggestedQuestions: [],
+          links: [],
+        });
+      }, () => {
+        setLoading(false);
       });
     } catch (e: any) {
       setOutputHtml(`<p class="error">${e.message}</p>`);
-    } finally {
       setLoading(false);
     }
-  }, []);
+  }, [startStream]);
 
   // Suggested question click handler
   const handleSuggestedClick = useCallback(async (question: string) => {
@@ -549,13 +753,41 @@ ${pageContext}`;
     setSearchQuery("");
     
     try {
-      await handleSummarize(question);
+      // Use the question as the title and send it as a direct question
+      const info = await getPageInfoFromTab();
+      setPageInfo(info);
+      if (info.error) throw new Error(info.error);
+
+      // Use streaming for the suggested question
+      await startStream(question, "direct_question", null, async (streamedContent) => {
+        // Convert markdown to HTML
+        const md = new (await import('markdown-it')).default({
+          html: true,
+          linkify: true,
+          typographer: true,
+        });
+        const htmlContent = md.render(streamedContent);
+        
+        // Show the question as title above content
+        setOutputHtml(`<h2 class="question-title">${question}</h2><div class="question-content">${htmlContent}</div>`);
+        
+        // Save to history
+        await addHistory({
+          title: generateHistoryTitle('question', question),
+          type: 'question',
+          response: streamedContent,
+          tags: [],
+          suggestedQuestions: [],
+          links: [],
+        });
+      }, () => {
+        setLoading(false);
+      });
     } catch (e: any) {
       setOutputHtml(`<p class="error">${e.message}</p>`);
-    } finally {
       setLoading(false);
     }
-  }, [handleSummarize]);
+  }, [startStream]);
 
   // Screenshot capture handler
   const handleScreenshotCapture = useCallback((imageData: string) => {
@@ -585,26 +817,9 @@ ${pageContext}`;
 
   // Helper to determine if we should show the page header
   const shouldShowPageHeader = useCallback(() => {
-    // Don't show header for search results
-    if (links.length > 0 && (nav?.currentIndex !== null && nav?.history[nav.currentIndex]?.title?.startsWith("Search results for") ||
-      (location.state as any)?.title?.startsWith("Search results for"))) {
-      return false;
-    }
-    
-    // Don't show header if we have no page info
-    if (!savedPageInfo && !pageInfo.title) {
-      return false;
-    }
-    
-    // Only show header for summaries or when we have saved page info from a summary
-    // Check if this is a summary response (has tags and suggested questions)
-    const isSummaryResponse = tags.length > 0 || suggested.length > 0;
-    
-    // Show header if we have page info AND this is either:
-    // 1. A summary response (has tags/suggested)
-    // 2. We have saved page info (from a previous summary)
-    return isSummaryResponse || !!savedPageInfo;
-  }, [links.length, nav, location.state, savedPageInfo, pageInfo.title, tags.length, suggested.length]);
+    // Page header disabled - titles are now shown in content area
+    return false;
+  }, []);
 
   // Helper to determine if we should show link list
   const shouldShowLinkList = useCallback(() => {
@@ -917,12 +1132,16 @@ ${pageContext}`;
     tags,
     suggested,
     links,
+    citations,
+    references,
     searchQuery,
     pageInfo,
     savedPageInfo,
     restoredScreenshotData,
+    firebaseScreenshotURL,
     currentHistoryItemType,
     currentHistoryItemFileName,
+    currentHistoryItemTitle,
     loading,
     isStreaming,
     streamContent,
@@ -936,7 +1155,12 @@ ${pageContext}`;
     screenshotData,
     showWelcome,
     handleClearContent,
-    shouldShowPageHeader: () => !loading && savedPageInfo && !isStreaming,
+    shouldShowPageHeader: () => {
+      // Only show page header for summary and page-specific question types
+      const isRelevantType = currentHistoryItemType === 'summary' || 
+                            (currentHistoryItemType === 'question' && savedPageInfo);
+      return !loading && savedPageInfo && !isStreaming && isRelevantType;
+    },
     shouldShowLinkList: () => !loading && links.length > 0 && !isStreaming,
     sendNewsQuery,
     usePageContext: userSettings?.contextConfig?.usePageContext ?? true,

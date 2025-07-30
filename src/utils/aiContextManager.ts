@@ -206,7 +206,8 @@ Use only basic HTML tags (<p>, <ul>, <li>, <strong>, <em>, <h3>).
 Return exactly the JSON object.`;
 
       default:
-        return `You are a helpful AI assistant. Provide clear, accurate, and helpful responses to user questions.
+        return `You are a helpful AI assistant. Provide clear, accurate, and helpful responses to user questions. When providing information, include relevant citations and references at the end of your response. Format references as: [1] Title - URL or [1] Title (description). Always include a "References:" section at the end when you cite sources.
+
 Format your response as a single JSON object with keys:
   "summary" (HTML string with your response),
   "tags" (array of exactly 6 relevant tags),

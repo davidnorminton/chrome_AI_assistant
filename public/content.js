@@ -16,8 +16,6 @@ function extractPageText() {
     return { text: "", error: "restricted_page" };
   }
   const txt = document.body?.innerText.trim() || "";
-  console.log("[Content Script] Extracted text:", txt.length, "characters");
-  console.log(document.body?.innerText)
   if (!txt) {
     return { text: "", error: "no_discernible_text" };
   }
@@ -77,7 +75,6 @@ function handleScreenshotMouseEvents() {
   overlay.addEventListener('mousedown', (e) => {
     // Use raw coordinates without any adjustments
     selectionStart = { x: e.clientX, y: e.clientY };
-    console.log('Selection started at:', selectionStart);
     selectionBox.style.display = 'block';
     selectionBox.style.left = e.clientX + 'px';
     selectionBox.style.top = e.clientY + 'px';
@@ -100,24 +97,12 @@ function handleScreenshotMouseEvents() {
         window.screenshotInstructions.textContent = 
           `Selection: ${Math.abs(width)}x${Math.abs(height)}px - Release to capture`;
       }
-      
-      // Update debug info
-      if (window.debugInfo) {
-        const devicePixelRatio = window.devicePixelRatio || 1;
-        window.debugInfo.textContent = `Screenshot Debug:
-Viewport: ${window.innerWidth}x${window.innerHeight}
-Device Pixel Ratio: ${devicePixelRatio}
-Mouse: ${e.clientX},${e.clientY}
-Selection: ${Math.abs(width)}x${Math.abs(height)}`;
-      }
     }
   });
   
   overlay.addEventListener('mouseup', (e) => {
     if (selectionStart) {
       selectionEnd = { x: e.clientX, y: e.clientY };
-      console.log('Selection ended at:', selectionEnd);
-      console.log('Selection size:', Math.abs(selectionEnd.x - selectionStart.x), 'x', Math.abs(selectionEnd.y - selectionStart.y));
       captureScreenshot();
     }
   });
@@ -137,18 +122,8 @@ function captureScreenshot() {
   const width = Math.abs(selectionEnd.x - selectionStart.x);
   const height = Math.abs(selectionEnd.y - selectionStart.y);
 
-  console.log('Screenshot selection:', {
-    selectionStart,
-    selectionEnd,
-    left,
-    top,
-    width,
-    height
-  });
-
   // Check if selection is too small
   if (width < 5 || height < 5) {
-    console.log('Selection too small:', { width, height });
     alert('Selection too small. Please select a larger area.');
     cancelScreenshot();
     return;
@@ -161,24 +136,12 @@ function captureScreenshot() {
   const scrollX = window.scrollX || window.pageXOffset;
   const scrollY = window.scrollY || window.pageYOffset;
   
-  console.log('Device and viewport info:', {
-    devicePixelRatio,
-    viewport: `${viewportWidth}x${viewportHeight}`,
-    scroll: `${scrollX},${scrollY}`
-  });
-
   // Calculate coordinates accounting for device pixel ratio and scrolling
   // The screenshot is captured at device pixel ratio, so we need to scale our coordinates
   const scaledLeft = Math.round(left * devicePixelRatio);
   const scaledTop = Math.round(top * devicePixelRatio);
   const scaledWidth = Math.round(width * devicePixelRatio);
   const scaledHeight = Math.round(height * devicePixelRatio);
-
-  console.log('Scaled coordinates:', {
-    original: { left, top, width, height },
-    scaled: { left: scaledLeft, top: scaledTop, width: scaledWidth, height: scaledHeight },
-    devicePixelRatio
-  });
 
   // Hide the overlay and selection box before capturing
   if (overlay) {
@@ -244,23 +207,13 @@ function captureScreenshot() {
       return;
     }
 
-    console.log('Screenshot captured, dataUrl length:', response.imageData.length);
-    console.log('Screenshot captured, processing crop with device pixel ratio scaling...');
-
     const img = new Image();
     img.onload = () => {
-      console.log('Image loaded, dimensions:', img.width, 'x', img.height);
-      console.log('Cropping to scaled coordinates:', scaledLeft, scaledTop, scaledWidth, scaledHeight);
-
       // Ensure coordinates are within bounds
       const cropLeft = Math.max(0, Math.min(scaledLeft, img.width - 1));
       const cropTop = Math.max(0, Math.min(scaledTop, img.height - 1));
       const cropWidth = Math.min(scaledWidth, img.width - cropLeft);
       const cropHeight = Math.min(scaledHeight, img.height - cropTop);
-
-      console.log('Final crop coordinates:', {
-        left: cropLeft, top: cropTop, width: cropWidth, height: cropHeight
-      });
 
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -271,21 +224,17 @@ function captureScreenshot() {
       ctx.drawImage(img, cropLeft, cropTop, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
 
       const imageData = canvas.toDataURL('image/png');
-      console.log('Screenshot processed successfully, imageData length:', imageData.length);
 
       // Clean up
       cancelScreenshot();
 
       // Send the screenshot data back to the extension
-      console.log('Sending screenshot data to extension...');
       chrome.runtime.sendMessage({
         action: 'screenshotCaptured',
         imageData: imageData
       }, (response) => {
         if (chrome.runtime.lastError) {
           console.error('Failed to send screenshot data:', chrome.runtime.lastError);
-        } else {
-          console.log('Screenshot data sent successfully');
         }
       });
     };
@@ -327,37 +276,10 @@ function startScreenshot() {
   selectionBox = newSelectionBox;
   window.screenshotInstructions = instructions;
   
-  // Add visual debugging to show page layout
-  const debugInfo = document.createElement('div');
-  debugInfo.style.cssText = `
-    position: fixed;
-    top: 60px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.9);
-    color: white;
-    padding: 10px 20px;
-    border-radius: 5px;
-    font-family: monospace;
-    font-size: 12px;
-    z-index: 1000001;
-    white-space: pre;
-  `;
-  
-  const devicePixelRatio = window.devicePixelRatio || 1;
-  
-  debugInfo.textContent = `Screenshot Debug:
-Viewport: ${window.innerWidth}x${window.innerHeight}
-Device Pixel Ratio: ${devicePixelRatio}`;
-  document.body.appendChild(debugInfo);
-  window.debugInfo = debugInfo;
-  
   handleScreenshotMouseEvents();
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  console.log("[Content Script] Message received:", request);
-
   // Handle screenshot start
   if (request.action === "startScreenshot") {
     startScreenshot();

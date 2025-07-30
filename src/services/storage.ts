@@ -16,10 +16,8 @@ export const isFirebaseConfigured = async () => {
   try {
     const result = await chrome.storage.local.get(['firebaseConfig']);
     const firebaseConfig = result.firebaseConfig;
-    console.log('Firebase config check:', { hasConfig: !!firebaseConfig, config: firebaseConfig });
     
     if (!firebaseConfig) {
-      console.log('No Firebase config found');
       return false;
     }
     
@@ -27,7 +25,6 @@ export const isFirebaseConfigured = async () => {
            firebaseConfig.apiKey !== "YOUR_API_KEY" && 
            firebaseConfig.projectId && 
            firebaseConfig.projectId !== "YOUR_PROJECT_ID";
-    console.log('Firebase config validation:', { isValid, apiKey: !!firebaseConfig.apiKey, projectId: !!firebaseConfig.projectId });
     return isValid;
   } catch (error) {
     console.error('Error checking Firebase config:', error);
@@ -39,7 +36,6 @@ export const isFirebaseConfigured = async () => {
 export const isUserAuthenticated = async () => {
   try {
     const user = await getCurrentUser();
-    console.log('User authentication check:', { user: !!user, userDetails: user });
     return user !== null;
   } catch (error) {
     console.error('Error checking user authentication:', error);
@@ -167,20 +163,15 @@ export const getSettings = async () => {
 
 // Hybrid storage functions for history
 export const saveHistoryItem = async (historyItem: any) => {
-  console.log('saveHistoryItem called with:', historyItem);
   
   try {
     const firebaseConfigured = await isFirebaseConfigured();
     const userAuthenticated = await isUserAuthenticated();
-    console.log('Firebase status:', { firebaseConfigured, userAuthenticated });
     
     if (firebaseConfigured && userAuthenticated) {
       const user = await getCurrentUser();
-      console.log('User found:', user);
       if (user) {
-        console.log('Saving to Firebase...');
         await saveHistoryToFirebase(user.uid, historyItem);
-        console.log('Successfully saved to Firebase');
         return;
       }
     }
@@ -189,11 +180,9 @@ export const saveHistoryItem = async (historyItem: any) => {
   }
   
   // Fallback to Chrome storage
-  console.log('Falling back to Chrome storage');
   const history = await getHistoryFromChromeStorage();
   history.unshift(historyItem);
   await chrome.storage.local.set({ extensionHistory: history });
-  console.log('Saved to Chrome storage');
 };
 
 export const getHistory = async () => {
@@ -245,7 +234,6 @@ const getHistoryFromChromeStorage = async () => {
 // Migration function to move data from Chrome storage to Firebase
 export const migrateToFirebase = async () => {
   try {
-    console.log('Starting migration to Firebase...');
     
     // Check what data exists in Chrome storage
     const chromeData = await chrome.storage.local.get([
@@ -257,18 +245,8 @@ export const migrateToFirebase = async () => {
       'aiModelConfig'
     ]);
     
-    console.log('Data found in Chrome storage:', {
-      notesCount: chromeData.notes?.length || 0,
-      historyCount: chromeData.extensionHistory?.length || 0,
-      hasApiKey: !!chromeData.apiKey,
-      hasModel: !!chromeData.model,
-      hasAiContextConfig: !!chromeData.aiContextConfig,
-      hasAiModelConfig: !!chromeData.aiModelConfig
-    });
-    
     // Check if Firebase is configured
     const firebaseConfigured = await isFirebaseConfigured();
-    console.log('Firebase configured:', firebaseConfigured);
     if (!firebaseConfigured) {
       throw new Error('Firebase not configured');
     }
@@ -277,7 +255,6 @@ export const migrateToFirebase = async () => {
     const { resetFirebase } = await import('./firebase');
     if (resetFirebase) {
       resetFirebase();
-      console.log('Reset Firebase initialization');
     }
     
     // Wait a moment for the config to be saved and Firebase to reset
@@ -286,11 +263,6 @@ export const migrateToFirebase = async () => {
     // Test Firebase initialization
     const { initializeFirebase } = await import('./firebase');
     const firebaseInstance = await initializeFirebase();
-    console.log('Firebase instance after reset:', {
-      hasApp: !!firebaseInstance.app,
-      hasAuth: !!firebaseInstance.auth,
-      hasDb: !!firebaseInstance.db
-    });
     
     if (!firebaseInstance.db) {
       throw new Error('Firebase Firestore database failed to initialize');
@@ -298,10 +270,6 @@ export const migrateToFirebase = async () => {
     
     // Check if user is already authenticated with Google
     const authResult = await chrome.storage.local.get(['userAuthenticated', 'googleAuthToken']);
-    console.log('Auth result:', { 
-      userAuthenticated: authResult.userAuthenticated, 
-      hasToken: !!authResult.googleAuthToken 
-    });
     
     if (!authResult.userAuthenticated || !authResult.googleAuthToken) {
       throw new Error('Please sign in with Google first before migrating data');
@@ -310,19 +278,14 @@ export const migrateToFirebase = async () => {
     // Try to get the current user (this will use existing Google credentials)
     let user: any = null;
     try {
-      console.log('Attempting to get current user...');
       user = await getCurrentUser();
-      console.log('Current user:', user);
     } catch (error) {
-      console.log('Error getting current user, will try to authenticate with existing token:', error);
       
       // Try to authenticate with the existing Google token
       const { signInWithGoogle } = await import('./firebase');
       try {
-        console.log('Attempting to sign in with Google...');
         const authUser = await signInWithGoogle();
         user = authUser;
-        console.log('Successfully authenticated user:', user);
       } catch (authError) {
         console.error('Failed to authenticate with existing token:', authError);
         throw new Error('Authentication failed. Please try signing in again.');
@@ -333,18 +296,14 @@ export const migrateToFirebase = async () => {
       throw new Error('No authenticated user found');
     }
     
-    console.log('Using authenticated user for migration:', user.uid);
-    
     // Migrate notes
     const chromeNotes = await getNotesFromChromeStorage();
-    console.log(`Migrating ${chromeNotes.length} notes to Firebase`);
     if (chromeNotes.length === 0) {
       console.log('No notes found to migrate');
     } else {
       for (const note of chromeNotes) {
         try {
           await saveNoteToFirebase(user.uid, note);
-          console.log('Successfully migrated note:', note.id);
         } catch (error) {
           console.error('Failed to migrate note:', note.id, error);
           throw new Error(`Failed to migrate note ${note.id}: ${error}`);
@@ -360,11 +319,9 @@ export const migrateToFirebase = async () => {
       'aiModelConfig'
     ]);
     const hasSettings = Object.keys(chromeSettings).some(key => chromeSettings[key] !== undefined);
-    console.log('Settings to migrate:', hasSettings ? 'Yes' : 'No');
     if (hasSettings) {
       try {
         await saveSettingsToFirebase(user.uid, chromeSettings);
-        console.log('Settings migrated to Firebase');
       } catch (error) {
         console.error('Failed to migrate settings:', error);
         throw new Error(`Failed to migrate settings: ${error}`);
@@ -373,14 +330,12 @@ export const migrateToFirebase = async () => {
     
     // Migrate history
     const chromeHistory = await getHistoryFromChromeStorage();
-    console.log(`Migrating ${chromeHistory.length} history items to Firebase`);
     if (chromeHistory.length === 0) {
       console.log('No history found to migrate');
     } else {
       for (const historyItem of chromeHistory) {
         try {
           await saveHistoryToFirebase(user.uid, historyItem);
-          console.log('Successfully migrated history item:', historyItem.id);
         } catch (error) {
           console.error('Failed to migrate history item:', historyItem.id, error);
           throw new Error(`Failed to migrate history item ${historyItem.id}: ${error}`);
@@ -388,7 +343,6 @@ export const migrateToFirebase = async () => {
       }
     }
     
-    console.log('Migration to Firebase completed successfully');
     return true;
   } catch (error) {
     console.error('Migration to Firebase failed:', error);
@@ -440,7 +394,6 @@ export const createTestData = async () => {
     existingHistory.unshift(testHistoryItem);
     await chrome.storage.local.set({ extensionHistory: existingHistory });
     
-    console.log('Test data created successfully');
     return true;
   } catch (error) {
     console.error('Failed to create test data:', error);
@@ -450,18 +403,13 @@ export const createTestData = async () => {
 
 // Test function to check Firebase status
 export const testFirebaseStatus = async () => {
-  console.log('=== Firebase Status Test ===');
   
   const firebaseConfigured = await isFirebaseConfigured();
-  console.log('Firebase configured:', firebaseConfigured);
   
   const userAuthenticated = await isUserAuthenticated();
-  console.log('User authenticated:', userAuthenticated);
   
   if (firebaseConfigured && userAuthenticated) {
     const user = await getCurrentUser();
-    console.log('Current user:', user);
   }
   
-  console.log('=== End Firebase Status Test ===');
 }; 

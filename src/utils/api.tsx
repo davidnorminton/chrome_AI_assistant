@@ -223,12 +223,59 @@ function parseAIResponse(response: string, action: AIAction): AIResponse {
     console.warn('Failed to parse AI response as JSON, treating as plain text');
   }
 
+  // Extract citations and references from plain text response
+  const citations = extractCitations(response);
+  const references = extractReferences(response);
+
   // Fallback: treat as plain text
   return {
     text: response,
     model: 'perplexity',
     tags: [],
+    citations,
+    references,
   };
+}
+
+// Extract citations from text (e.g., [1][2][3])
+function extractCitations(text: string): string[] {
+  const citationRegex = /\[(\d+)\]/g;
+  const matches = text.match(citationRegex);
+  if (matches) {
+    return [...new Set(matches)]; // Remove duplicates
+  }
+  return [];
+}
+
+// Extract references from text (look for reference sections)
+function extractReferences(text: string): { id: string; title: string; url: string; description?: string }[] {
+  const references: { id: string; title: string; url: string; description?: string }[] = [];
+  
+  // Look for reference patterns like "[1] Title - URL" or "References:" sections
+  const referenceSectionRegex = /(?:references?|sources?):\s*\n([\s\S]*?)(?=\n\n|$)/i;
+  const referenceMatch = text.match(referenceSectionRegex);
+  
+  if (referenceMatch) {
+    const referenceText = referenceMatch[1];
+    const referenceLines = referenceText.split('\n').filter(line => line.trim());
+    
+    referenceLines.forEach((line, index) => {
+      const id = (index + 1).toString();
+      const urlMatch = line.match(/https?:\/\/[^\s]+/);
+      const url = urlMatch ? urlMatch[0] : '';
+      const title = line.replace(/\[?\d+\]?\s*/, '').replace(url, '').trim();
+      
+      if (title) {
+        references.push({
+          id,
+          title,
+          url,
+        });
+      }
+    });
+  }
+  
+  return references;
 }
 
 // Enhanced function with context management

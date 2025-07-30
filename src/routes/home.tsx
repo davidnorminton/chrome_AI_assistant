@@ -3,7 +3,6 @@ import { useEffect, useContext, useState } from "react";
 import { Welcome } from "../welcome/welcome";
 import Prompt from "../prompt/prompt";
 import ContentDisplay from "../components/ContentDisplay";
-import PageHeader from "../components/PageHeader";
 import LinkList from "../components/LinkList";
 
 import { useHomeLogic } from "../hooks/useHomeLogic";
@@ -32,8 +31,10 @@ export default function Home() {
 
     screenshotData,
     restoredScreenshotData,
+    firebaseScreenshotURL,
     currentHistoryItemType,
     currentHistoryItemFileName,
+    currentHistoryItemTitle,
     showWelcome,
     
     // Handlers
@@ -45,10 +46,11 @@ export default function Home() {
     handleClearContent,
     
     // Helpers
-    shouldShowPageHeader,
     shouldShowLinkList,
 
     sendNewsQuery,
+    citations,
+    references,
   } = useHomeLogic();
 
   // Set the context functions
@@ -69,30 +71,18 @@ export default function Home() {
   };
 
   // Calculate display states
-  const showPageHeader = Boolean(outputHtml) && Boolean(shouldShowPageHeader()) && !loading;
   const showLinkList = Boolean(shouldShowLinkList()) && !loading;
 
 
   return (
     <div id="tabContent">
       <div id="currentTab" className="tab-panel active">
-        {/* Page Header */}
-        <PageHeader
-          savedPageInfo={savedPageInfo}
-          pageInfo={pageInfo}
-          shouldShow={showPageHeader}
-          currentHistoryItemType={currentHistoryItemType}
-          currentHistoryItemFileName={currentHistoryItemFileName}
-        />
-
         {/* Link List */}
         <LinkList
           links={links}
           searchQuery={searchQuery}
           shouldShow={showLinkList}
         />
-
-
 
         {/* Content Display */}
         <ContentDisplay
@@ -103,6 +93,7 @@ export default function Home() {
           onSuggestedClick={handleSuggestedClick}
           showWelcome={showWelcome}
           screenshotData={restoredScreenshotData || undefined}
+          firebaseScreenshotURL={firebaseScreenshotURL || undefined}
           isProcessingFile={isProcessingFile}
           processingFileName={processingFileName}
           processingFileType={processingFileType}

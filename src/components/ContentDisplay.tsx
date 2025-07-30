@@ -13,6 +13,7 @@ interface ContentDisplayProps {
   onSuggestedClick: (question: string) => void;
   showWelcome: boolean;
   screenshotData?: string; // Screenshot data to display
+  firebaseScreenshotURL?: string; // Firebase screenshot URL to display
   children?: React.ReactNode; // For Welcome component
   isProcessingFile?: boolean;
   processingFileName?: string | null;
@@ -94,6 +95,7 @@ export default function ContentDisplay({
   onSuggestedClick,
   showWelcome,
   screenshotData,
+  firebaseScreenshotURL,
   children,
   isProcessingFile,
   processingFileName,
@@ -166,6 +168,17 @@ export default function ContentDisplay({
               src={screenshotData}
               alt="Screenshot"
               style={{ maxHeight: '250px', maxWidth: '100%', borderRadius: '8px' }}
+            />
+          </div>
+        )}
+
+        {/* Firebase Screenshot Display - Show above AI response */}
+        {!loading && firebaseScreenshotURL && (
+          <div className="screenshot-display">
+            <img
+              src={firebaseScreenshotURL}
+              alt="Screenshot from Firebase"
+              className="screenshot-image"
             />
           </div>
         )}

@@ -49,11 +49,11 @@ export const StreamingProvider = ({ children }: { children: ReactNode }) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful AI assistant. Provide clear, concise, and accurate responses. Use markdown formatting for better readability. Respond with plain text only, no JSON formatting.'
+            content: 'You are a helpful AI assistant. Provide clear, concise, and accurate responses. Use markdown formatting for better readability. When providing information, include relevant citations and references at the end of your response. Format references as: [1] Title - URL or [1] Title (description). Always include a "References:" section at the end when you cite sources. Respond with plain text only, no JSON formatting.'
           }
         ],
         stream: true,
-        max_tokens: modelConfig.maxTokens || 4000,
+        max_tokens: modelConfig.maxTokens || 6000,
         temperature: modelConfig.temperature || 0.7
       };
 

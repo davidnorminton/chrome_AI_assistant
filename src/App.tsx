@@ -42,15 +42,11 @@ export default function App() {
 
   // Debug when setSendNewsQuery is called
   const setSendNewsQueryWithDebug = useCallback((fn: (query: string) => void) => {
-    console.log('=== SET SEND NEWS QUERY CALLED ===');
-    console.log('Setting sendNewsQuery function:', fn);
     setSendNewsQuery(() => fn);
   }, []);
 
   // Debug when setClearContent is called
   const setClearContentWithDebug = useCallback((fn: () => void) => {
-    console.log('=== SET CLEAR CONTENT CALLED ===');
-    console.log('Setting clearContent function:', fn);
     setClearContent(() => fn);
   }, []);
 
@@ -65,7 +61,6 @@ export default function App() {
   useEffect(() => {
     const handleStorageChange = (changes: { [key: string]: chrome.storage.StorageChange }) => {
       if (changes[STORAGE_KEY]) {
-        console.log('Storage changed, refreshing history');
         getHistory().then((historyItems) => {
           setHistory(historyItems);
         });
@@ -74,7 +69,6 @@ export default function App() {
 
     // Also listen for Firebase-related changes
     const handleFirebaseChange = async () => {
-      console.log('Firebase data may have changed, refreshing history');
       try {
         const historyItems = await getHistory();
         setHistory(historyItems);
@@ -97,66 +91,62 @@ export default function App() {
   // Update history if it changes in storage (optional: add a listener for more reactivity)
 
   const goBack = useCallback(async () => {
-    console.log('goBack called - currentIndex:', currentIndex, 'history.length:', history.length);
     if (history.length === 0) {
-      console.log('goBack: No history available');
       return;
     }
     
     // Refresh history from Firebase to ensure we have the latest data
     try {
-      console.log('goBack: Refreshing history from Firebase...');
       const historyItems = await getHistory();
-      console.log('goBack: Received history items:', historyItems.length);
       setHistory(historyItems);
       
       // After refreshing, navigate back if possible
       if (historyItems.length > 0 && currentIndex > 0) {
         const newIndex = currentIndex - 1;
-        console.log('goBack: setting to index', newIndex);
         setCurrentIndex(newIndex);
       } else {
-        console.log('goBack: already at oldest entry, doing nothing');
+        // Fallback to existing logic if refresh fails
+        if (currentIndex > 0) {
+          const newIndex = currentIndex - 1;
+          setCurrentIndex(newIndex);
+        }
       }
     } catch (error) {
       console.error('Error refreshing history for goBack:', error);
       // Fallback to existing logic if refresh fails
       if (currentIndex > 0) {
         const newIndex = currentIndex - 1;
-        console.log('goBack: fallback - setting to index', newIndex);
         setCurrentIndex(newIndex);
       }
     }
   }, [currentIndex, history.length]);
 
   const goForward = useCallback(async () => {
-    console.log('goForward called - currentIndex:', currentIndex, 'history.length:', history.length);
     if (history.length === 0) {
-      console.log('goForward: No history available');
       return;
     }
     
     // Refresh history from Firebase to ensure we have the latest data
     try {
-      console.log('goForward: Refreshing history from Firebase...');
       const historyItems = await getHistory();
-      console.log('goForward: Received history items:', historyItems.length);
       setHistory(historyItems);
       
       // After refreshing, navigate forward if possible
       if (historyItems.length > 0 && currentIndex < historyItems.length - 1) {
         const newIndex = currentIndex + 1;
-        console.log('goForward: setting to index', newIndex);
         setCurrentIndex(newIndex);
       } else {
-        console.log('goForward: already at newest entry, doing nothing');
+        // Fallback to existing logic if refresh fails
+        if (currentIndex < history.length - 1) {
+          const newIndex = currentIndex + 1;
+          setCurrentIndex(newIndex);
+        }
       }
     } catch (error) {
       console.error('Error refreshing history for goForward:', error);
       // Fallback to existing logic if refresh fails
       if (currentIndex < history.length - 1) {
         const newIndex = currentIndex + 1;
-        console.log('goForward: fallback - setting to index', newIndex);
         setCurrentIndex(newIndex);
       }
     }
@@ -168,17 +158,16 @@ export default function App() {
 
   // Debug navigation state
   useEffect(() => {
-    console.log('Navigation state:', {
-      historyLength: history.length,
-      currentIndex,
-      canGoBack,
-      canGoForward,
-      currentHistoryItem: history[currentIndex] || 'none'
-    });
+    // console.log('Navigation state:', {
+    //   historyLength: history.length,
+    //   currentIndex,
+    //   canGoBack,
+    //   canGoForward,
+    //   currentHistoryItem: history[currentIndex] || 'none'
+    // });
   }, [history.length, currentIndex, canGoBack, canGoForward, history]);
 
   const setIndex = (idx: number | null) => {
-    console.log('setIndex called with', idx, 'history.length', history.length);
     if (history.length === 0) {
       setCurrentIndex(0); // Keep at 0 even if no history
     } else if (typeof idx === 'number') {
@@ -192,7 +181,6 @@ export default function App() {
   };
 
   const refreshHistory = useCallback(async () => {
-    console.log('Manually refreshing history');
     try {
       const historyItems = await getHistory();
       setHistory(historyItems);
@@ -203,17 +191,19 @@ export default function App() {
 
   // Ensure currentIndex is always valid
   useEffect(() => {
-    console.log('App useEffect - history.length:', history.length, 'currentIndex:', currentIndex);
     if (history.length === 0) {
       setCurrentIndex(0); // Keep at 0 even if no history
     } else if (currentIndex >= history.length) {
-      console.log('Setting currentIndex to', history.length - 1, '(clamped)');
       setCurrentIndex(history.length - 1);
     }
   }, [history.length, currentIndex]);
 
   useEffect(() => {
-    console.log('App render: currentIndex', currentIndex, 'history.length', history.length);
+    // console.log('App useEffect - history.length:', history.length, 'currentIndex:', currentIndex);
+  }, [history.length, currentIndex]);
+
+  useEffect(() => {
+    // console.log('App render: currentIndex', currentIndex, 'history.length', history.length);
   }, [currentIndex, history.length]);
 
   return (

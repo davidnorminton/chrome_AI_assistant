@@ -510,3 +510,38 @@
   content: "📄";
   font-size: 16px;
 } 
+
+/* Question Title and Content */
+.question-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #4a9eff;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #333;
+}
+
+.question-content {
+  margin-top: 15px;
+}
+
+/* Search Results */
+.search-results {
+  margin-bottom: 20px;
+}
+
+.search-results h3 {
+  color: #4a9eff;
+  margin-bottom: 10px;
+}
+
+/* History Title */
+.history-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #4a9eff;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #333;
+  text-transform: capitalize;
+} 

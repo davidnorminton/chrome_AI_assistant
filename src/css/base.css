@@ -183,6 +183,32 @@ body {
   width: 100%;
 }
 
+/* Welcome Icon with Pulsing Animation */
+.welcome-icon {
+  border-radius: 50%;
+  box-shadow: 0 4px 20px rgba(74, 158, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.pulse-animation {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 4px 20px rgba(74, 158, 255, 0.3);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 8px 30px rgba(74, 158, 255, 0.5);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 4px 20px rgba(74, 158, 255, 0.3);
+  }
+}
+
 .general-question-btn,
 .summarize-page-btn {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);

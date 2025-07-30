@@ -19,31 +19,36 @@ import {
   updateDoc,
   deleteDoc
 } from 'firebase/firestore';
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject
+} from 'firebase/storage';
 
 // Initialize Firebase with configuration from Chrome storage
 let app: any = null;
 let auth: any = null;
 let db: any = null;
+let storage: any = null;
 
 // Reset Firebase initialization (useful when config changes)
 export const resetFirebase = () => {
   app = null;
   auth = null;
   db = null;
+  storage = null;
 };
 
 export const initializeFirebase = async () => {
   if (app) {
-    console.log('Using existing Firebase app');
     return { app, auth, db };
   }
   
   try {
-    console.log('Initializing Firebase...');
     const result = await chrome.storage.local.get(['firebaseConfig']);
     const firebaseConfig = result.firebaseConfig;
-    
-    console.log('Firebase config from storage:', firebaseConfig);
     
     // More comprehensive check for valid Firebase config
     if (!firebaseConfig || 
@@ -51,30 +56,18 @@ export const initializeFirebase = async () => {
         firebaseConfig.apiKey === "YOUR_API_KEY" ||
         !firebaseConfig.projectId ||
         firebaseConfig.projectId === "YOUR_PROJECT_ID") {
-      console.log('Firebase not configured or invalid config - using local storage only');
       return { app: null, auth: null, db: null };
     }
     
-    console.log('Creating Firebase app with config:', {
-      apiKey: firebaseConfig.apiKey ? '***' : 'missing',
-      projectId: firebaseConfig.projectId,
-      authDomain: firebaseConfig.authDomain,
-      storageBucket: firebaseConfig.storageBucket,
-      messagingSenderId: firebaseConfig.messagingSenderId,
-      appId: firebaseConfig.appId
-    });
-    
     app = initializeApp(firebaseConfig);
-    console.log('Firebase app created successfully');
     
     auth = getAuth(app);
-    console.log('Firebase auth initialized');
     
     db = getFirestore(app);
-    console.log('Firebase Firestore initialized');
     
-    console.log('Firebase initialized successfully');
-    return { app, auth, db };
+    storage = getStorage(app);
+    
+    return { app, auth, db, storage };
   } catch (error) {
     console.error('Error initializing Firebase:', error);
     return { app: null, auth: null, db: null };
@@ -98,7 +91,6 @@ const fetchGoogleUserProfile = async (accessToken: string) => {
     }
     
     const userInfo = await response.json();
-    console.log('Fetched Google user profile:', userInfo);
     
     return {
       uid: userInfo.id,
@@ -291,23 +283,19 @@ export const deleteNoteFromFirebase = async (userId: string, noteId: string) => 
 // Firestore functions for settings
 export const saveSettingsToFirebase = async (userId: string, settings: any) => {
   try {
-    console.log('Attempting to save settings to Firebase for user:', userId);
     const { db } = await initializeFirebase();
     
     if (!db) {
       throw new Error('Firebase Firestore database is not initialized');
     }
     
-    console.log('Firebase db instance:', db);
     const settingsRef = doc(db, 'users', userId, 'settings', 'userSettings');
-    console.log('Settings document reference created');
     
     await setDoc(settingsRef, {
       ...settings,
       userId,
       updatedAt: new Date().toISOString()
     });
-    console.log('Settings saved to Firebase successfully');
   } catch (error) {
     console.error('Error saving settings to Firebase:', error);
     throw error;
@@ -367,10 +355,68 @@ export const getHistoryFromFirebase = async (userId: string) => {
 export const deleteHistoryFromFirebase = async (userId: string, historyId: string) => {
   try {
     const { db } = await initializeFirebase();
+    if (!db) {
+      throw new Error('Firebase not initialized');
+    }
+    
     const historyRef = doc(db, 'users', userId, 'history', historyId);
     await deleteDoc(historyRef);
   } catch (error) {
     console.error('Error deleting history from Firebase:', error);
+    throw error;
+  }
+};
+
+// Screenshot storage functions
+export const uploadScreenshotToFirebase = async (userId: string, imageData: string, query: string): Promise<string> => {
+  try {
+    const { storage } = await initializeFirebase();
+    if (!storage) {
+      throw new Error('Firebase Storage not initialized');
+    }
+
+    // Convert data URL to blob
+    const response = await fetch(imageData);
+    const blob = await response.blob();
+    
+    // Create a unique filename
+    const timestamp = Date.now();
+    const filename = `screenshots/${userId}/${timestamp}.png`;
+    
+    // Upload to Firebase Storage
+    const storageRef = ref(storage, filename);
+    await uploadBytes(storageRef, blob);
+    
+    // Get the download URL
+    const downloadURL = await getDownloadURL(storageRef);
+    
+    // Store metadata in Firestore
+    const { db } = await initializeFirebase();
+    if (db) {
+      const screenshotRef = doc(db, 'users', userId, 'screenshots', timestamp.toString());
+      await setDoc(screenshotRef, {
+        filename,
+        downloadURL,
+        query,
+        timestamp,
+        createdAt: new Date().toISOString()
+      });
+    }
+    
+    return downloadURL;
+  } catch (error) {
+    console.error('Error uploading screenshot to Firebase:', error);
+    throw error;
+  }
+};
+
+export const getScreenshotFromFirebase = async (downloadURL: string): Promise<string> => {
+  try {
+    // For now, just return the URL as the image data
+    // In a more sophisticated implementation, you might want to fetch and convert to data URL
+    return downloadURL;
+  } catch (error) {
+    console.error('Error getting screenshot from Firebase:', error);
     throw error;
   }
 };

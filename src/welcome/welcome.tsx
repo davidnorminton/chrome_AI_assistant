@@ -40,7 +40,7 @@ export function Welcome({ onSummarize, onGeneralQuestion }: WelcomeProps) {
     <div className="intro orla">
         <h1>ORLA</h1>
         <p>Your personal A.I. browser assistant</p>
-        <img src={ icon } width="250" height="250" />
+        <img src={ icon } width="250" height="250" className="welcome-icon pulse-animation" />
         <div className="welcome-buttons">
           {onGeneralQuestion && (
             <button 
