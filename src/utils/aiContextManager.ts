@@ -181,13 +181,23 @@ Use only basic HTML tags (<p>, <ul>, <li>, <strong>, <em>, <h3>).
 Return exactly the JSON object.`;
 
       case 'get_links':
-        return `You are an AI assistant that searches for and returns high-quality links related to the user's query.
-Return exactly a JSON array of 10 links. Each object must have:
+        return `CRITICAL: You must return EXACTLY a JSON array of 15 links. DO NOT include any other text before or after the JSON array.
+
+Each link object must have these exact properties:
   - "title": string (clear, descriptive title)
   - "url": string (valid URL starting with http:// or https://)
   - "description": string (brief description of the content)
 
-Return only the JSON array, no other text.`;
+Example format:
+[
+  {
+    "title": "Example Title",
+    "url": "https://example.com",
+    "description": "Example description"
+  }
+]
+
+DO NOT include any text like "Found 15 relevant links" or any other text. Return ONLY the JSON array.`;
 
       case 'summarize_file':
         return `You are an AI assistant specialized in analyzing and summarizing files.

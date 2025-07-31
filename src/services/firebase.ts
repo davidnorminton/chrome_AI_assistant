@@ -222,11 +222,15 @@ export const saveNoteToFirebase = async (userId: string, note: any) => {
       throw new Error('Firebase not configured');
     }
     const noteRef = doc(db, 'users', userId, 'notes', note.id);
-    await setDoc(noteRef, {
+    
+    // Clean the data to remove undefined values
+    const cleanedNote = removeUndefinedValues({
       ...note,
       userId,
       updatedAt: new Date().toISOString()
     });
+    
+    await setDoc(noteRef, cleanedNote);
   } catch (error) {
     console.error('Error saving note to Firebase:', error);
     throw error;
@@ -258,11 +262,15 @@ export const updateNoteInFirebase = async (userId: string, note: any) => {
   try {
     const { db } = await initializeFirebase();
     const noteRef = doc(db, 'users', userId, 'notes', note.id);
-    await updateDoc(noteRef, {
+    
+    // Clean the data to remove undefined values
+    const cleanedNote = removeUndefinedValues({
       ...note,
       userId,
       updatedAt: new Date().toISOString()
     });
+    
+    await updateDoc(noteRef, cleanedNote);
   } catch (error) {
     console.error('Error updating note in Firebase:', error);
     throw error;
@@ -291,11 +299,14 @@ export const saveSettingsToFirebase = async (userId: string, settings: any) => {
     
     const settingsRef = doc(db, 'users', userId, 'settings', 'userSettings');
     
-    await setDoc(settingsRef, {
+    // Clean the data to remove undefined values
+    const cleanedSettings = removeUndefinedValues({
       ...settings,
       userId,
       updatedAt: new Date().toISOString()
     });
+    
+    await setDoc(settingsRef, cleanedSettings);
   } catch (error) {
     console.error('Error saving settings to Firebase:', error);
     throw error;
@@ -318,16 +329,43 @@ export const getSettingsFromFirebase = async (userId: string) => {
   }
 };
 
+// Utility function to remove undefined values from objects
+const removeUndefinedValues = (obj: any): any => {
+  if (obj === null || obj === undefined) {
+    return null;
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(removeUndefinedValues).filter(item => item !== null);
+  }
+  
+  if (typeof obj === 'object') {
+    const cleaned: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (value !== undefined) {
+        cleaned[key] = removeUndefinedValues(value);
+      }
+    }
+    return cleaned;
+  }
+  
+  return obj;
+};
+
 // Firestore functions for history
 export const saveHistoryToFirebase = async (userId: string, historyItem: any) => {
   try {
     const { db } = await initializeFirebase();
     const historyRef = doc(db, 'users', userId, 'history', historyItem.id);
-    await setDoc(historyRef, {
+    
+    // Clean the data to remove undefined values
+    const cleanedHistoryItem = removeUndefinedValues({
       ...historyItem,
       userId,
       timestamp: historyItem.timestamp || new Date().toISOString()
     });
+    
+    await setDoc(historyRef, cleanedHistoryItem);
   } catch (error) {
     console.error('Error saving history to Firebase:', error);
     throw error;

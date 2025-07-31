@@ -3,6 +3,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import AILoadingAnimation from './AILoadingAnimation';
 import { MarkdownRenderer } from './MarkdownRenderer';
+import { YouTubeToggle } from './YouTubeToggle';
 import { useStreaming } from '../context/StreamingContext';
 
 interface ContentDisplayProps {
@@ -24,6 +25,13 @@ interface ContentDisplayProps {
   pageInfo?: { title: string; url: string }; // Added pageInfo prop
   links?: string[]; // Added links prop
   fileData?: string; // Added fileData prop
+  transcription?: string; // Added transcription prop for YouTube videos
+  videoInfo?: {
+    videoId: string;
+    title: string;
+    summary: string;
+    transcription: string;
+  }; // Added videoInfo prop for YouTube videos
   userSettings?: { contextConfig: { showTags: boolean; showSuggestedQuestions: boolean } } | null; // Add user settings
 }
 
@@ -107,17 +115,12 @@ export default function ContentDisplay({
   pageInfo,
   links,
   fileData,
+  transcription,
+  videoInfo,
   userSettings
 }: ContentDisplayProps) {
   const { isStreaming, streamContent } = useStreaming();
   
-  const shouldShowPageHeader = () => {
-    return Boolean(pageInfo?.title || pageInfo?.url);
-  };
-
-  const shouldShowLinkList = () => {
-    return Boolean(links && links.length > 0);
-  };
 
   const shouldShowTags = () => {
     return Boolean(tags && tags.length > 0 && !isStreaming && userSettings?.contextConfig?.showTags);
@@ -127,9 +130,6 @@ export default function ContentDisplay({
     return Boolean(suggested && suggested.length > 0 && !isStreaming && userSettings?.contextConfig?.showSuggestedQuestions);
   };
 
-  const shouldShowScreenshotDisplay = () => {
-    return Boolean(screenshotData && !fileData);
-  };
 
   // Show loading animation when loading or streaming
   if (loading && !showWelcome) {
@@ -151,7 +151,6 @@ export default function ContentDisplay({
 
   // Determine content to display - prioritize streaming content
   const displayContent = isStreaming ? streamContent : (outputHtml || streamContent);
-  const isStreamingOrLoading = isStreaming || loading;
 
   return (
     <div id="responseBox">
@@ -201,17 +200,27 @@ export default function ContentDisplay({
           </div>
         )}
 
-        {/* Welcome Component - Only show when not loading */}
-        {!loading && showWelcome && children}
-
         {/* Content Display - Show when not welcome and has content or is streaming */}
         {!showWelcome && (displayContent || isStreaming || streamContent) && (
           <div className="content-display">
-            {isStreaming ? (
-              <MarkdownRenderer content={displayContent} className="streaming" isStreaming={true} />
+            {transcription ? (
+              // Use YouTubeToggle for videos with transcription
+              <YouTubeToggle summary={displayContent} transcription={transcription} videoInfo={videoInfo} />
             ) : (
-              <MarkdownRenderer content={displayContent} className="" isStreaming={false} />
+              // Regular content display for non-YouTube content
+              isStreaming ? (
+                <MarkdownRenderer content={displayContent} className="streaming" isStreaming={true} />
+              ) : (
+                <MarkdownRenderer content={displayContent} className="" isStreaming={false} />
+              )
             )}
+          </div>
+        )}
+        
+        {/* Debug info - remove this later */}
+        {process.env.NODE_ENV === 'development' && (
+          <div style={{ fontSize: '12px', color: '#666', marginTop: '10px', padding: '10px', backgroundColor: '#f5f5f5' }}>
+            Debug: transcription={transcription ? 'present' : 'null'}, videoInfo={videoInfo ? 'present' : 'null'}, currentHistoryItemType={currentHistoryItemType}
           </div>
         )}
 

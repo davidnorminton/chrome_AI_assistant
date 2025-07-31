@@ -312,5 +312,138 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
 
+  // === YouTube transcription extraction ===
+  if (request.action === "extractYouTubeTranscription") {
+    console.log('[Content Script] Starting YouTube transcription extraction...');
+    
+    // Wait for page to be fully loaded
+    setTimeout(async () => {
+      try {
+        // Method 1: Try to find and click the "..." menu button first
+        const moreButton = document.querySelector('button[aria-label*="More actions"], button[aria-label*="more"], ytd-button-renderer[aria-label*="More actions"]');
+        if (moreButton) {
+          console.log('[Content Script] Found more actions button, clicking...');
+          moreButton.click();
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
+        // Method 2: Look for transcript button in various locations
+        const transcriptButtonSelectors = [
+          'button[aria-label*="transcript"]',
+          'button[aria-label*="Transcript"]',
+          'button[title*="transcript"]',
+          'button[title*="Transcript"]',
+          'ytd-button-renderer[aria-label*="transcript"]',
+          'ytd-button-renderer[aria-label*="Transcript"]',
+          '[role="button"][aria-label*="transcript"]',
+          '[role="button"][aria-label*="Transcript"]',
+          'a[href*="transcript"]',
+          'span:contains("Show transcript")',
+          'span:contains("Transcript")'
+        ];
+        
+        let transcriptButton = null;
+        for (const selector of transcriptButtonSelectors) {
+          transcriptButton = document.querySelector(selector);
+          if (transcriptButton) {
+            console.log(`[Content Script] Found transcript button with selector: ${selector}`);
+            break;
+          }
+        }
+        
+        if (transcriptButton) {
+          console.log('[Content Script] Clicking transcript button...');
+          transcriptButton.click();
+          
+          // Wait for transcript panel to appear
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        } else {
+          console.log('[Content Script] No transcript button found');
+        }
+        
+        // Method 3: Look for transcript content in various locations
+        const transcriptSelectors = [
+          '[role="dialog"] [data-timestamp]',
+          '.ytd-transcript-renderer [data-timestamp]',
+          '[aria-label*="transcript"] [data-timestamp]',
+          '[role="dialog"] [role="button"]',
+          '.ytd-transcript-segment-renderer',
+          '[data-timestamp]',
+          '[role="button"][data-timestamp]',
+          '.ytd-transcript-renderer span',
+          '[aria-label*="transcript"] span',
+          '.ytd-transcript-renderer div',
+          '[role="dialog"] span',
+          '[role="dialog"] div'
+        ];
+        
+        let transcription = '';
+        
+        for (const selector of transcriptSelectors) {
+          const elements = document.querySelectorAll(selector);
+          if (elements.length > 0) {
+            console.log(`[Content Script] Found ${elements.length} elements with selector: ${selector}`);
+            
+            const texts = Array.from(elements)
+              .map(el => el.textContent?.trim())
+              .filter(text => text && text.length > 0);
+            
+            if (texts.length > 0) {
+              transcription = texts.join(' ');
+              console.log(`[Content Script] Extracted ${transcription.length} characters of transcription`);
+              
+              // Validate that we have meaningful content
+              if (transcription.length > 50 && transcription.split(' ').length > 10) {
+                console.log('[Content Script] ✅ Successfully extracted meaningful transcription');
+                chrome.runtime.sendMessage({
+                  action: 'transcriptionExtracted',
+                  transcription: transcription
+                });
+                return;
+              }
+            }
+          }
+        }
+        
+        // Method 4: Try to find any text that looks like a transcript
+        const allTextElements = document.querySelectorAll('span, div, p');
+        const potentialTranscriptTexts = Array.from(allTextElements)
+          .map(el => el.textContent?.trim())
+          .filter(text => text !== undefined && text.length > 20 && text.split(' ').length > 5)
+          .filter(text => !text.includes('Subscribe') && !text.includes('Like') && !text.includes('Share'));
+        
+        if (potentialTranscriptTexts.length > 0) {
+          console.log(`[Content Script] Found ${potentialTranscriptTexts.length} potential transcript texts`);
+          const longestText = potentialTranscriptTexts.reduce((longest, current) => 
+            current.length > longest.length ? current : longest, '');
+          
+          if (longestText.length > 100) {
+            console.log('[Content Script] ✅ Found potential transcript text');
+            chrome.runtime.sendMessage({
+              action: 'transcriptionExtracted',
+              transcription: longestText
+            });
+            return;
+          }
+        }
+        
+        console.log('[Content Script] ❌ No transcript found - video may not have captions available');
+        chrome.runtime.sendMessage({
+          action: 'transcriptionExtracted',
+          transcription: null
+        });
+        
+      } catch (error) {
+        console.error('[Content Script] ❌ Error extracting YouTube transcription:', error);
+        chrome.runtime.sendMessage({
+          action: 'transcriptionExtracted',
+          transcription: null
+        });
+      }
+    }, 1000);
+    
+    return true; // keep channel open
+  }
+
   return false; // ignore other messages
 });

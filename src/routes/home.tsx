@@ -22,19 +22,17 @@ export default function Home() {
     links,
     loading,
     searchQuery,
-    pageInfo,
-    savedPageInfo,
     usePageContext,
     setUsePageContext,
     useWebSearch,
     setUseWebSearch,
 
-    screenshotData,
     restoredScreenshotData,
     firebaseScreenshotURL,
     currentHistoryItemType,
     currentHistoryItemFileName,
-    currentHistoryItemTitle,
+    transcription,
+    videoInfo,
     showWelcome,
     userSettings, // Add user settings
     
@@ -48,9 +46,6 @@ export default function Home() {
     
     // Helpers
     shouldShowLinkList,
-
-    citations,
-    references,
   } = useHomeLogic();
 
   // Set the context functions
@@ -97,6 +92,8 @@ export default function Home() {
           currentHistoryItemType={currentHistoryItemType}
           currentHistoryItemFileName={currentHistoryItemFileName}
           loading={loading}
+          transcription={transcription || undefined}
+          videoInfo={videoInfo || undefined}
           userSettings={userSettings}
         >
           <Welcome 
@@ -119,8 +116,6 @@ export default function Home() {
           loading={loading}
           useContext={usePageContext}
           setUseContext={setUsePageContext}
-          useWebSearch={useWebSearch}
-          setUseWebSearch={setUseWebSearch}
           onScreenshotCapture={handleScreenshotCapture}
           onFileProcessingChange={handleFileProcessingChange}
         />

@@ -1,12 +1,11 @@
 import { useState, useEffect, useCallback, useRef, useContext } from "react";
 import { useLocation } from "react-router-dom";
 import { getPageInfoFromTab, type PageInfo } from "../utils/tabs";
-import { sendQueryToAI } from "../utils/api";
-import type { AIResponse, AIContextConfig, AIModelConfig, AIAction } from "../types";
+import { sendQueryToAI, sendQueryWithContext } from "../utils/api";
+import { getYouTubeVideoInfo } from "../utils/youtube";
+import type { AIContextConfig, AIModelConfig, AIAction } from "../types";
 import { addHistory } from "../utils/storage";
-import { processImagesWithBase64 } from "../utils/imageUtils";
 import { HistoryNavigationContext, AppActionsContext } from "../App";
-import { getYouTubeVideoInfo, YouTubeVideoInfo } from "../utils/youtube";
 import { useStreaming } from '../context/StreamingContext';
 import DOMPurify from 'dompurify';
 import { uploadScreenshotToFirebase, getCurrentUser } from '../services/firebase';
@@ -177,7 +176,7 @@ export function useHomeLogic() {
 
   // Centralized title management function
   const generateHistoryTitle = useCallback((
-    type: 'summary' | 'search' | 'question' | 'file_analysis' | 'definition' | 'news' | 'weather' | 'events',
+    type: 'summary' | 'search' | 'question' | 'file_analysis' | 'definition' | 'news' | 'weather' | 'events' | 'video',
     query: string,
     pageTitle?: string,
     fileName?: string,
@@ -200,16 +199,15 @@ export function useHomeLogic() {
         return capitalizeWords(`Weather: ${query}`);
       case 'events':
         return capitalizeWords(`Events: ${query}`);
+      case 'video':
+        return capitalizeWords(pageTitle || 'YouTube Video');
       default:
         return capitalizeWords(query);
     }
   }, []);
 
   // State management
-  const location = useLocation();
-  const nav = useContext(HistoryNavigationContext);
-  const actions = useContext(AppActionsContext);
-  
+  const nav = useContext(HistoryNavigationContext); 
   const [outputHtml, setOutputHtml] = useState<string>("");
   const [tags, setTags] = useState<string[]>([]);
   const [suggested, setSuggested] = useState<string[]>([]);
@@ -228,6 +226,13 @@ export function useHomeLogic() {
   const [savedPageInfo, setSavedPageInfo] = useState<{ title: string; url: string; favicon: string } | null>(null);
   const [restoredScreenshotData, setRestoredScreenshotData] = useState<string | null>(null);
   const [firebaseScreenshotURL, setFirebaseScreenshotURL] = useState<string | null>(null);
+  const [transcription, setTranscription] = useState<string | null>(null);
+  const [videoInfo, setVideoInfo] = useState<{
+    videoId: string;
+    title: string;
+    summary: string;
+    transcription: string;
+  } | null>(null);
 
   // Get user settings for tags and suggested questions
   const getUserSettings = async () => {
@@ -364,6 +369,15 @@ ${pageContext}`;
       setCurrentHistoryItemFileName(item.fileName || null);
       setCurrentHistoryItemTitle(item.title || null); // Set the new state
       
+      // Handle video type - set transcription and videoInfo
+      if (item.type === 'video' && item.videoInfo) {
+        setTranscription(item.transcription || null);
+        setVideoInfo(item.videoInfo);
+      } else {
+        setTranscription(item.transcription || null);
+        setVideoInfo(null);
+      }
+      
       // Extract citations and references from the response
       if (item.response) {
         const extractedCitations = extractCitations(item.response);
@@ -414,6 +428,15 @@ ${pageContext}`;
       setCurrentHistoryItemFileName(item.fileName || null);
       setCurrentHistoryItemTitle(item.title || null); // Set the new state
       
+      // Handle video type - set transcription and videoInfo
+      if (item.type === 'video' && item.videoInfo) {
+        setTranscription(item.transcription || null);
+        setVideoInfo(item.videoInfo);
+      } else {
+        setTranscription(item.transcription || null);
+        setVideoInfo(null);
+      }
+      
       // Extract citations and references from the response
       if (item.response) {
         const extractedCitations = extractCitations(item.response);
@@ -442,6 +465,8 @@ ${pageContext}`;
       setCurrentHistoryItemType(null);
       setCurrentHistoryItemFileName(null);
       setCurrentHistoryItemTitle(null); // Clear the new state
+      setTranscription(null);
+      setVideoInfo(null);
       setSavedPageInfo(null);
       setSearchQuery("");
     }
@@ -449,6 +474,7 @@ ${pageContext}`;
 
   // Summarize page handler
   const handleSummarize = useCallback(async (userPrompt?: string) => {
+    console.log('🚀 handleSummarize called with userPrompt:', userPrompt);
     setRestoredScreenshotData(null); // Clear screenshot data when summarizing
     setSearchQuery("");
     setLoading(true);
@@ -457,6 +483,83 @@ ${pageContext}`;
       const info = await getPageInfoFromTab();
       setPageInfo(info);
       if (info.error) throw new Error(info.error);
+
+      // Check for YouTube video first
+      console.log('🔍 Starting YouTube detection in handleSummarize...');
+      let youtubeInfo;
+      try {
+        youtubeInfo = await getYouTubeVideoInfo();
+        console.log('🔍 YouTube detection result in handleSummarize:', youtubeInfo);
+        console.log('🔍 YouTube videoId:', youtubeInfo.videoId);
+        console.log('🔍 YouTube transcription:', youtubeInfo.transcription ? 'present' : 'null');
+      } catch (error) {
+        console.error('❌ Error in YouTube detection:', error);
+        youtubeInfo = { isYouTubeVideo: false };
+      }
+      
+      if (youtubeInfo.videoId) {
+        if (youtubeInfo.transcription) {
+          console.log('✅ YouTube video with transcription detected in handleSummarize:', youtubeInfo.title);
+          const confirmSummarize = confirm(
+            `Would you like to summarize this YouTube video?\n\n"${youtubeInfo.title}"\n\nThis will use the video's transcription for summarization.`
+          );
+          
+          if (confirmSummarize) {
+            const response = await sendQueryWithContext(
+              `Summarize this YouTube video based on its transcription:\n\n${youtubeInfo.transcription}`,
+              info,
+              { contextConfig: { usePageContext: false } }
+            );
+
+            setOutputHtml(response.text);
+            setTags(response.tags ?? []);
+            setSuggested(response.suggestedQuestions ?? []);
+
+            // Store both transcription and summary separately
+            const summaryResponse = `## YouTube Video Summary\n\n${response.text}`;
+            setTranscription(youtubeInfo.transcription || ''); // Set raw transcription for toggle
+            
+            await addHistory({
+              title: youtubeInfo.title || "YouTube Video Summary",
+              type: 'video',
+              response: summaryResponse,
+              transcription: youtubeInfo.transcription || '', // Store raw transcription
+              videoInfo: {
+                videoId: youtubeInfo.videoId || '',
+                title: youtubeInfo.title || "YouTube Video",
+                summary: response.text,
+                transcription: youtubeInfo.transcription || '',
+              },
+              tags: response.tags ?? [],
+              suggestedQuestions: response.suggestedQuestions ?? [],
+              pageInfo: {
+                title: youtubeInfo.title || "YouTube Video",
+                url: window.location.href,
+                favicon: "https://www.youtube.com/favicon.ico",
+              },
+            });
+            
+            setLoading(false);
+            return;
+          }
+        } else {
+          // YouTube video detected but no transcription available
+          console.log('⚠️ YouTube video detected but no transcription available in handleSummarize:', youtubeInfo.title);
+          const confirmPageAnalysis = confirm(
+            `YouTube video detected: "${youtubeInfo.title}"\n\nNo transcription is available for this video. Would you like to analyze the page content instead?`
+          );
+          
+          if (confirmPageAnalysis) {
+            // Continue with regular page analysis
+            console.log('Proceeding with page content analysis for YouTube video');
+          } else {
+            setLoading(false);
+            return;
+          }
+        }
+      } else {
+        console.log('❌ Not a YouTube video or no videoId detected in handleSummarize');
+      }
 
       const query = userPrompt
         ? `Based on this page:\n${info.text}\n\nUser question: ${userPrompt}`
@@ -534,8 +637,7 @@ ${pageContext}`;
   const handleSend = useCallback(async (
     query: string,
     fileData: string | null,
-    _useContext: boolean,
-    _useWebSearch: boolean,
+    usePageContext: boolean,
     fileName?: string | null
   ) => {
     if (loading || isStreaming) return;
@@ -606,7 +708,7 @@ ${pageContext}`;
         finalQuery = queryToSend;
       } else {
         // Handle regular queries
-        if (userSettings?.contextConfig?.usePageContext && !imageData) {
+        if (usePageContext && !imageData) {
           const sanitizedQuery = sanitizeInput(query);
           finalQuery = `Based on this page:\n${info.text}\n\nUser question: ${sanitizedQuery}`;
         } else if (userSettings?.contextConfig?.useWebSearch) {
@@ -1021,6 +1123,8 @@ ${pageContext}`;
     streamContent,
     stopStream,
     resetStream,
+    transcription,
+    videoInfo,
     handleSend,
     handleSummarize,
     handleTagClick,

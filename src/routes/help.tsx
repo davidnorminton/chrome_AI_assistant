@@ -20,7 +20,7 @@ const Help: React.FC = () => {
               <li><strong>Install the Extension:</strong> Load the extension in Chrome and set up your Perplexity AI API key</li>
               <li><strong>Open the Assistant:</strong> Click the ORLA icon in your browser toolbar</li>
               <li><strong>Ask Questions:</strong> Type your question and press Enter or click the send button</li>
-              <li><strong>Explore Features:</strong> Try the Summarize, Web Search, and File Upload buttons</li>
+              <li><strong>Explore Features:</strong> Try the Summarize button and slash commands</li>
             </ol>
           </div>
         </CollapsibleSection>
@@ -47,14 +47,38 @@ const Help: React.FC = () => {
           </div>
 
           <div className="help-card">
-            <h3>🔍 Web Search</h3>
-            <p>Search the web for real, clickable links related to your query.</p>
-            <ul>
-              <li>Click the globe icon to search the web</li>
-              <li>Results include titles, URLs, and descriptions</li>
-              <li>Links are saved in history for easy access</li>
-              <li>Automatically disables page context for broader search</li>
-            </ul>
+            <h3>⌨️ Prompt Commands</h3>
+            <p>Use slash commands for quick access to specific features.</p>
+            <div className="command-list">
+              <div className="command-item">
+                <code>/search &lt;query&gt;</code>
+                <span>Search the web for real, clickable links related to your query</span>
+              </div>
+              <div className="command-item">
+                <code>/news &lt;location&gt;</code>
+                <span>Get news for a specific location (e.g., /news London)</span>
+              </div>
+              <div className="command-item">
+                <code>/news</code>
+                <span>Get world headlines</span>
+              </div>
+              <div className="command-item">
+                <code>/weather &lt;location&gt;</code>
+                <span>Get weather for a specific location</span>
+              </div>
+              <div className="command-item">
+                <code>/weather</code>
+                <span>Get weather for your current location</span>
+              </div>
+              <div className="command-item">
+                <code>/events &lt;location&gt;</code>
+                <span>Find events in a specific location</span>
+              </div>
+              <div className="command-item">
+                <code>/events</code>
+                <span>Find world events</span>
+              </div>
+            </div>
           </div>
 
           <div className="help-card">
@@ -63,7 +87,7 @@ const Help: React.FC = () => {
             <ul>
               <li>Click the camera icon to capture the current page</li>
               <li>AI analyzes the visual content and text</li>
-              <li>Screenshots are stored in history with base64 encoding</li>
+              <li>Screenshots are stored in Firebase for persistence</li>
               <li>Automatically disables page context for focused analysis</li>
             </ul>
           </div>
@@ -172,8 +196,8 @@ const Help: React.FC = () => {
             <p>All your conversations and analyses are automatically saved for future reference.</p>
             <ul>
               <li><strong>Automatic Saving:</strong> Every interaction is saved immediately</li>
-              <li><strong>Local Storage:</strong> Data is stored in your browser's local storage</li>
-              <li><strong>No Cloud Sync:</strong> Data stays on your device for privacy</li>
+              <li><strong>Firebase Storage:</strong> Data is stored securely in Firebase</li>
+              <li><strong>Cloud Sync:</strong> Data syncs across devices</li>
               <li><strong>Persistent:</strong> History survives browser restarts</li>
             </ul>
           </div>
@@ -191,12 +215,24 @@ const Help: React.FC = () => {
                 <p>Page summaries with key points and insights</p>
               </div>
               <div className="history-type">
-                <h4>🔍 Web Searches</h4>
+                <h4>🔍 Search</h4>
                 <p>Web search results with clickable links</p>
               </div>
               <div className="history-type">
                 <h4>📁 File Analysis</h4>
                 <p>Uploaded file analyses with file names</p>
+              </div>
+              <div className="history-type">
+                <h4>📰 News</h4>
+                <p>News articles and headlines</p>
+              </div>
+              <div className="history-type">
+                <h4>🌤️ Weather</h4>
+                <p>Weather information and forecasts</p>
+              </div>
+              <div className="history-type">
+                <h4>🎉 Events</h4>
+                <p>Event listings and information</p>
               </div>
             </div>
           </div>
@@ -217,7 +253,7 @@ const Help: React.FC = () => {
             <ul>
               <li><strong>JSON Format:</strong> Structured data export</li>
               <li><strong>Complete Data:</strong> Includes all conversation details</li>
-              <li><strong>Privacy First:</strong> Data never leaves your device</li>
+              <li><strong>Privacy First:</strong> Data stored securely in Firebase</li>
             </ul>
           </div>
         </CollapsibleSection>
@@ -227,35 +263,12 @@ const Help: React.FC = () => {
           
           <div className="help-card">
             <h3>📋 Creating Notes</h3>
-            <p>Create and organize your thoughts with two types of notes.</p>
+            <p>Create and organize your thoughts with the notes system.</p>
             <ul>
-              <li><strong>Regular Notes:</strong> Free-form text for general notes and ideas</li>
-              <li><strong>Todo Lists:</strong> Interactive checkboxes for task management</li>
-              <li><strong>Color Coding:</strong> Choose from 8 different background colors</li>
               <li><strong>Auto-save:</strong> Notes are automatically saved as you type</li>
-            </ul>
-          </div>
-
-          <div className="help-card">
-            <h3>✅ Todo List Features</h3>
-            <p>Interactive task management with checkboxes and smart editing.</p>
-            <ul>
-              <li><strong>Checkbox Creation:</strong> Type "- " to automatically create checkboxes</li>
-              <li><strong>Interactive Editing:</strong> Click checkboxes to mark tasks complete</li>
-              <li><strong>Add Items:</strong> Use the "Add Item" button for new tasks</li>
-              <li><strong>Delete Rows:</strong> Hover over items to see delete buttons</li>
-              <li><strong>Keyboard Navigation:</strong> Use Enter to add new items, Backspace to delete</li>
-            </ul>
-          </div>
-
-          <div className="help-card">
-            <h3>🎨 Note Customization</h3>
-            <p>Personalize your notes with colors and organization.</p>
-            <ul>
-              <li><strong>Color Selection:</strong> 8 different background colors available</li>
-              <li><strong>Type Indicators:</strong> Visual icons show note vs todo list</li>
-              <li><strong>Preview Text:</strong> See note content in the sidebar</li>
-              <li><strong>Creation Date:</strong> Automatic timestamps for organization</li>
+              <li><strong>Firebase Storage:</strong> Notes are stored securely in the cloud</li>
+              <li><strong>Cross-device Sync:</strong> Access your notes from any device</li>
+              <li><strong>Instant Updates:</strong> Real-time synchronization</li>
             </ul>
           </div>
 
@@ -323,7 +336,7 @@ const Help: React.FC = () => {
             <ul>
               <li><strong>Be Specific:</strong> Ask detailed questions for better responses</li>
               <li><strong>Use Context:</strong> Enable page context for relevant answers</li>
-              <li><strong>Try Different Actions:</strong> Use summarize, search, and file upload for different perspectives</li>
+              <li><strong>Try Different Actions:</strong> Use summarize and slash commands for different perspectives</li>
               <li><strong>Check History:</strong> Review previous conversations for insights</li>
             </ul>
           </div>
@@ -341,7 +354,7 @@ const Help: React.FC = () => {
             <ul>
               <li><strong>YouTube Analysis:</strong> Great for learning from video content</li>
               <li><strong>File Upload:</strong> Perfect for analyzing documents and reports</li>
-              <li><strong>Web Search:</strong> Use for finding current information and sources</li>
+              <li><strong>Slash Commands:</strong> Use for quick access to specific features</li>
               <li><strong>Screenshot Analysis:</strong> Ideal for visual content and layouts</li>
             </ul>
           </div>
@@ -365,7 +378,7 @@ const Help: React.FC = () => {
             </div>
             <div className="troubleshooting-item">
               <h4>History Not Loading</h4>
-              <p><strong>Solution:</strong> Check browser storage permissions and try refreshing</p>
+              <p><strong>Solution:</strong> Check Firebase connection and try refreshing</p>
             </div>
           </div>
           <div className="help-card">

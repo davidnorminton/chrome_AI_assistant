@@ -5,6 +5,9 @@ import {
   RouterProvider,
 } from "react-router-dom";
 
+// Initialize services and providers
+import "./services";
+
 import App from "./App";
 import Home from "./routes/home";
 import Settings from "./routes/settings";

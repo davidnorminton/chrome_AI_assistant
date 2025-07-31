@@ -4,7 +4,7 @@ import { extractTextFromPDF, isPDFFile, extractTextFromFile, isTextFile } from "
 
 interface PromptProps {
   /** Called for the "Send" button */
-  onSend: (query: string, fileData: string | null, usePageContext: boolean, useWebSearch: boolean, fileName?: string | null) => void;
+  onSend: (query: string, fileData: string | null, usePageContext: boolean, fileName?: string | null) => void;
   /** Called for the "Summarize" button */
   onSummarize: () => void;
   /** Whether any request is in flight */
@@ -13,17 +13,13 @@ interface PromptProps {
   useContext: boolean;
   /** Setter for context toggle */
   setUseContext: (val: boolean) => void;
-  /** Whether to use web search */
-  useWebSearch: boolean;
-  /** Setter for web search toggle */
-  setUseWebSearch: (val: boolean) => void;
   /** Called when a screenshot is captured */
   onScreenshotCapture?: (imageData: string) => void;
   /** Called when file processing state changes */
   onFileProcessingChange?: (isProcessing: boolean, fileName: string | null, fileType: string | null) => void;
 }
 
-export default function Prompt({ onSend, onSummarize, loading, useContext, setUseContext, useWebSearch, setUseWebSearch, onScreenshotCapture, onFileProcessingChange }: PromptProps) {
+export default function Prompt({ onSend, onSummarize, loading, useContext, setUseContext, onScreenshotCapture, onFileProcessingChange }: PromptProps) {
   const [text, setText] = useState("");
   const [fileData, setFileData] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -206,7 +202,7 @@ export default function Prompt({ onSend, onSummarize, loading, useContext, setUs
 
   const handleSendClick = () => {
     if (!text.trim() && !fileData) return;
-    onSend(text.trim(), fileData, useContext, useWebSearch, fileName);
+    onSend(text.trim(), fileData, useContext, fileName);
     setText("");
     setFileData(null);
     setFileName(null);
@@ -340,24 +336,6 @@ export default function Prompt({ onSend, onSummarize, loading, useContext, setUs
                 </span>
               </button>
 
-              {/* Toggle web search */}
-              <button
-                id="toggleWebSearchBtn"
-                className={`nice-button web-search-button tooltip ${useWebSearch ? "active" : ""}`}
-                onClick={() => {
-                  const newWebSearchState = !useWebSearch;
-                  setUseWebSearch(newWebSearchState);
-                  // Disable page context when web search is enabled
-                  if (newWebSearchState) {
-                    setUseContext(false);
-                  }
-                }}
-                disabled={loading}
-              >
-                <i className="fas fa-globe" />
-                <span className="tooltiptext">{useWebSearch ? "Disable Web Search" : "Enable Web Search"}</span>
-              </button>
-
               {/* Summarize */}
               <button
                 id="summarizeBtn"
@@ -413,20 +391,6 @@ export default function Prompt({ onSend, onSummarize, loading, useContext, setUs
                       disabled={loading || !canTakeScreenshot}
                     >
                       Take Screenshot
-                    </button>
-                    <button
-                      className={`menu-item ${useWebSearch ? "active" : ""}`}
-                      onClick={() => {
-                        const newWebSearchState = !useWebSearch;
-                        setUseWebSearch(newWebSearchState);
-                        if (newWebSearchState) {
-                          setUseContext(false);
-                        }
-                        setShowMenu(false);
-                      }}
-                      disabled={loading}
-                    >
-                      Web Search
                     </button>
                     <button
                       className="menu-item"

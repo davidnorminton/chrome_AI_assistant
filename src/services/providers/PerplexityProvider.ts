@@ -278,7 +278,7 @@ export class PerplexityProvider implements AIProvider {
         // For link searches, expect an array of links
         if (Array.isArray(parsed)) {
           return {
-            text: `Found ${parsed.length} relevant links`,
+            text: JSON.stringify(parsed), // Return the actual JSON array
             model: 'perplexity',
             tags: [],
             links: parsed.slice(0, 15), // Limit to 15 links

@@ -12,6 +12,7 @@ export interface UseAILogicReturn {
   suggested: string[];
   links: { title: string; url: string; description: string }[];
   loading: boolean;
+  transcription?: string | null;
   
   // Actions
   sendQuery: (query: string, options?: SendQueryOptions) => Promise<void>;
@@ -37,6 +38,7 @@ export function useAILogic(): UseAILogicReturn {
   const [suggested, setSuggested] = useState<string[]>([]);
   const [links, setLinks] = useState<{ title: string; url: string; description: string }[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [transcription, setTranscription] = useState<string | null>(null);
 
   // Send a general query with context
   const sendQuery = useCallback(async (query: string, options: SendQueryOptions = {}) => {
@@ -89,39 +91,74 @@ export function useAILogic(): UseAILogicReturn {
       const pageInfo = await getPageInfoFromTab();
       
       // Check for YouTube video
+      console.log('🔍 Starting YouTube detection...');
       const youtubeInfo = await getYouTubeVideoInfo();
-      if (youtubeInfo.videoId && youtubeInfo.transcription) {
-        const confirmSummarize = confirm(
-          `Would you like to summarize this YouTube video?\n\n"${youtubeInfo.title}"\n\nThis will use the video's transcription for summarization.`
-        );
-        
-        if (confirmSummarize) {
-          const response = await sendQueryWithContext(
-            `Summarize this YouTube video based on its transcription:\n\n${youtubeInfo.transcription}`,
-            pageInfo,
-            { contextConfig: { usePageContext: false } }
+      console.log('🔍 YouTube detection result:', youtubeInfo);
+      console.log('🔍 YouTube videoId:', youtubeInfo.videoId);
+      console.log('🔍 YouTube transcription:', youtubeInfo.transcription ? 'present' : 'null');
+      
+      if (youtubeInfo.videoId) {
+        if (youtubeInfo.transcription) {
+          console.log('✅ YouTube video with transcription detected:', youtubeInfo.title);
+          const confirmSummarize = confirm(
+            `Would you like to summarize this YouTube video?\n\n"${youtubeInfo.title}"\n\nThis will use the video's transcription for summarization.`
           );
-
-          setOutputHtml(response.text);
-          setTags(response.tags ?? []);
-          setSuggested(response.suggestedQuestions ?? []);
-
-          await addHistory({
-            title: youtubeInfo.title || "YouTube Video Summary",
-            type: 'summary',
-            response: response.text,
-            tags: response.tags ?? [],
-            suggestedQuestions: response.suggestedQuestions ?? [],
-            pageInfo: {
-              title: youtubeInfo.title || "YouTube Video",
-              url: window.location.href,
-              favicon: "https://www.youtube.com/favicon.ico",
-            },
-          });
           
-          setLoading(false);
-          return;
+          if (confirmSummarize) {
+            const response = await sendQueryWithContext(
+              `Summarize this YouTube video based on its transcription:\n\n${youtubeInfo.transcription}`,
+              pageInfo,
+              { contextConfig: { usePageContext: false } }
+            );
+
+            setOutputHtml(response.text);
+            setTags(response.tags ?? []);
+            setSuggested(response.suggestedQuestions ?? []);
+
+            // Store both transcription and summary separately
+            const summaryResponse = `## YouTube Video Summary\n\n${response.text}`;
+            setTranscription(youtubeInfo.transcription || ''); // Set raw transcription for toggle
+            
+            await addHistory({
+              title: youtubeInfo.title || "YouTube Video Summary",
+              type: 'video',
+              response: summaryResponse,
+              transcription: youtubeInfo.transcription || '', // Store raw transcription
+              videoInfo: {
+                videoId: youtubeInfo.videoId || '',
+                title: youtubeInfo.title || "YouTube Video",
+                summary: response.text,
+                transcription: youtubeInfo.transcription || '',
+              },
+              tags: response.tags ?? [],
+              suggestedQuestions: response.suggestedQuestions ?? [],
+              pageInfo: {
+                title: youtubeInfo.title || "YouTube Video",
+                url: window.location.href,
+                favicon: "https://www.youtube.com/favicon.ico",
+              },
+            });
+            
+            setLoading(false);
+            return;
+          }
+        } else {
+          // YouTube video detected but no transcription available
+          console.log('⚠️ YouTube video detected but no transcription available:', youtubeInfo.title);
+          const confirmPageAnalysis = confirm(
+            `YouTube video detected: "${youtubeInfo.title}"\n\nNo transcription is available for this video. Would you like to analyze the page content instead?`
+          );
+          
+          if (confirmPageAnalysis) {
+            // Continue with regular page analysis
+            console.log('Proceeding with page content analysis for YouTube video');
+          } else {
+            setLoading(false);
+            return;
+          }
         }
+      } else {
+        console.log('❌ Not a YouTube video or no videoId detected');
       }
 
       // Regular page summarization
@@ -261,6 +298,7 @@ export function useAILogic(): UseAILogicReturn {
     suggested,
     links,
     loading,
+    transcription,
     
     // Actions
     sendQuery,

@@ -8,7 +8,7 @@ A modern Chrome extension that adds an AI assistant to any webpage. Built with R
 - **AI-powered assistance** - Ask questions about any webpage
 - **Page summarization** - Get quick summaries of web content
 - **Context-aware responses** - AI understands the current page content
-- **Web search integration** - Search the web for real, clickable links
+- **Slash commands** - Quick access to search, news, weather, and events
 - **File upload support** - Upload images, PDFs, and documents for analysis
 - **YouTube video analysis** - Automatic transcription and summarization of YouTube videos
 - **Configurable AI context** - Customize how the AI processes information
@@ -23,7 +23,7 @@ A modern Chrome extension that adds an AI assistant to any webpage. Built with R
 
 ### 📱 User Interface
 - **Modern UI** - Clean, responsive interface with dark theme
-- **Smart navigation** - News/events dropdown with location-based content
+- **Slash commands** - Quick access to search, news, weather, and events
 - **Sticky controls** - Search and filter controls stay at the top
 - **Loading animations** - Visual feedback during AI processing
 - **Responsive design** - Works on different screen sizes
@@ -36,18 +36,16 @@ A modern Chrome extension that adds an AI assistant to any webpage. Built with R
 - **Tags and suggestions** - AI-generated follow-up questions and tags
 - **Link collections** - Save and organize web search results
 - **File analysis history** - Track uploaded files and their analyses
-- **Notes & Todo Lists** - Create and organize notes with interactive checkboxes
+- **Notes system** - Create and organize notes with auto-save
 
 ### 🎯 Smart Features
 - **Page context toggle** - Include/exclude current page content
-- **Automatic mode switching** - Web search and file upload disable page context
+- **Automatic mode switching** - File upload disables page context
 - **Screenshot capture** - Take screenshots for AI analysis
-- **Location-based news** - Get local, national, and world news
-- **Weather integration** - Current weather and forecasts
-- **Event discovery** - Find local events and activities
+- **Slash commands** - Quick access to search, news, weather, and events
 - **File processing** - Support for PDFs, text files, and images
 - **Syntax highlighting** - Code blocks with IDE-style coloring
-- **Note organization** - Color-coded notes with auto-save functionality
+- **Note organization** - Auto-save notes with Firebase storage
 
 ### 🔧 Developer Features
 - **Modular architecture** - Clean, maintainable code structure
@@ -69,8 +67,7 @@ A modern Chrome extension that adds an AI assistant to any webpage. Built with R
 ### 🔧 Backend & APIs
 - **Chrome Extension APIs** - Browser integration and permissions
 - **Perplexity AI** - Advanced AI capabilities for text and image analysis
-- **OpenStreetMap Nominatim** - Location-based services
-- **Geolocation API** - Automatic location detection
+- **Firebase** - Cloud storage for history and notes
 - **AI Context Manager** - Centralized context configuration
 
 ### 📦 Architecture
@@ -208,10 +205,14 @@ The extension requires a Perplexity AI API key:
 - Ask questions about the current webpage
 - Use the "Summarize" button for quick page summaries
 
-### 🔍 Search Features
-- **Web Search**: Click the globe icon to search the web for real links
-- **File Upload**: Upload images, PDFs, and documents for analysis
-- **Page Context**: Toggle the book icon to include/exclude current page content
+### ⌨️ Slash Commands
+- **`/search <query>`** - Search the web for real, clickable links
+- **`/news <location>`** - Get news for a specific location
+- **`/news`** - Get world headlines
+- **`/weather <location>`** - Get weather for a specific location
+- **`/weather`** - Get weather for your current location
+- **`/events <location>`** - Find events in a specific location
+- **`/events`** - Find world events
 
 ### 📁 File Management
 - **Upload Files**: Support for PDFs, text files, images, and more
@@ -226,28 +227,19 @@ The extension requires a Perplexity AI API key:
 - **Context Length**: Set character limits (1,000-20,000)
 - **Metadata Control**: Include/exclude page title and URL
 
-### 📰 News & Events
-- Access local, national, and world news
-- Get current weather and forecasts
-- Discover local events and activities
-- Set your location for personalized content
-
 ### 💾 History & Organization
 - All conversations are automatically saved
 - Search through your history with filters
 - Export your data as JSON
 - Tags and suggested questions help you continue conversations
 - File analysis history with uploaded content tracking
-- Notes and todo lists with auto-save and color coding
+- Notes with auto-save and Firebase storage
 
-### 📝 Notes & Todo Lists
-- **Create Notes**: Regular text notes or interactive todo lists
-- **Todo Lists**: Type "- " to automatically create checkboxes
-- **Interactive Editing**: Click checkboxes to mark tasks complete
-- **Color Coding**: Choose from 8 different background colors
-- **Auto-save**: Notes are automatically saved as you type
-- **Smart Management**: Add items, delete rows, and keyboard navigation
-- **Organization**: Visual indicators for note types and creation dates
+### 📝 Notes System
+- **Create Notes**: Auto-save notes with real-time synchronization
+- **Firebase Storage**: Secure cloud storage for your notes
+- **Cross-device Sync**: Access your notes from any device
+- **Instant Updates**: Real-time synchronization across devices
 
 ### 🎬 YouTube Integration
 - **Automatic Detection**: Recognizes YouTube video pages
@@ -264,6 +256,8 @@ The extension requires a Perplexity AI API key:
 ## Recent Updates
 
 ### 🆕 Latest Features (v2.0+)
+- **Slash Commands**: Quick access to search, news, weather, and events
+- **Firebase Integration**: Cloud storage for history and notes
 - **AI Context Management**: Configurable context levels and custom instructions
 - **Enhanced File Support**: PDF, text file, and image analysis
 - **YouTube Integration**: Automatic video transcription and analysis
@@ -271,7 +265,6 @@ The extension requires a Perplexity AI API key:
 - **Improved Settings**: Comprehensive configuration panel
 - **Performance Optimization**: 26.6% CSS reduction and faster loading
 - **Modular Architecture**: Clean, maintainable code structure
-- **Notes & Todo Lists**: Interactive note-taking with checkboxes and color coding
 
 ### 🔧 Technical Improvements
 - **Type Safety**: Enhanced TypeScript interfaces
@@ -279,6 +272,7 @@ The extension requires a Perplexity AI API key:
 - **Context Management**: Centralized AI configuration
 - **Code Organization**: Modular CSS and component structure
 - **Build Optimization**: Reduced bundle sizes and faster builds
+- **Firebase Storage**: Secure cloud storage for data persistence
 
 ## Contributing
 
