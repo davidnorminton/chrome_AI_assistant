@@ -12,7 +12,6 @@ interface ContentDisplayProps {
   suggested: string[];
   onTagClick: (tag: string) => void;
   onSuggestedClick: (question: string) => void;
-  showWelcome: boolean;
   screenshotData?: string; // Screenshot data to display
   firebaseScreenshotURL?: string; // Firebase screenshot URL to display
   children?: React.ReactNode; // For Welcome component
@@ -102,7 +101,6 @@ export default function ContentDisplay({
   suggested,
   onTagClick,
   onSuggestedClick,
-  showWelcome,
   screenshotData,
   firebaseScreenshotURL,
   children,
@@ -132,7 +130,7 @@ export default function ContentDisplay({
 
 
   // Show loading animation when loading or streaming
-  if (loading && !showWelcome) {
+      if (loading) {
     return (
       <div className="content-display">
         <div className="loading-container">
@@ -156,7 +154,7 @@ export default function ContentDisplay({
     <div id="responseBox">
       <div id="output">
         {/* Loading Animation - Show when loading OR streaming but hide when content starts */}
-        {loading && !showWelcome && (
+        {loading && (
           <div className="loading-container">
             <AILoadingAnimation />
           </div>
@@ -201,7 +199,7 @@ export default function ContentDisplay({
         )}
 
         {/* Content Display - Show when not welcome and has content or is streaming */}
-        {!showWelcome && (displayContent || isStreaming || streamContent) && (
+        {(displayContent || isStreaming || streamContent) && (
           <div className="content-display">
             {transcription ? (
               // Use YouTubeToggle for videos with transcription

@@ -19,8 +19,8 @@ export const YouTubeToggle: React.FC<YouTubeToggleProps> = ({ summary, transcrip
   const displaySummary = videoInfo?.summary || summary;
   const rawTranscription = videoInfo?.transcription || transcription;
   
-  // Format transcription for display
-  const displayTranscription = `## Original Transcription\n\n\`\`\`\n${rawTranscription}\n\`\`\``;
+  // Format transcription for display with better formatting
+  const displayTranscription = `## Original Transcription\n\n${rawTranscription.split('\n').map(line => line.trim()).filter(line => line.length > 0).join('\n\n')}`;
 
   return (
     <div className="youtube-toggle-container">

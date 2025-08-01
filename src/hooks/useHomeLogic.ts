@@ -233,6 +233,12 @@ export function useHomeLogic() {
     summary: string;
     transcription: string;
   } | null>(null);
+  const [showYouTubeConfirmation, setShowYouTubeConfirmation] = useState(false);
+  const [pendingYouTubeInfo, setPendingYouTubeInfo] = useState<{
+    videoId: string;
+    title: string;
+    transcription?: string;
+  } | null>(null);
 
   // Get user settings for tags and suggested questions
   const getUserSettings = async () => {
@@ -321,8 +327,7 @@ ${pageContext}`;
 
   const { startStream, stopStream, isStreaming, streamContent, resetStream } = useStreaming();
 
-  // Simple logic: show welcome only when there's no content
-  const showWelcome = !outputHtml && !isStreaming && streamContent === '' && tags.length === 0 && suggested.length === 0 && links.length === 0;
+  // Welcome is now a separate page - no longer needed here
 
   // Debug restoredScreenshotData changes
   useEffect(() => {
@@ -498,65 +503,15 @@ ${pageContext}`;
       }
       
       if (youtubeInfo.videoId) {
-        if (youtubeInfo.transcription) {
-          console.log('✅ YouTube video with transcription detected in handleSummarize:', youtubeInfo.title);
-          const confirmSummarize = confirm(
-            `Would you like to summarize this YouTube video?\n\n"${youtubeInfo.title}"\n\nThis will use the video's transcription for summarization.`
-          );
-          
-          if (confirmSummarize) {
-            const response = await sendQueryWithContext(
-              `Summarize this YouTube video based on its transcription:\n\n${youtubeInfo.transcription}`,
-              info,
-              { contextConfig: { usePageContext: false } }
-            );
-
-            setOutputHtml(response.text);
-            setTags(response.tags ?? []);
-            setSuggested(response.suggestedQuestions ?? []);
-
-            // Store both transcription and summary separately
-            const summaryResponse = `## YouTube Video Summary\n\n${response.text}`;
-            setTranscription(youtubeInfo.transcription || ''); // Set raw transcription for toggle
-            
-            await addHistory({
-              title: youtubeInfo.title || "YouTube Video Summary",
-              type: 'video',
-              response: summaryResponse,
-              transcription: youtubeInfo.transcription || '', // Store raw transcription
-              videoInfo: {
-                videoId: youtubeInfo.videoId || '',
-                title: youtubeInfo.title || "YouTube Video",
-                summary: response.text,
-                transcription: youtubeInfo.transcription || '',
-              },
-              tags: response.tags ?? [],
-              suggestedQuestions: response.suggestedQuestions ?? [],
-              pageInfo: {
-                title: youtubeInfo.title || "YouTube Video",
-                url: window.location.href,
-                favicon: "https://www.youtube.com/favicon.ico",
-              },
-            });
-            
-            setLoading(false);
-            return;
-          }
-        } else {
-          // YouTube video detected but no transcription available
-          console.log('⚠️ YouTube video detected but no transcription available in handleSummarize:', youtubeInfo.title);
-          const confirmPageAnalysis = confirm(
-            `YouTube video detected: "${youtubeInfo.title}"\n\nNo transcription is available for this video. Would you like to analyze the page content instead?`
-          );
-          
-          if (confirmPageAnalysis) {
-            // Continue with regular page analysis
-            console.log('Proceeding with page content analysis for YouTube video');
-          } else {
-            setLoading(false);
-            return;
-          }
-        }
+        // Show custom confirmation instead of browser confirm
+        setPendingYouTubeInfo({
+          videoId: youtubeInfo.videoId,
+          title: youtubeInfo.title || "YouTube Video",
+          transcription: youtubeInfo.transcription
+        });
+        setShowYouTubeConfirmation(true);
+        setLoading(false);
+        return;
       } else {
         console.log('❌ Not a YouTube video or no videoId detected in handleSummarize');
       }
@@ -631,6 +586,128 @@ ${pageContext}`;
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  // YouTube confirmation handlers
+  const handleYouTubeConfirm = useCallback(async () => {
+    if (!pendingYouTubeInfo) return;
+    
+    setLoading(true);
+    setShowYouTubeConfirmation(false);
+    setOutputHtml("");
+    setTags([]);
+    setSuggested([]);
+    setLinks([]);
+    setCitations([]);
+    setReferences([]);
+    setTranscription(null);
+    setVideoInfo(null);
+    
+    try {
+      const info = await getPageInfoFromTab();
+      
+      if (pendingYouTubeInfo.transcription) {
+        // Summarize YouTube video with transcription
+        console.log('✅ Processing YouTube video with transcription:', pendingYouTubeInfo.title);
+        
+        const response = await sendQueryWithContext(
+          `Summarize this YouTube video based on its transcription:\n\n${pendingYouTubeInfo.transcription}`,
+          info,
+          { contextConfig: { usePageContext: false } }
+        );
+
+        setOutputHtml(response.text);
+        setTags(response.tags ?? []);
+        setSuggested(response.suggestedQuestions ?? []);
+
+        // Store both transcription and summary separately
+        const summaryResponse = `## YouTube Video Summary\n\n${response.text}`;
+        setTranscription(pendingYouTubeInfo.transcription); // Set raw transcription for toggle
+        
+        await addHistory({
+          title: pendingYouTubeInfo.title || "YouTube Video Summary",
+          type: 'video',
+          response: summaryResponse,
+          transcription: pendingYouTubeInfo.transcription, // Store raw transcription
+          videoInfo: {
+            videoId: pendingYouTubeInfo.videoId,
+            title: pendingYouTubeInfo.title || "YouTube Video",
+            summary: response.text,
+            transcription: pendingYouTubeInfo.transcription,
+          },
+          tags: response.tags ?? [],
+          suggestedQuestions: response.suggestedQuestions ?? [],
+          pageInfo: {
+            title: pendingYouTubeInfo.title || "YouTube Video",
+            url: window.location.href,
+            favicon: "https://www.youtube.com/favicon.ico",
+          },
+        });
+      } else {
+        // Analyze page content for YouTube video without transcription
+        console.log('⚠️ Analyzing page content for YouTube video without transcription:', pendingYouTubeInfo.title);
+        
+        const query = `Based on this page:\n${info.text}\n\nAnalyze this YouTube video page content.`;
+        
+        // Start both API calls simultaneously
+        let fetchedTags: string[] = [];
+        let fetchedQuestions: string[] = [];
+        
+        // Start the tags/questions API call immediately
+        let tagsPromise: Promise<{ tags: string[]; suggestedQuestions: string[] }> | null = null;
+        tagsPromise = fetchTagsAndQuestions(info.text);
+        
+        let finalContent = '';
+        
+        // Use streaming for summarization
+        await startStream(query, "summarize_page", null, async (streamedContent) => {
+          finalContent = streamedContent;
+          // Convert markdown to HTML and save to outputHtml
+          const md = new (await import('markdown-it')).default({
+            html: true,
+            linkify: true,
+            typographer: true,
+          });
+          const htmlContent = md.render(streamedContent);
+          setOutputHtml(htmlContent);
+          
+          // Wait for tags/questions to complete
+          try {
+            const result = await tagsPromise;
+            fetchedTags = result.tags;
+            fetchedQuestions = result.suggestedQuestions;
+            setTags(fetchedTags);
+            setSuggested(fetchedQuestions);
+          } catch (error) {
+            console.error('Error fetching tags and questions:', error);
+          }
+        });
+        
+        await addHistory({
+          title: generateHistoryTitle('summary', query, info.title),
+          type: 'summary' as const,
+          response: finalContent,
+          tags: fetchedTags,
+          suggestedQuestions: fetchedQuestions,
+          pageInfo: {
+            title: info.title,
+            url: info.url,
+            favicon: info.favicon,
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Error in handleYouTubeConfirm:', error);
+    } finally {
+      setLoading(false);
+      setPendingYouTubeInfo(null);
+    }
+  }, [pendingYouTubeInfo, generateHistoryTitle]);
+
+  const handleYouTubeCancel = useCallback(() => {
+    setShowYouTubeConfirmation(false);
+    setPendingYouTubeInfo(null);
+    setLoading(false);
   }, []);
 
   // Direct question handler
@@ -1131,7 +1208,6 @@ ${pageContext}`;
     handleSuggestedClick,
     handleScreenshotCapture,
     screenshotData,
-    showWelcome,
     handleClearContent,
     shouldShowPageHeader: () => {
       // Only show page header for summary and page-specific question types
@@ -1145,5 +1221,9 @@ ${pageContext}`;
     useWebSearch: userSettings?.contextConfig?.useWebSearch ?? false,
     setUseWebSearch,
     userSettings, // Add user settings to return object
+    showYouTubeConfirmation,
+    pendingYouTubeInfo,
+    handleYouTubeConfirm,
+    handleYouTubeCancel,
   };
 } 

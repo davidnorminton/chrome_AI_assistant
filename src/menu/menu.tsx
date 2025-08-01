@@ -1,10 +1,11 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useContext, useState, useEffect, useRef } from 'react';
 import { HistoryNavigationContext, AppActionsContext } from '../App';
 
 export default function Menu() {
     const nav = useContext(HistoryNavigationContext);
     const actions = useContext(AppActionsContext);
+    const navigate = useNavigate();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userPhoto, setUserPhoto] = useState<string | null>(null);
     const [userName, setUserName] = useState<string | null>(null);
@@ -116,6 +117,10 @@ export default function Menu() {
                 <i className="fas fa-history"></i>
                 <span className="tooltiptext">History</span>
             </Link>
+            <Link to="/welcome" id="welcomeToggle" className="menu-item tooltip">
+                <i className="fas fa-home"></i>
+                <span className="tooltiptext">Welcome</span>
+            </Link>
             
             {/* Notes Button */}
             <Link to="/notes" id="notesToggle" className="menu-item notes-button tooltip">
@@ -128,10 +133,13 @@ export default function Menu() {
                 <button 
                     id="clearContentBtn" 
                     className="menu-item clear-button tooltip" 
-                    onClick={() => actions?.clearContent?.()}
+                    onClick={() => {
+                        actions?.clearContent?.();
+                        navigate('/welcome');
+                    }}
                 >
                     <i className="fas fa-trash-alt"></i>
-                    <span className="tooltiptext">Clear</span>
+                    <span className="tooltiptext">Clear & Welcome</span>
                 </button>
             </div>
             

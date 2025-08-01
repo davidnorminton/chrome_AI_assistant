@@ -10,6 +10,7 @@ import "./services";
 
 import App from "./App";
 import Home from "./routes/home";
+import Welcome from "./routes/welcome";
 import Settings from "./routes/settings";
 import History from "./routes/history";
 import Help from "./routes/help";
@@ -23,6 +24,7 @@ const router = createBrowserRouter([
     element: <App />,
     children: [
       { index: true, element: <Home /> },
+      { path: "welcome", element: <Welcome /> },
       { path: "settings", element: <Settings /> },
       { path: "history", element: <History /> },
       { path: "help", element: <Help /> },

@@ -4,6 +4,7 @@ import { Welcome } from "../welcome/welcome";
 import Prompt from "../prompt/prompt";
 import ContentDisplay from "../components/ContentDisplay";
 import LinkList from "../components/LinkList";
+import { YouTubeConfirmation } from "../components/YouTubeConfirmation";
 
 import { useHomeLogic } from "../hooks/useHomeLogic";
 import { AppActionsContext } from "../App";
@@ -33,8 +34,9 @@ export default function Home() {
     currentHistoryItemFileName,
     transcription,
     videoInfo,
-    showWelcome,
     userSettings, // Add user settings
+    showYouTubeConfirmation,
+    pendingYouTubeInfo,
     
     // Handlers
     handleSummarize,
@@ -43,6 +45,8 @@ export default function Home() {
     handleSuggestedClick,
     handleScreenshotCapture,
     handleClearContent,
+    handleYouTubeConfirm,
+    handleYouTubeCancel,
     
     // Helpers
     shouldShowLinkList,
@@ -69,6 +73,16 @@ export default function Home() {
   return (
     <div id="tabContent">
       <div id="currentTab" className="tab-panel active">
+        {/* YouTube Confirmation */}
+        {showYouTubeConfirmation && pendingYouTubeInfo && (
+          <YouTubeConfirmation
+            videoTitle={pendingYouTubeInfo.title}
+            hasTranscription={!!pendingYouTubeInfo.transcription}
+            onConfirm={handleYouTubeConfirm}
+            onCancel={handleYouTubeCancel}
+          />
+        )}
+
         {/* Link List */}
         <LinkList
           links={links}
@@ -83,7 +97,7 @@ export default function Home() {
           suggested={suggested}
           onTagClick={handleTagClick}
           onSuggestedClick={handleSuggestedClick}
-          showWelcome={showWelcome}
+
           screenshotData={restoredScreenshotData || undefined}
           firebaseScreenshotURL={firebaseScreenshotURL || undefined}
           isProcessingFile={isProcessingFile}
@@ -95,19 +109,7 @@ export default function Home() {
           transcription={transcription || undefined}
           videoInfo={videoInfo || undefined}
           userSettings={userSettings}
-        >
-          <Welcome 
-            onSummarize={() => handleSummarize()} 
-            onGeneralQuestion={() => {
-              // Focus the textarea and set placeholder for general question
-              const textarea = document.getElementById('cmdInput') as HTMLTextAreaElement;
-              if (textarea) {
-                textarea.focus();
-                textarea.placeholder = "Ask anything";
-              }
-            }}
-          />
-        </ContentDisplay>
+        />
 
         {/* Prompt */}
         <Prompt
