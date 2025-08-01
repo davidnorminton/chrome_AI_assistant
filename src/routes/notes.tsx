@@ -93,7 +93,7 @@ const NotesIndex: React.FC = () => {
               onClick={() => handleNoteClick(note.id)}
             >
               <div className="note-card-header">
-                <div className="note-title-section">
+                <div className="title">
                   <h3>{note.title}</h3>
                   <div className="note-type-indicator">
                     <i className={`fas fa-${note.type === 'todo' ? 'check-square' : 'sticky-note'}`}></i>

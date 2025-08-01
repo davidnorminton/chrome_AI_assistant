@@ -25,7 +25,7 @@ export default function ImageList({ images, searchQuery, shouldShow }: ImageList
 
   return (
     <div className="image-list-container">
-      <div className="search-results-title">
+      <div className="title">
         Image search results for "{searchQuery}"
       </div>
       <div className="image-grid">
@@ -46,7 +46,7 @@ export default function ImageList({ images, searchQuery, shouldShow }: ImageList
               </div>
             </div>
             <div className="image-info">
-              <div className="image-title">{image.title}</div>
+              <div className="title">{image.title}</div>
               <div className="image-description">{image.description}</div>
             </div>
           </div>

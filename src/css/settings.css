@@ -56,15 +56,16 @@
 }
 
 .setting-group-title {
-  color: #fff;
-  font-size: 16px;
-  margin-bottom: 16px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid #4a9eff;
+  font-size: 18px;
+  font-weight: bold;
+  color: #4a9eff;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #333;
+  text-transform: capitalize;
   display: flex;
   align-items: center;
   gap: 6px;
-  font-weight: 500;
 }
 
 .setting-group-title i {

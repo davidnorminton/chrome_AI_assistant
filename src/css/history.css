@@ -72,14 +72,13 @@
 }
 
 .history-item-title {
-  font-weight: 600;
-  font-size: 14px;
-  margin-top: 0;
-  margin-bottom: 4px;
-  color: #ffffff;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 18px;
+  font-weight: bold;
+  color: #4a9eff;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #333;
+  text-transform: capitalize;
 }
 
 .history-item-preview {
@@ -292,7 +291,10 @@
 /* Search Results Title */
 .search-results-title {
   font-size: 18px;
-  font-weight: 600;
+  font-weight: bold;
+  color: #4a9eff;
   margin-bottom: 15px;
-  color: #ffffff;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #333;
+  text-transform: capitalize;
 } 

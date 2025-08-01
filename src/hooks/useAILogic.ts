@@ -17,7 +17,6 @@ export interface UseAILogicReturn {
   // Actions
   sendQuery: (query: string, options?: SendQueryOptions) => Promise<void>;
   summarizePage: (userPrompt?: string) => Promise<void>;
-  searchWeb: (query: string) => Promise<void>;
   analyzeFile: (fileData: string, fileName?: string) => Promise<void>;
   
   // Context management
@@ -198,48 +197,7 @@ export function useAILogic(): UseAILogicReturn {
     }
   }, []);
 
-  // Search the web
-  const searchWeb = useCallback(async (query: string) => {
-    setLoading(true);
-    setTags([]);
-    setSuggested([]);
-    setLinks([]);
 
-    try {
-      const pageInfo = await getPageInfoFromTab();
-      
-      const response = await sendQueryWithContext(query, pageInfo, {
-        contextConfig: { usePageContext: false },
-        useWebSearch: true,
-      });
-
-      const linksArr = response.links?.slice(0, 15) ?? [];
-      
-      if (linksArr.length === 0) {
-        setOutputHtml(`<p>No web search results found for "${query}".</p>`);
-      } else {
-        setOutputHtml(''); // Clear output HTML since LinkList will show the results
-      }
-
-      setLinks(linksArr);
-
-      await addHistory({
-        title: `Web search results for "${query}"`,
-        type: 'search',
-        response: linksArr.length > 0 ? `Found ${linksArr.length} web search results for "${query}":` : `No web search results found for "${query}".`,
-        tags: [],
-        suggestedQuestions: [],
-        links: linksArr,
-      });
-
-    } catch (error: any) {
-      setOutputHtml(`<p class="error">Error: ${error.message}</p>`);
-      setTags([]);
-      setSuggested([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
   // Analyze a file
   const analyzeFile = useCallback(async (fileData: string, fileName?: string) => {
@@ -303,7 +261,6 @@ export function useAILogic(): UseAILogicReturn {
     // Actions
     sendQuery,
     summarizePage,
-    searchWeb,
     analyzeFile,
     
     // Context management

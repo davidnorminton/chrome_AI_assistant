@@ -321,7 +321,7 @@ const FirebaseSetupWizard: React.FC<FirebaseSetupWizardProps> = ({ onComplete, o
           >
             <div className="step-number">{step.number}</div>
             <div className="step-info">
-              <div className="step-title">{step.title}</div>
+                              <div className="title">{step.title}</div>
               <div className="step-description">{step.description}</div>
             </div>
           </div>

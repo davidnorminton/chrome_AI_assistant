@@ -3,7 +3,7 @@ import { useEffect, useContext, useState } from "react";
 import { Welcome } from "../welcome/welcome";
 import Prompt from "../prompt/prompt";
 import ContentDisplay from "../components/ContentDisplay";
-import LinkList from "../components/LinkList";
+
 import { YouTubeConfirmation } from "../components/YouTubeConfirmation";
 
 import { useHomeLogic } from "../hooks/useHomeLogic";
@@ -48,8 +48,7 @@ export default function Home() {
     handleYouTubeConfirm,
     handleYouTubeCancel,
     
-    // Helpers
-    shouldShowLinkList,
+
   } = useHomeLogic();
 
   // Set the context functions
@@ -66,8 +65,7 @@ export default function Home() {
     setProcessingFileType(fileType);
   };
 
-  // Calculate display states
-  const showLinkList = Boolean(shouldShowLinkList()) && !loading;
+
 
 
   return (
@@ -83,12 +81,7 @@ export default function Home() {
           />
         )}
 
-        {/* Link List */}
-        <LinkList
-          links={links}
-          searchQuery={searchQuery}
-          shouldShow={showLinkList}
-        />
+
 
         {/* Content Display */}
         <ContentDisplay

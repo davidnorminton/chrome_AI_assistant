@@ -379,7 +379,7 @@ Make the list practical and actionable.`;
             placeholder="Note title..."
           />
         ) : (
-          <h1 className="note-title-display">{note.title}</h1>
+          <h1 className="title">{note.title}</h1>
         )}
 
         <div className="note-content-area">

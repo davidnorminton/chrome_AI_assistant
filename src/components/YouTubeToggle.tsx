@@ -24,6 +24,9 @@ export const YouTubeToggle: React.FC<YouTubeToggleProps> = ({ summary, transcrip
 
   return (
     <div className="youtube-toggle-container">
+      <div className="title">
+          {videoInfo?.title || 'YouTube Video'}
+      </div>
       <div className="youtube-toggle-buttons">
         <button
           className={`youtube-toggle-btn ${view === 'summary' ? 'active' : ''}`}

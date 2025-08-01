@@ -286,7 +286,7 @@ export default function History() {
                     <i className={getItemIcon(item)}></i>
                   </div>
                   <div className="history-item-content">
-                    <h3 className="history-item-title">{item.title}</h3>
+                    <h3 className="title">{item.title}</h3>
                     <p className="history-item-preview">
                       {truncateText(item.response.replace(/<[^>]*>/g, ""))}
                     </p>

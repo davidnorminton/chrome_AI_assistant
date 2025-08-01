@@ -53,17 +53,23 @@
   align-items: center;
   gap: 8px;
   flex: 1;
+  font-size: 18px;
+  font-weight: bold;
+  color: #4a9eff;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #333;
+  text-transform: capitalize;
 }
 
 .note-title-section h3 {
-  font-size: 16px;
-  font-weight: 600;
-  color: #fff;
-  margin: 0;
-  line-height: 1.3;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 18px;
+  font-weight: bold;
+  color: #4a9eff;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #333;
+  text-transform: capitalize;
 }
 
 .note-type-indicator {
@@ -290,13 +296,13 @@
 }
 
 .note-title-display {
-  font-size: 24px;
-  font-weight: 600;
-  color: #ffffff;
-  margin: 0 0 24px 0;
-  padding: 0;
-  background: transparent;
-  border: none;
+  font-size: 18px;
+  font-weight: bold;
+  color: #4a9eff;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #333;
+  text-transform: capitalize;
 }
 
 .note-content-area {

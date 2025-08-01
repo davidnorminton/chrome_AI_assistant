@@ -88,9 +88,13 @@
 }
 
 .step-title {
-  font-weight: 600;
-  color: #2d3748;
-  margin-bottom: 4px;
+  font-size: 18px;
+  font-weight: bold;
+  color: #4a9eff;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #333;
+  text-transform: capitalize;
 }
 
 .step-description {

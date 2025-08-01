@@ -139,6 +139,25 @@ const processSlashCommand = (query: string): { isCommand: boolean; command: stri
     }
   }
   
+  // Handle /search command
+  if (command === '/search') {
+    if (args) {
+      // /search <query> - Search the web for the specified query
+      return {
+        isCommand: true,
+        command: 'search',
+        query: args
+      };
+    } else {
+      // /search without args - prompt for search query
+      return {
+        isCommand: true,
+        command: 'search',
+        query: 'Please provide a search query'
+      };
+    }
+  }
+  
   // Handle /events command
   if (command === '/events') {
     if (args) {
@@ -747,6 +766,18 @@ ${pageContext}`;
         isNewsCommand = commandResult.command === 'news';
         isWeatherCommand = commandResult.command === 'weather';
         isEventsCommand = commandResult.command === 'events';
+        
+        // Handle /search command specifically
+        if (commandResult.command === 'search') {
+          // Force web search for /search command
+          const sanitizedQuery = sanitizeInput(commandResult.query);
+          finalQuery = `Search the web for: ${sanitizedQuery}`;
+          action = "get_links";
+          
+          // Use streaming API for web search (same as regular queries)
+          // The response will be handled by the streaming logic below
+        }
+        
         console.log('Detected slash command:', commandResult.command, 'with query:', finalQuery);
       }
 
@@ -794,33 +825,8 @@ ${pageContext}`;
           finalQuery = `Search the web for: ${sanitizedQuery}`;
           action = "get_links";
           
-          // Use streaming for web search
-          await startStream(finalQuery, action, imageData, async (streamedContent) => {
-            // Convert markdown to HTML
-            const md = new (await import('markdown-it')).default({
-              html: true,
-              linkify: true,
-              typographer: true,
-            });
-            const htmlContent = md.render(streamedContent);
-            
-            setOutputHtml(htmlContent);
-            
-            // Save to history
-            await addHistory({
-              title: generateHistoryTitle('search', sanitizedQuery),
-              type: 'search',
-              response: streamedContent,
-              tags: [],
-              suggestedQuestions: [],
-              links: [],
-            });
-          }, () => {
-            setLoading(false);
-          });
-          
-          setLoading(false);
-          return; // Exit early since we handled the web search with streaming
+          // Use streaming API for web search (same as regular queries)
+          // The response will be handled by the streaming logic below
         } else if (imageData) {
           finalQuery = sanitizeInput(query);
         } else {
@@ -856,6 +862,8 @@ ${pageContext}`;
         }
       }
       
+
+      
       // Use streaming for main response
       await startStream(finalQuery, action, imageData, async (streamedContent) => {
         // Convert markdown to HTML and save to outputHtml
@@ -864,7 +872,19 @@ ${pageContext}`;
           linkify: true,
           typographer: true,
         });
-        const htmlContent = md.render(streamedContent);
+        let htmlContent = md.render(streamedContent);
+        
+        // Make references clickable by converting them to proper links
+        htmlContent = htmlContent.replace(
+          /\[(\d+)\]\s*([^\n]+?)(?:\s*-\s*(https?:\/\/[^\s]+))?/g,
+          (match, number, title, url) => {
+            if (url) {
+              return `<a href="#" data-url="${url}" class="reference-link" onclick="chrome.tabs.create({url: '${url}'}); return false;">[${number}] ${title}</a>`;
+            } else {
+              return match; // Keep original if no URL found
+            }
+          }
+        );
         
         // For general questions, show title above content
         if (!isPageSpecific && !imageData) {
@@ -1103,11 +1123,7 @@ ${pageContext}`;
     return false;
   }, []);
 
-  // Helper to determine if we should show link list
-  const shouldShowLinkList = useCallback(() => {
-    // Show link list whenever we have links (for search results)
-    return links.length > 0;
-  }, [links.length]);
+
 
 
 
@@ -1199,7 +1215,7 @@ ${pageContext}`;
     handleSuggestedClick,
     handleScreenshotCapture,
     handleClearContent,
-    shouldShowLinkList: () => !loading && links.length > 0 && !isStreaming,
+
     usePageContext: userSettings?.contextConfig?.usePageContext ?? true,
     setUsePageContext,
     useWebSearch: userSettings?.contextConfig?.useWebSearch ?? false,

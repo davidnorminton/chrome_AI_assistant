@@ -22,7 +22,7 @@ export default function CollapsibleSection({
         onClick={() => setIsExpanded(!isExpanded)}
         aria-expanded={isExpanded}
       >
-        <div className="collapsible-title">
+        <div className="title">
           {icon && <i className={icon}></i>}
           <span>{title}</span>
         </div>

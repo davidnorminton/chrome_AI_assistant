@@ -20,7 +20,7 @@ export const YouTubeConfirmation: React.FC<YouTubeConfirmationProps> = ({
       </div>
       
       <div className="youtube-confirmation-content">
-        <p className="video-title">"{videoTitle}"</p>
+        <p className="title">"{videoTitle}"</p>
         
         {hasTranscription ? (
           <div className="confirmation-message">

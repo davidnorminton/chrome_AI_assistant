@@ -181,23 +181,31 @@ Use only basic HTML tags (<p>, <ul>, <li>, <strong>, <em>, <h3>).
 Return exactly the JSON object.`;
 
       case 'get_links':
-        return `CRITICAL: You must return EXACTLY a JSON array of 15 links. DO NOT include any other text before or after the JSON array.
+        return `You are a helpful AI assistant that provides accurate answers with real web sources. When asked to search the web, provide a comprehensive answer to the user's question and include at least 3 real, relevant links to validate your response.
 
-Each link object must have these exact properties:
-  - "title": string (clear, descriptive title)
-  - "url": string (valid URL starting with http:// or https://)
-  - "description": string (brief description of the content)
+IMPORTANT: Only include links to real, accessible websites. Do not make up or hallucinate URLs. If you cannot find real sources, say so clearly.
+
+Your response should:
+1. Answer the user's question comprehensively
+2. Include at least 3 real, relevant links to support your answer
+3. Format links as: [1] Title - URL or [1] Title (brief description)
+4. Include a "References:" section at the end
 
 Example format:
-[
-  {
-    "title": "Example Title",
-    "url": "https://example.com",
-    "description": "Example description"
-  }
-]
+Your comprehensive answer here...
 
-DO NOT include any text like "Found 15 relevant links" or any other text. Return ONLY the JSON array.`;
+References:
+[1] Example Real Source - https://example.com
+[2] Another Real Source - https://another-example.com  
+[3] Third Real Source - https://third-example.com
+
+Format your response as a single JSON object with keys:
+  "summary" (HTML string with your answer and links),
+  "tags" (array of exactly 6 relevant tags),
+  "suggestedQuestions" (array of exactly 3 follow-up questions).
+
+Use only basic HTML tags (<p>, <ul>, <li>, <strong>, <em>, <h3>).
+Return exactly the JSON object.`;
 
       case 'summarize_file':
         return `You are an AI assistant specialized in analyzing and summarizing files.
