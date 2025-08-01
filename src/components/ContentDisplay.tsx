@@ -14,16 +14,12 @@ interface ContentDisplayProps {
   onSuggestedClick: (question: string) => void;
   screenshotData?: string; // Screenshot data to display
   firebaseScreenshotURL?: string; // Firebase screenshot URL to display
-  children?: React.ReactNode; // For Welcome component
   isProcessingFile?: boolean;
   processingFileName?: string | null;
   processingFileType?: string | null;
   currentHistoryItemType?: string | null;
   currentHistoryItemFileName?: string | null;
   loading?: boolean; // Add loading prop
-  pageInfo?: { title: string; url: string }; // Added pageInfo prop
-  links?: string[]; // Added links prop
-  fileData?: string; // Added fileData prop
   transcription?: string; // Added transcription prop for YouTube videos
   videoInfo?: {
     videoId: string;
@@ -103,16 +99,12 @@ export default function ContentDisplay({
   onSuggestedClick,
   screenshotData,
   firebaseScreenshotURL,
-  children,
   isProcessingFile,
   processingFileName,
   processingFileType,
   currentHistoryItemType,
   currentHistoryItemFileName,
   loading,
-  pageInfo,
-  links,
-  fileData,
   transcription,
   videoInfo,
   userSettings

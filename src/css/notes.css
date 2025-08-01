@@ -289,6 +289,16 @@
   color: #666;
 }
 
+.note-title-display {
+  font-size: 24px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0 0 24px 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
 .note-content-area {
   flex: 1;
   min-height: 400px;

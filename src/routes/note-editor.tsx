@@ -16,7 +16,7 @@ const NoteEditor: React.FC = () => {
   const { noteId } = useParams<{ noteId: string }>();
   const navigate = useNavigate();
   const [note, setNote] = useState<Note | null>(null);
-  const [isEditing, setIsEditing] = useState(true);
+  const [isEditing, setIsEditing] = useState(false); // Start in view mode by default
   const [showAIPromptForm, setShowAIPromptForm] = useState(false);
   const [isGeneratingList, setIsGeneratingList] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
@@ -38,6 +38,7 @@ const NoteEditor: React.FC = () => {
     if (isCreateRoute || noteId === 'create') {
       console.log('Creating new note');
       setIsNewNote(true);
+      setIsEditing(true); // Enable editing for new notes
       setNote({
         id: Date.now().toString(),
         title: '',
@@ -369,13 +370,17 @@ Make the list practical and actionable.`;
       </div>
 
       <div className="note-editor-content">
-        <input
-          type="text"
-          className="note-title-input"
-          value={note.title}
-          onChange={(e) => handleTitleChange(e.target.value)}
-          placeholder="Note title..."
-        />
+        {isEditing ? (
+          <input
+            type="text"
+            className="note-title-input"
+            value={note.title}
+            onChange={(e) => handleTitleChange(e.target.value)}
+            placeholder="Note title..."
+          />
+        ) : (
+          <h1 className="note-title-display">{note.title}</h1>
+        )}
 
         <div className="note-content-area">
           {isEditing ? (

@@ -1185,21 +1185,12 @@ ${pageContext}`;
     tags,
     suggested,
     links,
-    citations,
-    references,
     searchQuery,
-    pageInfo,
-    savedPageInfo,
     restoredScreenshotData,
     firebaseScreenshotURL,
     currentHistoryItemType,
     currentHistoryItemFileName,
-    currentHistoryItemTitle,
     loading,
-    isStreaming,
-    streamContent,
-    stopStream,
-    resetStream,
     transcription,
     videoInfo,
     handleSend,
@@ -1207,14 +1198,7 @@ ${pageContext}`;
     handleTagClick,
     handleSuggestedClick,
     handleScreenshotCapture,
-    screenshotData,
     handleClearContent,
-    shouldShowPageHeader: () => {
-      // Only show page header for summary and page-specific question types
-      const isRelevantType = currentHistoryItemType === 'summary' || 
-                            (currentHistoryItemType === 'question' && savedPageInfo);
-      return !loading && savedPageInfo && !isStreaming && isRelevantType;
-    },
     shouldShowLinkList: () => !loading && links.length > 0 && !isStreaming,
     usePageContext: userSettings?.contextConfig?.usePageContext ?? true,
     setUsePageContext,

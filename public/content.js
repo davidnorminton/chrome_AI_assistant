@@ -64,7 +64,7 @@ function createScreenshotOverlay() {
     font-size: 14px;
     z-index: 1000000;
   `;
-  instructions.textContent = 'Click and drag to select an area, then release to capture';
+  instructions.textContent = 'Click, drag, and release';
   document.body.appendChild(instructions);
   
   return { overlay, selectionBox, instructions };
@@ -283,6 +283,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   // Handle screenshot start
   if (request.action === "startScreenshot") {
     startScreenshot();
+    return true;
+  }
+
+  // Handle screenshot cancel
+  if (request.action === "cancelScreenshot") {
+    cancelScreenshot();
     return true;
   }
 

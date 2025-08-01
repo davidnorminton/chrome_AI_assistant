@@ -213,6 +213,20 @@ export default function Prompt({ onSend, onSummarize, loading, useContext, setUs
   };
 
   const handleScreenshotClick = () => {
+    // If already in screenshot mode, cancel it
+    if (isScreenshotMode) {
+      setIsScreenshotMode(false);
+      
+      // Send message to content script to cancel screenshot mode
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs[0]?.id) {
+          chrome.tabs.sendMessage(tabs[0].id, { action: "cancelScreenshot" });
+        }
+      });
+      return;
+    }
+
+    // Start screenshot mode
     setIsScreenshotMode(true);
     
     // Send message to content script to start screenshot mode
